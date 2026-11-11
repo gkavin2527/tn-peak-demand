@@ -1,0 +1,2 @@
+target_date,issue_day,issued_at,predicted_mw,lo90,hi90,lo95,hi95,H,anchor_col,anchor_mw,weather_source,weather_issue_slot,weather_issued_on,model_version,model_is_champion,n_train_rows,features_nan,actual_mw,error_mw,observed_filled_from_forecast
+2026-11-12,2026-11-11,2026-11-11T12:48:19,17860.2,16676.9,19043.4,16144.1,19576.2,2,peak_lag_1,16819.0,live_log_evening_lead_1,evening,2026-11-11,standin-hgb-differenced-v1,False,4839,,,,2026-11-11(lead0)

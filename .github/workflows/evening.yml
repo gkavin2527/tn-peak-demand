@@ -1,0 +1,104 @@
+name: evening forecast
+
+# Roadmap Phase 7.2. The morning job (daily.yml) collects data; this one
+# issues the forecast.
+#
+# Why the evening, and why this is the latest sensible slot:
+#   * Grid-India publishes day D's demand on D+1 (~09:00-11:00 IST, measured
+#     in results/publish_time.json). Nothing we do tonight makes today's
+#     demand appear, which is why H=2 and peak_lag_1 is unavailable.
+#   * The weather forecast, though, is strictly better the later we ask.
+#     An evening run gets a lead-1 forecast for tomorrow instead of the
+#     lead-1-from-this-morning that daily.yml logs.
+# So the evening slot buys fresher weather at no cost in demand staleness.
+#
+# Ordering is load-bearing: the logger must write tomorrow's forecast BEFORE
+# predict_next_day.py reads it, or inference falls back to this morning's
+# staler run (or fails outright if the log has no row for tomorrow).
+
+on:
+  schedule:
+    - cron: "30 14 * * *"   # 20:00 IST
+  workflow_dispatch:
+
+concurrency:
+  group: evening-forecast
+  cancel-in-progress: false
+
+jobs:
+  forecast:
+    runs-on: self-hosted
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python virtual environment
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install -q -r requirements.txt
+
+      # Must come first - predict_next_day.py reads what this writes.
+      # Tagged `evening` so it does not overwrite the morning run's rows;
+      # both slots are kept and inference prefers this one.
+      - name: Log evening weather forecast
+        run: .venv/bin/python fetch_weather.py forecast --slot=evening
+
+      # Score yesterday's forecasts now that Grid-India has published.
+      # Runs before inference so a failure here still leaves us a forecast.
+      - name: Score matured forecasts
+        continue-on-error: true
+        run: .venv/bin/python track_predictions.py
+
+      - name: Issue tomorrow's forecast
+        run: .venv/bin/python predict_next_day.py
+
+      - name: Commit forecast and scores
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/weather_forecast_log.csv data/predictions_log.csv results/
+          if git diff --staged --quiet; then
+            echo "nothing to commit"
+          else
+            git commit -m "forecast: $(date -u +%Y-%m-%d) evening"
+            git pull --rebase --autostash
+            git push
+          fi
+
+  # Hyperparameters are frozen (D5) but the fitted model and the conformal
+  # calibration both need to track the current regime, so they are refreshed
+  # on their own cadence rather than nightly.
+  recalibrate:
+    runs-on: self-hosted
+    if: github.event_name == 'schedule'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python virtual environment
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install -q -r requirements.txt
+
+      - name: Weekly interval recalibration
+        run: |
+          if [ "$(date -u +%u)" = "7" ]; then
+            .venv/bin/python calibrate_intervals.py
+          else
+            echo "not Sunday - skipping recalibration"
+          fi
+
+      - name: Commit calibration
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add results/intervals.json
+          if git diff --staged --quiet; then
+            echo "nothing to commit"
+          else
+            git commit -m "recalibrate intervals: $(date -u +%Y-%m-%d)"
+            git pull --rebase --autostash
+            git push
+          fi

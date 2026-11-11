@@ -1,0 +1,97 @@
+{
+  "measured_at": "2026-11-11T11:04:32",
+  "question": "how far is inference-time lagged weather (forecast endpoint analysis) from training-time archive weather?",
+  "overlap_days": 92,
+  "span": [
+    "2026-08-11",
+    "2026-11-10"
+  ],
+  "past_days_requested": 92,
+  "comparisons": [
+    {
+      "column": "t_mean",
+      "bias": 0.0119,
+      "mae": 0.0119,
+      "p95_abs": 0.0,
+      "n": 62
+    },
+    {
+      "column": "t_max",
+      "bias": 0.0,
+      "mae": 0.0,
+      "p95_abs": 0.0,
+      "n": 62
+    },
+    {
+      "column": "rh_mean",
+      "bias": -0.0446,
+      "mae": 0.0446,
+      "p95_abs": 0.0,
+      "n": 62
+    },
+    {
+      "column": "cdd",
+      "bias": 0.0119,
+      "mae": 0.0119,
+      "p95_abs": 0.0,
+      "n": 62
+    },
+    {
+      "column": "cdd_max",
+      "bias": 0.0,
+      "mae": 0.0,
+      "p95_abs": 0.0,
+      "n": 62
+    },
+    {
+      "column": "thi",
+      "bias": 0.0058,
+      "mae": 0.0058,
+      "p95_abs": 0.0,
+      "n": 62
+    }
+  ],
+  "exact_agreement_by_age": [
+    {
+      "age_days": "0-5",
+      "n": 5,
+      "exact_agreement": 1.0,
+      "mean_abs": 0.0
+    },
+    {
+      "age_days": "6-15",
+      "n": 10,
+      "exact_agreement": 1.0,
+      "mean_abs": 0.0
+    },
+    {
+      "age_days": "16-40",
+      "n": 25,
+      "exact_agreement": 1.0,
+      "mean_abs": 0.0
+    },
+    {
+      "age_days": "41-92",
+      "n": 52,
+      "exact_agreement": 0.423,
+      "mean_abs": 0.0
+    }
+  ],
+  "worst_lagged_mae": 0.0119,
+  "material_threshold_degc": 0.5,
+  "material": false,
+  "affected_columns": [
+    "cdd_lag1",
+    "cdd_max_lag1",
+    "thi_lag1"
+  ],
+  "conclusion": "No material skew: the archive endpoint and the forecast endpoint's past_days window return bit-identical values for the recent window, so training-time and inference-time lagged weather are the same product rather than two that agree.",
+  "revision_stability": {
+    "method": "git: 2026-10-15 snapshot of weather_daily.csv vs HEAD",
+    "city_days_compared": 25175,
+    "changed_t_mean": 0,
+    "changed_t_max": 0,
+    "changed_rh_mean": 0,
+    "note": "archive values are not revised as ERA5 finalises, so master.csv's recent rows are reproducible"
+  }
+}

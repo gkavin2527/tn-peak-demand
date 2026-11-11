@@ -23,6 +23,9 @@ echo "=== Fetching recent actual weather ==="
 python3 fetch_weather.py update
 
 echo "=== Rebuilding dataset ==="
+echo "=== Reconciling provisional weather to ERA5 reanalysis ==="
+python3 fetch_weather.py reconcile
+
 python3 build_dataset.py
 
 echo "=== Running health check ==="

@@ -1,0 +1,1162 @@
+{
+  "generated_at": "2026-11-11T12:34:22",
+  "model": "stand-in (HistGradientBoostingRegressor, differenced)",
+  "model_is_champion": false,
+  "H_measured": 2,
+  "H_idealised": 1,
+  "anchor": "peak_lag_1",
+  "refit_days": 7,
+  "test_start": "2025-01-01",
+  "test_end": "2026-11-10",
+  "leads": [
+    1,
+    2,
+    3
+  ],
+  "surge_definition": "top 5% per calendar year (D4 primary)",
+  "ci_method": "moving-block bootstrap, 7d blocks, 2000 draws",
+  "phase_5_2_archive_vs_log": {
+    "gate_metric_mae": 0.3596,
+    "threshold": 0.5,
+    "passed": true,
+    "verdict": "archive is a valid stand-in"
+  },
+  "phase_5_3_regimes": {
+    "H2_regime_a": {
+      "label": "A reanalysis H=2  [measured, headline]",
+      "span": [
+        "2025-01-03",
+        "2026-11-09"
+      ],
+      "overall": {
+        "n": 676,
+        "mae": 483.5447077488576,
+        "rmse": 683.8345754131304,
+        "mape": 2.8053629653766774,
+        "bias": -3.2030175249357002,
+        "r2": 0.8683208205083649,
+        "mae_ci95": [
+          433.8,
+          526.9
+        ],
+        "bias_ci95": [
+          -66.3,
+          48.6
+        ]
+      },
+      "summer_mar_jun": {
+        "n": 244,
+        "mae": 517.1965161867391,
+        "rmse": 673.2110595731401,
+        "mape": 2.8204376978072045,
+        "bias": -26.16951557157719,
+        "r2": 0.7804532227109463,
+        "mae_ci95": [
+          465.1,
+          576.5
+        ],
+        "bias_ci95": [
+          -126.5,
+          76.6
+        ]
+      },
+      "surge_per_year": {
+        "n": 35,
+        "mae": 439.28084754362095,
+        "rmse": 657.5552027410962,
+        "mape": 2.137734694218022,
+        "bias": -335.2884858117055,
+        "r2": 0.4914208178608809,
+        "mae_ci95": [
+          270.1,
+          551.4
+        ],
+        "bias_ci95": [
+          -446.9,
+          -177.9
+        ]
+      },
+      "surge_summer": {
+        "n": 14,
+        "mae": 531.4858645632667,
+        "rmse": 763.3781994358106,
+        "mape": 2.600001826844257,
+        "bias": -425.93568984850725,
+        "r2": -0.38638335562795767,
+        "mae_ci95": [
+          323.2,
+          608.5
+        ],
+        "bias_ci95": [
+          -576.2,
+          -112.1
+        ]
+      },
+      "surge_legacy_19000mw": {
+        "n": 220,
+        "mae": 462.00180280848707,
+        "rmse": 626.1614353748195,
+        "mape": 2.3147473226311295,
+        "bias": -165.33211115239948,
+        "r2": 0.277377174654565,
+        "mae_ci95": [
+          406.7,
+          518.0
+        ],
+        "bias_ci95": [
+          -231.9,
+          -86.7
+        ]
+      }
+    },
+    "H2_regime_b_lead1": {
+      "label": "B forecast lead 1 H=2  [measured, headline]",
+      "span": [
+        "2025-01-03",
+        "2026-11-09"
+      ],
+      "overall": {
+        "n": 676,
+        "mae": 525.2032943208355,
+        "rmse": 712.7204269098621,
+        "mape": 3.027111989098906,
+        "bias": -52.053082884769104,
+        "r2": 0.8569613465605451,
+        "mae_ci95": [
+          476.8,
+          567.2
+        ],
+        "bias_ci95": [
+          -119.1,
+          2.4
+        ]
+      },
+      "summer_mar_jun": {
+        "n": 244,
+        "mae": 562.5875724377313,
+        "rmse": 711.1785285006666,
+        "mape": 3.065655144951463,
+        "bias": -67.78688487827942,
+        "r2": 0.7549911031531649,
+        "mae_ci95": [
+          509.2,
+          623.2
+        ],
+        "bias_ci95": [
+          -180.7,
+          39.6
+        ]
+      },
+      "surge_per_year": {
+        "n": 35,
+        "mae": 550.5000593741786,
+        "rmse": 749.9290752222275,
+        "mape": 2.679013583764254,
+        "bias": -418.1563502406317,
+        "r2": 0.33849287551604335,
+        "mae_ci95": [
+          413.1,
+          707.5
+        ],
+        "bias_ci95": [
+          -581.4,
+          -281.5
+        ]
+      },
+      "surge_summer": {
+        "n": 14,
+        "mae": 621.6342671264847,
+        "rmse": 900.0531850583313,
+        "mape": 3.033233974929186,
+        "bias": -532.3572648093262,
+        "r2": -0.9272594132722056,
+        "mae_ci95": [
+          406.1,
+          665.2
+        ],
+        "bias_ci95": [
+          -620.6,
+          -243.0
+        ]
+      },
+      "surge_legacy_19000mw": {
+        "n": 220,
+        "mae": 509.2263057038545,
+        "rmse": 646.5475095564057,
+        "mape": 2.553561916984412,
+        "bias": -186.8326757825616,
+        "r2": 0.2295580370718232,
+        "mae_ci95": [
+          452.2,
+          567.4
+        ],
+        "bias_ci95": [
+          -264.0,
+          -93.3
+        ]
+      }
+    },
+    "H2_gap_lead1": {
+      "overall": {
+        "n": 676,
+        "mae_a": 483.5,
+        "mae_b": 525.2,
+        "d_mae": 41.7,
+        "d_mae_pct": 8.6,
+        "mape_a": 2.805,
+        "mape_b": 3.027,
+        "d_mape": 0.222,
+        "d_rmse": 28.9,
+        "bias_a": -3.2,
+        "bias_b": -52.1,
+        "d_bias": -48.9
+      },
+      "summer_mar_jun": {
+        "n": 244,
+        "mae_a": 517.2,
+        "mae_b": 562.6,
+        "d_mae": 45.4,
+        "d_mae_pct": 8.8,
+        "mape_a": 2.82,
+        "mape_b": 3.066,
+        "d_mape": 0.245,
+        "d_rmse": 38.0,
+        "bias_a": -26.2,
+        "bias_b": -67.8,
+        "d_bias": -41.6
+      },
+      "surge_per_year": {
+        "n": 35,
+        "mae_a": 439.3,
+        "mae_b": 550.5,
+        "d_mae": 111.2,
+        "d_mae_pct": 25.3,
+        "mape_a": 2.138,
+        "mape_b": 2.679,
+        "d_mape": 0.541,
+        "d_rmse": 92.4,
+        "bias_a": -335.3,
+        "bias_b": -418.2,
+        "d_bias": -82.9
+      },
+      "surge_summer": {
+        "n": 14,
+        "mae_a": 531.5,
+        "mae_b": 621.6,
+        "d_mae": 90.1,
+        "d_mae_pct": 17.0,
+        "mape_a": 2.6,
+        "mape_b": 3.033,
+        "d_mape": 0.433,
+        "d_rmse": 136.7,
+        "bias_a": -425.9,
+        "bias_b": -532.4,
+        "d_bias": -106.4
+      },
+      "surge_legacy_19000mw": {
+        "n": 220,
+        "mae_a": 462.0,
+        "mae_b": 509.2,
+        "d_mae": 47.2,
+        "d_mae_pct": 10.2,
+        "mape_a": 2.315,
+        "mape_b": 2.554,
+        "d_mape": 0.239,
+        "d_rmse": 20.4,
+        "bias_a": -165.3,
+        "bias_b": -186.8,
+        "d_bias": -21.5
+      }
+    },
+    "H2_regime_b_lead2": {
+      "label": "B forecast lead 2 H=2  [measured, headline]",
+      "span": [
+        "2025-01-03",
+        "2026-11-09"
+      ],
+      "overall": {
+        "n": 676,
+        "mae": 530.7691574015681,
+        "rmse": 730.9931049819917,
+        "mape": 3.0595256341981116,
+        "bias": -50.49619221497041,
+        "r2": 0.8495328961088016,
+        "mae_ci95": [
+          479.4,
+          576.7
+        ],
+        "bias_ci95": [
+          -122.4,
+          7.9
+        ]
+      },
+      "summer_mar_jun": {
+        "n": 244,
+        "mae": 563.7930558362306,
+        "rmse": 723.1325263558178,
+        "mape": 3.064276524027571,
+        "bias": -85.36304538089553,
+        "r2": 0.7466853101806785,
+        "mae_ci95": [
+          511.0,
+          620.9
+        ],
+        "bias_ci95": [
+          -205.1,
+          29.7
+        ]
+      },
+      "surge_per_year": {
+        "n": 35,
+        "mae": 574.1106227817094,
+        "rmse": 811.2147827206288,
+        "mape": 2.7901398229483796,
+        "bias": -456.0635942561474,
+        "r2": 0.22595563257068807,
+        "mae_ci95": [
+          421.1,
+          742.7
+        ],
+        "bias_ci95": [
+          -652.4,
+          -286.6
+        ]
+      },
+      "surge_summer": {
+        "n": 14,
+        "mae": 635.4904790688876,
+        "rmse": 974.8871088959912,
+        "mape": 3.098144195844341,
+        "bias": -557.253554928399,
+        "r2": -1.2610620704342024,
+        "mae_ci95": [
+          368.8,
+          669.9
+        ],
+        "bias_ci95": [
+          -637.8,
+          -212.3
+        ]
+      },
+      "surge_legacy_19000mw": {
+        "n": 220,
+        "mae": 525.4806337639843,
+        "rmse": 689.5578662746368,
+        "mape": 2.635516799154478,
+        "bias": -200.0679169902467,
+        "r2": 0.12364417645497339,
+        "mae_ci95": [
+          465.7,
+          586.2
+        ],
+        "bias_ci95": [
+          -287.2,
+          -99.9
+        ]
+      }
+    },
+    "H2_gap_lead2": {
+      "overall": {
+        "n": 676,
+        "mae_a": 483.5,
+        "mae_b": 530.8,
+        "d_mae": 47.2,
+        "d_mae_pct": 9.8,
+        "mape_a": 2.805,
+        "mape_b": 3.06,
+        "d_mape": 0.254,
+        "d_rmse": 47.2,
+        "bias_a": -3.2,
+        "bias_b": -50.5,
+        "d_bias": -47.3
+      },
+      "summer_mar_jun": {
+        "n": 244,
+        "mae_a": 517.2,
+        "mae_b": 563.8,
+        "d_mae": 46.6,
+        "d_mae_pct": 9.0,
+        "mape_a": 2.82,
+        "mape_b": 3.064,
+        "d_mape": 0.244,
+        "d_rmse": 49.9,
+        "bias_a": -26.2,
+        "bias_b": -85.4,
+        "d_bias": -59.2
+      },
+      "surge_per_year": {
+        "n": 35,
+        "mae_a": 439.3,
+        "mae_b": 574.1,
+        "d_mae": 134.8,
+        "d_mae_pct": 30.7,
+        "mape_a": 2.138,
+        "mape_b": 2.79,
+        "d_mape": 0.652,
+        "d_rmse": 153.7,
+        "bias_a": -335.3,
+        "bias_b": -456.1,
+        "d_bias": -120.8
+      },
+      "surge_summer": {
+        "n": 14,
+        "mae_a": 531.5,
+        "mae_b": 635.5,
+        "d_mae": 104.0,
+        "d_mae_pct": 19.6,
+        "mape_a": 2.6,
+        "mape_b": 3.098,
+        "d_mape": 0.498,
+        "d_rmse": 211.5,
+        "bias_a": -425.9,
+        "bias_b": -557.3,
+        "d_bias": -131.3
+      },
+      "surge_legacy_19000mw": {
+        "n": 220,
+        "mae_a": 462.0,
+        "mae_b": 525.5,
+        "d_mae": 63.5,
+        "d_mae_pct": 13.7,
+        "mape_a": 2.315,
+        "mape_b": 2.636,
+        "d_mape": 0.321,
+        "d_rmse": 63.4,
+        "bias_a": -165.3,
+        "bias_b": -200.1,
+        "d_bias": -34.7
+      }
+    },
+    "H2_regime_b_lead3": {
+      "label": "B forecast lead 3 H=2  [measured, headline]",
+      "span": [
+        "2025-01-03",
+        "2026-11-09"
+      ],
+      "overall": {
+        "n": 676,
+        "mae": 531.3232901009435,
+        "rmse": 725.716176633188,
+        "mape": 3.0611094190815757,
+        "bias": -53.487317039281805,
+        "r2": 0.8516974534022086,
+        "mae_ci95": [
+          479.9,
+          574.9
+        ],
+        "bias_ci95": [
+          -122.9,
+          3.9
+        ]
+      },
+      "summer_mar_jun": {
+        "n": 244,
+        "mae": 555.3951343751828,
+        "rmse": 716.5606080984895,
+        "mape": 3.0184388748381106,
+        "bias": -74.56598912335262,
+        "r2": 0.7512686986634038,
+        "mae_ci95": [
+          496.2,
+          614.5
+        ],
+        "bias_ci95": [
+          -192.1,
+          44.5
+        ]
+      },
+      "surge_per_year": {
+        "n": 35,
+        "mae": 525.5770305323858,
+        "rmse": 787.3760921142793,
+        "mape": 2.5572806663294956,
+        "bias": -426.5673432556383,
+        "r2": 0.27077996899684886,
+        "mae_ci95": [
+          334.6,
+          726.3
+        ],
+        "bias_ci95": [
+          -635.1,
+          -240.4
+        ]
+      },
+      "surge_summer": {
+        "n": 14,
+        "mae": 650.5461262947746,
+        "rmse": 957.7824175272488,
+        "mape": 3.166370891564492,
+        "bias": -504.6578669455427,
+        "r2": -1.182416064699746,
+        "mae_ci95": [
+          431.3,
+          665.8
+        ],
+        "bias_ci95": [
+          -562.7,
+          -179.9
+        ]
+      },
+      "surge_legacy_19000mw": {
+        "n": 220,
+        "mae": 513.2950370756582,
+        "rmse": 666.8924282507522,
+        "mape": 2.5735653712917754,
+        "bias": -199.42260457863563,
+        "r2": 0.18030815226404928,
+        "mae_ci95": [
+          451.8,
+          566.9
+        ],
+        "bias_ci95": [
+          -283.5,
+          -99.6
+        ]
+      }
+    },
+    "H2_gap_lead3": {
+      "overall": {
+        "n": 676,
+        "mae_a": 483.5,
+        "mae_b": 531.3,
+        "d_mae": 47.8,
+        "d_mae_pct": 9.9,
+        "mape_a": 2.805,
+        "mape_b": 3.061,
+        "d_mape": 0.256,
+        "d_rmse": 41.9,
+        "bias_a": -3.2,
+        "bias_b": -53.5,
+        "d_bias": -50.3
+      },
+      "summer_mar_jun": {
+        "n": 244,
+        "mae_a": 517.2,
+        "mae_b": 555.4,
+        "d_mae": 38.2,
+        "d_mae_pct": 7.4,
+        "mape_a": 2.82,
+        "mape_b": 3.018,
+        "d_mape": 0.198,
+        "d_rmse": 43.3,
+        "bias_a": -26.2,
+        "bias_b": -74.6,
+        "d_bias": -48.4
+      },
+      "surge_per_year": {
+        "n": 35,
+        "mae_a": 439.3,
+        "mae_b": 525.6,
+        "d_mae": 86.3,
+        "d_mae_pct": 19.6,
+        "mape_a": 2.138,
+        "mape_b": 2.557,
+        "d_mape": 0.42,
+        "d_rmse": 129.8,
+        "bias_a": -335.3,
+        "bias_b": -426.6,
+        "d_bias": -91.3
+      },
+      "surge_summer": {
+        "n": 14,
+        "mae_a": 531.5,
+        "mae_b": 650.5,
+        "d_mae": 119.1,
+        "d_mae_pct": 22.4,
+        "mape_a": 2.6,
+        "mape_b": 3.166,
+        "d_mape": 0.566,
+        "d_rmse": 194.4,
+        "bias_a": -425.9,
+        "bias_b": -504.7,
+        "d_bias": -78.7
+      },
+      "surge_legacy_19000mw": {
+        "n": 220,
+        "mae_a": 462.0,
+        "mae_b": 513.3,
+        "d_mae": 51.3,
+        "d_mae_pct": 11.1,
+        "mape_a": 2.315,
+        "mape_b": 2.574,
+        "d_mape": 0.259,
+        "d_rmse": 40.7,
+        "bias_a": -165.3,
+        "bias_b": -199.4,
+        "d_bias": -34.1
+      }
+    },
+    "H1_regime_a": {
+      "label": "A reanalysis H=1  [idealised]",
+      "span": [
+        "2025-01-02",
+        "2026-11-09"
+      ],
+      "overall": {
+        "n": 677,
+        "mae": 399.60997858787687,
+        "rmse": 562.9926554907497,
+        "mape": 2.3028326702544066,
+        "bias": 3.232680532422929,
+        "r2": 0.9108165964601798,
+        "mae_ci95": [
+          361.0,
+          432.4
+        ],
+        "bias_ci95": [
+          -35.5,
+          36.2
+        ]
+      },
+      "summer_mar_jun": {
+        "n": 244,
+        "mae": 439.2816011029304,
+        "rmse": 595.1221231130555,
+        "mape": 2.392409161226548,
+        "bias": -17.76203211829351,
+        "r2": 0.8284318087953499,
+        "mae_ci95": [
+          392.5,
+          490.5
+        ],
+        "bias_ci95": [
+          -84.5,
+          45.9
+        ]
+      },
+      "surge_per_year": {
+        "n": 35,
+        "mae": 380.8714056767433,
+        "rmse": 568.235124471807,
+        "mape": 1.8540519934756177,
+        "bias": -339.7127016240626,
+        "r2": 0.6202040816352693,
+        "mae_ci95": [
+          291.8,
+          512.6
+        ],
+        "bias_ci95": [
+          -488.2,
+          -228.4
+        ]
+      },
+      "surge_summer": {
+        "n": 14,
+        "mae": 409.46822814171173,
+        "rmse": 692.9420667923588,
+        "mape": 1.9864519828563802,
+        "bias": -382.41866071220386,
+        "r2": -0.14234604784235172,
+        "mae_ci95": [
+          220.6,
+          409.5
+        ],
+        "bias_ci95": [
+          -382.4,
+          -168.9
+        ]
+      },
+      "surge_legacy_19000mw": {
+        "n": 220,
+        "mae": 386.8189643600827,
+        "rmse": 516.0566732264192,
+        "mape": 1.9414941684290663,
+        "bias": -139.4296400759573,
+        "r2": 0.5091669032238609,
+        "mae_ci95": [
+          343.3,
+          433.6
+        ],
+        "bias_ci95": [
+          -190.6,
+          -75.6
+        ]
+      }
+    },
+    "H1_regime_b_lead1": {
+      "label": "B forecast lead 1 H=1  [idealised]",
+      "span": [
+        "2025-01-02",
+        "2026-11-09"
+      ],
+      "overall": {
+        "n": 677,
+        "mae": 422.7501850894809,
+        "rmse": 579.0623495150597,
+        "mape": 2.422205628221709,
+        "bias": -56.50630579295937,
+        "r2": 0.9056527512808883,
+        "mae_ci95": [
+          387.6,
+          455.4
+        ],
+        "bias_ci95": [
+          -102.3,
+          -19.1
+        ]
+      },
+      "summer_mar_jun": {
+        "n": 244,
+        "mae": 458.9106185829738,
+        "rmse": 619.3564183604113,
+        "mape": 2.5007012425564956,
+        "bias": -71.91857452188894,
+        "r2": 0.8141742614368133,
+        "mae_ci95": [
+          410.4,
+          503.5
+        ],
+        "bias_ci95": [
+          -153.3,
+          2.3
+        ]
+      },
+      "surge_per_year": {
+        "n": 35,
+        "mae": 473.0877088475089,
+        "rmse": 700.3479526480778,
+        "mape": 2.3085640844749613,
+        "bias": -467.30707947946524,
+        "r2": 0.4230716651142469,
+        "mae_ci95": [
+          371.6,
+          644.9
+        ],
+        "bias_ci95": [
+          -644.7,
+          -365.4
+        ]
+      },
+      "surge_summer": {
+        "n": 14,
+        "mae": 501.3950798455748,
+        "rmse": 856.2265259163638,
+        "mape": 2.4339442300820657,
+        "bias": -500.3126052001163,
+        "r2": -0.744139371069231,
+        "mae_ci95": [
+          281.5,
+          501.4
+        ],
+        "bias_ci95": [
+          -500.3,
+          -281.5
+        ]
+      },
+      "surge_legacy_19000mw": {
+        "n": 220,
+        "mae": 414.60095718041265,
+        "rmse": 557.9248879355144,
+        "mape": 2.0767863248434124,
+        "bias": -188.22567735585105,
+        "r2": 0.42629251976237725,
+        "mae_ci95": [
+          367.9,
+          465.8
+        ],
+        "bias_ci95": [
+          -253.7,
+          -116.0
+        ]
+      }
+    },
+    "H1_gap_lead1": {
+      "overall": {
+        "n": 677,
+        "mae_a": 399.6,
+        "mae_b": 422.8,
+        "d_mae": 23.1,
+        "d_mae_pct": 5.8,
+        "mape_a": 2.303,
+        "mape_b": 2.422,
+        "d_mape": 0.119,
+        "d_rmse": 16.1,
+        "bias_a": 3.2,
+        "bias_b": -56.5,
+        "d_bias": -59.7
+      },
+      "summer_mar_jun": {
+        "n": 244,
+        "mae_a": 439.3,
+        "mae_b": 458.9,
+        "d_mae": 19.6,
+        "d_mae_pct": 4.5,
+        "mape_a": 2.392,
+        "mape_b": 2.501,
+        "d_mape": 0.108,
+        "d_rmse": 24.2,
+        "bias_a": -17.8,
+        "bias_b": -71.9,
+        "d_bias": -54.2
+      },
+      "surge_per_year": {
+        "n": 35,
+        "mae_a": 380.9,
+        "mae_b": 473.1,
+        "d_mae": 92.2,
+        "d_mae_pct": 24.2,
+        "mape_a": 1.854,
+        "mape_b": 2.309,
+        "d_mape": 0.455,
+        "d_rmse": 132.1,
+        "bias_a": -339.7,
+        "bias_b": -467.3,
+        "d_bias": -127.6
+      },
+      "surge_summer": {
+        "n": 14,
+        "mae_a": 409.5,
+        "mae_b": 501.4,
+        "d_mae": 91.9,
+        "d_mae_pct": 22.5,
+        "mape_a": 1.986,
+        "mape_b": 2.434,
+        "d_mape": 0.447,
+        "d_rmse": 163.3,
+        "bias_a": -382.4,
+        "bias_b": -500.3,
+        "d_bias": -117.9
+      },
+      "surge_legacy_19000mw": {
+        "n": 220,
+        "mae_a": 386.8,
+        "mae_b": 414.6,
+        "d_mae": 27.8,
+        "d_mae_pct": 7.2,
+        "mape_a": 1.941,
+        "mape_b": 2.077,
+        "d_mape": 0.135,
+        "d_rmse": 41.9,
+        "bias_a": -139.4,
+        "bias_b": -188.2,
+        "d_bias": -48.8
+      }
+    }
+  },
+  "phase_5_4_sensitivity": {
+    "mw_per_degc_t_max": 179.5,
+    "mw_per_degc_cdd_max": 179.62,
+    "corr_t_max_err_vs_mw_shift": 0.432,
+    "n_days": 676,
+    "mean_abs_err_when_t_max_err_gt_1c": 541.2,
+    "mean_abs_err_when_t_max_err_le_1c": 522.4,
+    "worst_days": [
+      {
+        "date": "2025-10-21",
+        "y_true": 11627.0,
+        "y_pred": 15066.0,
+        "error_mw": 3439.0,
+        "t_max_forecast_error_c": 0.16,
+        "holiday_name": null,
+        "festival_adjacent": true
+      },
+      {
+        "date": "2025-01-14",
+        "y_true": 12629.0,
+        "y_pred": 15916.0,
+        "error_mw": 3287.0,
+        "t_max_forecast_error_c": 0.09,
+        "holiday_name": "Pongal",
+        "festival_adjacent": true
+      },
+      {
+        "date": "2025-10-20",
+        "y_true": 10756.0,
+        "y_pred": 14020.0,
+        "error_mw": 3264.0,
+        "t_max_forecast_error_c": -0.09,
+        "holiday_name": "Diwali (Deepavali)",
+        "festival_adjacent": true
+      },
+      {
+        "date": "2026-11-09",
+        "y_true": 13897.0,
+        "y_pred": 16646.0,
+        "error_mw": 2749.0,
+        "t_max_forecast_error_c": -0.69,
+        "holiday_name": null,
+        "festival_adjacent": true
+      },
+      {
+        "date": "2026-11-07",
+        "y_true": 14837.0,
+        "y_pred": 17561.0,
+        "error_mw": 2724.0,
+        "t_max_forecast_error_c": -0.41,
+        "holiday_name": null,
+        "festival_adjacent": true
+      },
+      {
+        "date": "2026-06-06",
+        "y_true": 21233.0,
+        "y_pred": 18627.0,
+        "error_mw": -2606.0,
+        "t_max_forecast_error_c": 0.51,
+        "holiday_name": null,
+        "festival_adjacent": false
+      },
+      {
+        "date": "2026-11-08",
+        "y_true": 12550.0,
+        "y_pred": 15084.0,
+        "error_mw": 2534.0,
+        "t_max_forecast_error_c": -0.89,
+        "holiday_name": "Diwali (Deepavali)",
+        "festival_adjacent": true
+      },
+      {
+        "date": "2025-05-01",
+        "y_true": 17148.0,
+        "y_pred": 19527.0,
+        "error_mw": 2379.0,
+        "t_max_forecast_error_c": 0.25,
+        "holiday_name": "May Day",
+        "festival_adjacent": true
+      },
+      {
+        "date": "2025-10-01",
+        "y_true": 14546.0,
+        "y_pred": 16924.0,
+        "error_mw": 2378.0,
+        "t_max_forecast_error_c": -0.66,
+        "holiday_name": "Ayudha Puja",
+        "festival_adjacent": true
+      },
+      {
+        "date": "2026-01-16",
+        "y_true": 12475.0,
+        "y_pred": 14744.0,
+        "error_mw": 2269.0,
+        "t_max_forecast_error_c": -0.27,
+        "holiday_name": "Uzhavar Thirunal",
+        "festival_adjacent": true
+      }
+    ],
+    "festival_vs_other": {
+      "worst10_festival_adjacent": 9,
+      "festival_adjacent": {
+        "n": 124,
+        "mean_abs_error_mw": 782.9,
+        "bias_mw": 161.8
+      },
+      "other_days": {
+        "n": 552,
+        "mean_abs_error_mw": 467.3,
+        "bias_mw": -100.1
+      },
+      "finding": "The dominant failure mode is festival demand collapse, not weather error. Days with |t_max error| > 1C are barely worse than calm days, but festival-adjacent days carry a large negative bias: the model over-forecasts them because a single is_holiday binary cannot express a multi-day industrial shutdown. Pongal has pongal_window; Diwali has no equivalent and Diwali days dominate the worst-error table. Recommended to Track A (Phase 3.4 feature ablation) rather than changed here, because master.csv's schema is frozen at G0."
+    }
+  },
+  "phase_5_5_real_log": {
+    "available": true,
+    "window": [
+      "2026-08-05",
+      "2026-11-11"
+    ],
+    "n_days": 99,
+    "regime_a": {
+      "label": "A reanalysis (log window)",
+      "span": [
+        "2026-08-05",
+        "2026-11-09"
+      ],
+      "overall": {
+        "n": 97,
+        "mae": 614.7110232961375,
+        "rmse": 859.9642570837761,
+        "mape": 3.380405117407285,
+        "bias": 44.011167742272235,
+        "r2": 0.7362442515637897,
+        "mae_ci95": [
+          480.2,
+          710.5
+        ],
+        "bias_ci95": [
+          -165.5,
+          169.7
+        ]
+      },
+      "summer_mar_jun": {
+        "n": 0,
+        "mae": NaN,
+        "rmse": NaN,
+        "mape": NaN,
+        "bias": NaN,
+        "r2": NaN
+      },
+      "surge_per_year": {
+        "n": 5,
+        "mae": 1019.3128422596717,
+        "rmse": 1144.8260819414097,
+        "mape": 4.7695578185753575,
+        "bias": -1019.3128422596717,
+        "r2": -34.05264362821205
+      },
+      "surge_summer": {
+        "n": 0,
+        "mae": NaN,
+        "rmse": NaN,
+        "mape": NaN,
+        "bias": NaN,
+        "r2": NaN
+      },
+      "surge_legacy_19000mw": {
+        "n": 60,
+        "mae": 511.6553606632549,
+        "rmse": 703.0989839660139,
+        "mape": 2.5372608381569197,
+        "bias": -86.95923275788373,
+        "r2": -0.39777054747174123,
+        "mae_ci95": [
+          397.3,
+          694.5
+        ],
+        "bias_ci95": [
+          -246.3,
+          45.8
+        ]
+      }
+    },
+    "regime_b": {
+      "label": "B live log lead 1",
+      "span": [
+        "2026-08-05",
+        "2026-11-09"
+      ],
+      "overall": {
+        "n": 97,
+        "mae": 664.7594469242648,
+        "rmse": 854.0864861084848,
+        "mape": 3.5881072819847053,
+        "bias": -84.27322735025723,
+        "r2": 0.7398374190941486,
+        "mae_ci95": [
+          536.8,
+          755.6
+        ],
+        "bias_ci95": [
+          -288.5,
+          47.5
+        ]
+      },
+      "summer_mar_jun": {
+        "n": 0,
+        "mae": NaN,
+        "rmse": NaN,
+        "mape": NaN,
+        "bias": NaN,
+        "r2": NaN
+      },
+      "surge_per_year": {
+        "n": 5,
+        "mae": 1170.7548660231762,
+        "rmse": 1311.4075471960687,
+        "mape": 5.479114724735709,
+        "bias": -1170.7548660231762,
+        "r2": -44.99568643696348
+      },
+      "surge_summer": {
+        "n": 0,
+        "mae": NaN,
+        "rmse": NaN,
+        "mape": NaN,
+        "bias": NaN,
+        "r2": NaN
+      },
+      "surge_legacy_19000mw": {
+        "n": 60,
+        "mae": 604.8167648755913,
+        "rmse": 775.5662515875689,
+        "mape": 2.9928953228315165,
+        "bias": -207.70773897175332,
+        "r2": -0.7007510582959495,
+        "mae_ci95": [
+          483.6,
+          749.7
+        ],
+        "bias_ci95": [
+          -380.2,
+          -48.1
+        ]
+      }
+    },
+    "gap": {
+      "overall": {
+        "n": 97,
+        "mae_a": 614.7,
+        "mae_b": 664.8,
+        "d_mae": 50.0,
+        "d_mae_pct": 8.1,
+        "mape_a": 3.38,
+        "mape_b": 3.588,
+        "d_mape": 0.208,
+        "d_rmse": -5.9,
+        "bias_a": 44.0,
+        "bias_b": -84.3,
+        "d_bias": -128.3
+      },
+      "summer_mar_jun": {
+        "n": 0,
+        "mae_a": NaN,
+        "mae_b": NaN,
+        "d_mae": NaN,
+        "d_mae_pct": NaN,
+        "mape_a": NaN,
+        "mape_b": NaN,
+        "d_mape": NaN,
+        "d_rmse": NaN,
+        "bias_a": NaN,
+        "bias_b": NaN,
+        "d_bias": NaN
+      },
+      "surge_per_year": {
+        "n": 5,
+        "mae_a": 1019.3,
+        "mae_b": 1170.8,
+        "d_mae": 151.4,
+        "d_mae_pct": 14.9,
+        "mape_a": 4.77,
+        "mape_b": 5.479,
+        "d_mape": 0.71,
+        "d_rmse": 166.6,
+        "bias_a": -1019.3,
+        "bias_b": -1170.8,
+        "d_bias": -151.4
+      },
+      "surge_summer": {
+        "n": 0,
+        "mae_a": NaN,
+        "mae_b": NaN,
+        "d_mae": NaN,
+        "d_mae_pct": NaN,
+        "mape_a": NaN,
+        "mape_b": NaN,
+        "d_mape": NaN,
+        "d_rmse": NaN,
+        "bias_a": NaN,
+        "bias_b": NaN,
+        "d_bias": NaN
+      },
+      "surge_legacy_19000mw": {
+        "n": 60,
+        "mae_a": 511.7,
+        "mae_b": 604.8,
+        "d_mae": 93.2,
+        "d_mae_pct": 18.2,
+        "mape_a": 2.537,
+        "mape_b": 2.993,
+        "d_mape": 0.456,
+        "d_rmse": 72.5,
+        "bias_a": -87.0,
+        "bias_b": -207.7,
+        "d_bias": -120.7
+      }
+    },
+    "caveat": "one monsoon/NE-monsoon season only, no heat season; validates fidelity not the heat-driven gap"
+  },
+  "caveats": [
+    "Model is a Track B stand-in, not Track A's champion (roadmap C.3). Re-run at G2 with --champion.",
+    "Regime B weather comes from Open-Meteo's archived past runs, validated against the live log in 5.2.",
+    "Forecast bias is non-stationary (+0.49C in 2021 to -0.55C in 2026), so a fixed bias correction would be wrong; none is applied."
+  ]
+}

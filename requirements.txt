@@ -1,7 +1,18 @@
 pandas
 numpy
 requests
-holidays
+# Pinned deliberately. The India/TN calendar changes between releases - some
+# lunisolar festivals gain or lose year coverage - and is_holiday must not
+# change meaning because a dependency floated. tn_holidays.py cross-checks its
+# curated overrides against whatever version is installed and fails loudly on a
+# contradiction, so bump this on purpose and read what it says.
+holidays==0.108
 xlrd
 openpyxl
 pdfplumber
+# Modelling and the operational experiment: baseline.py, run_phase5.py,
+# predict_next_day.py, calibrate_intervals.py. The morning data pipeline
+# (daily.yml) does not import it; the evening forecast job does.
+scikit-learn
+# Phase 7.3 dashboard only (dashboard/app.py). Not imported by any job.
+streamlit

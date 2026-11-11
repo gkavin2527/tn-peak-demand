@@ -49,6 +49,12 @@ jobs:
       - name: Append recent actual weather
         run: .venv/bin/python fetch_weather.py update
 
+      # 'update' rows come from the forecast model's own analysis, which runs
+      # ~0.9 C off ERA5. This replaces them with reanalysis once ERA5 lands,
+      # so the history every model trains on stays one consistent series.
+      - name: Reconcile provisional weather to reanalysis
+        run: .venv/bin/python fetch_weather.py reconcile
+
       - name: Rebuild dataset
         run: .venv/bin/python build_dataset.py
 

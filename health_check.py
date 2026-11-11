@@ -11,8 +11,9 @@ from datetime import date
 
 import pandas as pd
 
-from config import (FORECAST_LOG, MASTER, PEAK_TARGET, RAW_DEMAND,
-                    RAW_PEAK, RAW_POSOCO, RAW_WEATHER, TARGET_COL)
+from config import (FORECAST_DAYS, FORECAST_LOG, H_BY_GROUP, LEAKY_SAMEDAY,
+                    MASTER, PEAK_TARGET, RAW_DEMAND, RAW_PEAK, RAW_POSOCO,
+                    RAW_WEATHER, TARGET_COL)
 
 MAX_DEMAND_LAG = 5      # upstream CSV normally sits ~1 day behind
 MAX_PEAK_LAG = 5
@@ -20,6 +21,7 @@ MAX_WEATHER_LAG = 3
 MAX_MASTER_LAG = 1      # master is rebuilt from demand on every run
 DEAD_SOURCE_LAG = 14    # past this, upstream is not late - it has stopped
 MIN_ROWS = 3000
+MAX_PROVISIONAL_DAYS = 10   # ERA5 lands ~5 days late; more means reconcile is not running
 
 
 def load(path, date_col, label, problems):
@@ -124,6 +126,22 @@ def main():
         if w_lag > MAX_WEATHER_LAG:
             problems.append(f"weather: {w_lag} days behind (limit {MAX_WEATHER_LAG})")
 
+        # Provenance. 'update' rows are the forecast model's own analysis, not
+        # ERA5 reanalysis, and the two differ by ~0.9 C. A handful at the tail
+        # is normal - ERA5 lands ~5 days late. A pile of them means reconcile
+        # has stopped running and a temperature step is accumulating inside the
+        # history every model is trained on.
+        if "source" in weather.columns:
+            prov = int((weather["source"] == "update").sum())
+            cities = max(len(weather["city"].unique()), 1) if "city" in weather else 1
+            print(f"  {'  provisional':<16} {prov:>7,} city-days "
+                  f"(~{prov / cities:.0f} days awaiting ERA5)")
+            if prov / cities > MAX_PROVISIONAL_DAYS:
+                warnings.append(
+                    f"weather: {prov / cities:.0f} days still provisional "
+                    f"(limit {MAX_PROVISIONAL_DAYS}) - run "
+                    f"'python fetch_weather.py reconcile'")
+
     peak, p_latest, p_lag = load(RAW_PEAK, "date", "peak demand", problems)
     if peak is not None:
         report("peak demand", peak, p_latest, p_lag,
@@ -165,6 +183,17 @@ def main():
         if lag > 2:
             problems.append(f"forecast log: not written for {lag} days "
                             f"(this data cannot be recovered later)")
+
+        # Horizon coverage: the log is only useful for evaluating an h-day
+        # forecast if it actually contains h-day-ahead rows. Logging fewer
+        # horizons than FORECAST_DAYS silently caps what you can ever measure.
+        h = (pd.to_datetime(fl["date"]) - pd.to_datetime(fl["issued_on"])).dt.days
+        reach = int(h.max()) if len(h) else -1
+        if reach < FORECAST_DAYS - 1:
+            warnings.append(
+                f"forecast log reaches only h={reach} but FORECAST_DAYS="
+                f"{FORECAST_DAYS} asks for h={FORECAST_DAYS - 1}; "
+                f"longer horizons cannot be backfilled later")
 
         # Interior gaps matter as much as staleness: a run that failed three
         # weeks ago leaves a permanent hole no archive can fill, and the log
@@ -212,9 +241,73 @@ def main():
                     problems.append(f"weather-peak correlation collapsed to {corr:.3f} "
                                     f"- the join may be misaligned")
 
-        if "tn_energy_gwh" in master.columns:
-            e = master["tn_energy_gwh"]
-            print(f"  energy range   {e.min():,.0f} - {e.max():,.0f} GWh")
+        # Source-staleness drift. config.H_BY_GROUP encodes how far behind
+        # each upstream publication runs: demand/energy come from the PSP
+        # report, the sr_* grid columns from a slice that lands a day later.
+        # Those offsets are what load_master() and predict_next_day.py shift
+        # by, so if upstream changes its cadence the declared offsets go stale
+        # and features silently turn up NaN on the row being predicted -
+        # present in training, absent at serving, with nothing to warn you.
+        # This is the daily-CI half of the same check test_contract.py makes.
+        if peak is not None and demand is not None:
+            grid_col = next((c for c in ("sr_max_demand_mw", "sr_demand_met_mw")
+                             if c in demand.columns), None)
+            if grid_col is not None:
+                newest_demand = peak.dropna(subset=[PEAK_TARGET])["date"].max()
+                newest_grid = demand.dropna(subset=[grid_col])["date"].max()
+                observed = int((newest_demand - newest_grid).days)
+                declared = H_BY_GROUP["grid"] - H_BY_GROUP["demand"]
+                print(f"  grid lag       {observed}d behind demand "
+                      f"(H_BY_GROUP declares {declared}d)")
+                if observed != declared:
+                    warnings.append(
+                        f"grid source is {observed} day(s) behind demand but "
+                        f"config.H_BY_GROUP declares {declared} - sr_*_lag1 "
+                        f"will be "
+                        f"{'NaN at inference' if observed > declared else 'staler than necessary'}"
+                        f". Update H_BY_GROUP and re-run test_contract.py")
+
+        # Leak guard. Every column in master.csv must be knowable before the
+        # target day begins. These are published the morning after, so their
+        # presence means a feature-engineering change has quietly reintroduced
+        # the leak that makes a backtest look ~24% better than reality.
+        reintroduced = [c for c in LEAKY_SAMEDAY if c in master.columns]
+        print(f"  same-day leaks {len(reintroduced)}")
+        if reintroduced:
+            problems.append(
+                "master: same-day columns present that are published after the "
+                f"target day: {', '.join(reintroduced)} - these are not "
+                "available at prediction time; lag them instead")
+
+        # Energy lives in the raw slice now, not in master
+        if demand is not None and "tn_energy_gwh" in demand.columns:
+            e = demand["tn_energy_gwh"].dropna()
+            if len(e):
+                print(f"  energy range   {e.min():,.0f} - {e.max():,.0f} GWh")
+
+        # Calendar drift. Counted on the CALENDAR, not on master's rows: an
+        # earlier version counted rows and flagged 2013 at 16 holidays against
+        # a median of 23, which was really the 82-day Q1 2013 row gap swallowing
+        # 8 holidays. Counting rows measures the gaps; counting the calendar
+        # measures what this check is actually for - whether a holidays-package
+        # upgrade moved the calendar under a feature the model relies on.
+        try:
+            from tn_holidays import coverage
+            years = range(int(master["date"].dt.year.min()),
+                          int(master["date"].dt.year.max()) + 1)
+            cov = coverage(years)
+            print(f"  holidays/year  {cov.min()}-{cov.max()} (median {cov.median():.0f})")
+            if cov.min() < cov.median() - 5:
+                thin = cov[cov < cov.median() - 5]
+                warnings.append(
+                    f"holiday calendar thin in {list(thin.index)} "
+                    f"({thin.min()} vs median {cov.median():.0f}) - a festival "
+                    f"series may have lost coverage; run python tn_holidays.py")
+        except ValueError as e:
+            problems.append(f"holiday calendar: {e}")
+        except ImportError:
+            warnings.append("tn_holidays.py not importable - is_holiday may be "
+                            "inconsistent across years")
 
     print()
     for w in warnings:

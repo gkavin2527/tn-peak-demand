@@ -1,0 +1,93 @@
+{
+  "_comment": [
+    "Shared contract file (roadmap C.2). Both tracks read this; change it only",
+    "by agreement, because a silent edit invalidates both sides' numbers.",
+    "",
+    "Groups exist for two reasons. (1) H-shifting: demand, energy and grid are",
+    "observed quantities that arrive late, so load_master(H) shifts them by",
+    "H-1 days. Calendar and weather are known or forecastable for the target",
+    "day and are never shifted. (2) swap_weather: only weather_target_day is",
+    "replaced when switching from reanalysis to forecast weather.",
+    "",
+    "weather_target_day includes the d_* and *_vs_roll7 columns even though",
+    "they are differences against observed history. They are built as",
+    "value(T) - something(<T), so the target-day half is forecast at inference",
+    "and the column must be rebuilt, not copied, when weather is swapped.",
+    "swap_weather handles that; do not move them to weather_lag."
+  ],
+  "target": "tn_peak_demand_mw",
+  "date": "date",
+  "groups": {
+    "demand": [
+      "peak_lag_1", "peak_lag_2", "peak_lag_3", "peak_lag_7", "peak_lag_14",
+      "peak_lag_364", "peak_roll_mean_7", "peak_roll_std_7",
+      "peak_roll_mean_30", "peak_roll_std_30", "peak_lag_1_diff",
+      "peak_lag_1_vs_week"
+    ],
+    "energy": [
+      "energy_lag_1", "energy_lag_2", "energy_lag_7", "energy_lag_14",
+      "energy_roll_mean_7", "energy_roll_std_7", "energy_roll_mean_30",
+      "energy_roll_std_30"
+    ],
+    "grid": [
+      "sr_max_demand_mw_lag1", "sr_wind_gwh_lag1", "sr_solar_gwh_lag1",
+      "sr_peak_shortage_mw_lag1"
+    ],
+    "calendar": [
+      "dow", "is_weekend", "dow_sin", "dow_cos", "is_holiday",
+      "day_before_holiday", "day_after_holiday", "holiday_name",
+      "pongal_window", "sin1", "cos1", "sin2", "cos2", "trend"
+    ],
+    "weather_target_day": [
+      "t_mean", "t_max", "t_min", "rh_mean", "app_t_mean", "app_t_max",
+      "hours_above_32", "cdd", "cdd_max", "cdd_apparent", "thi",
+      "d_t_mean", "d_t_max", "d_rh_mean", "d_app_t_max", "d_cdd", "d_cdd_max",
+      "d_thi", "t_max_vs_roll7", "cdd_max_vs_roll7", "thi_vs_roll7"
+    ],
+    "weather_lag": [
+      "cdd_lag1", "cdd_max_lag1", "thi_lag1"
+    ]
+  },
+  "shifted_by_H": ["demand", "energy", "grid"],
+  "_shift_note": [
+    "Each of these is shifted by its OWN horizon, from config.H_BY_GROUP -",
+    "not uniformly by H. demand and energy come from the Grid-India PSP",
+    "report (published D+1, so H=2); grid (sr_*) comes from the",
+    "POSOCO/CICERO slice, which runs a further day behind (H=3). Shifting",
+    "them uniformly left every sr_*_lag1 column NaN on the row being",
+    "predicted - present in training, absent at inference."
+  ],
+  "swappable": ["weather_target_day"],
+  "non_numeric": ["holiday_name"],
+  "weather_swap_rules": {
+    "_comment": "How swap_weather rebuilds each kind of weather column.",
+    "levels": {
+      "columns": ["t_mean", "t_max", "t_min", "rh_mean", "app_t_mean",
+                  "app_t_max", "hours_above_32", "cdd", "cdd_max",
+                  "cdd_apparent", "thi"],
+      "rule": "replace outright with the forecast value for the target day"
+    },
+    "deltas": {
+      "columns": ["d_t_mean", "d_t_max", "d_rh_mean", "d_app_t_max", "d_cdd",
+                  "d_cdd_max", "d_thi"],
+      "rule": "forecast(T) - observed(T-1); yesterday is already known at issue time"
+    },
+    "anomalies": {
+      "columns": ["t_max_vs_roll7", "cdd_max_vs_roll7", "thi_vs_roll7"],
+      "rule": "forecast(T) - mean(observed[T-7 .. T-1])"
+    }
+  },
+  "recommended_drops": {
+    "_comment": [
+      "Not part of the contract - a measured recommendation Track A may",
+      "override. Weather levels are redundant once the autoregressive lags",
+      "are present, and trend is actively harmful to trees in an",
+      "extrapolating regime. See README 'Choosing features' and baseline.py."
+    ],
+    "weather_levels": ["t_mean", "t_max", "t_min", "rh_mean", "app_t_mean",
+                       "app_t_max", "hours_above_32", "cdd", "cdd_max",
+                       "cdd_apparent", "thi", "cdd_lag1", "cdd_max_lag1",
+                       "thi_lag1"],
+    "trend": ["trend"]
+  }
+}

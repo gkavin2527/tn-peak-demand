@@ -1,0 +1,50 @@
+{
+  "calibrated_at": "2026-11-11T12:11:27",
+  "window_days": 365,
+  "window": [
+    "2025-11-10",
+    "2026-11-09"
+  ],
+  "method": "rolling split-conformal on relative residuals",
+  "seasons": {
+    "summer": {
+      "n": 122,
+      "note": "122 days",
+      "relative_halfwidth": {
+        "0.90": 0.06382021362557937,
+        "0.95": 0.07464592891169011
+      }
+    },
+    "rest": {
+      "n": 243,
+      "note": "243 days",
+      "relative_halfwidth": {
+        "0.90": 0.06625133741167906,
+        "0.95": 0.09608301595437864
+      }
+    }
+  },
+  "coverage": {
+    "0.90": {
+      "nominal": 0.9,
+      "realised_coverage": 0.9144,
+      "mean_width_mw": 2293.4,
+      "interval_score": 3278.2,
+      "by_season": {
+        "summer": 0.9126,
+        "rest": 0.9154
+      }
+    },
+    "0.95": {
+      "nominal": 0.95,
+      "realised_coverage": 0.9548,
+      "mean_width_mw": 3093.9,
+      "interval_score": 4176.0,
+      "by_season": {
+        "summer": 0.9508,
+        "rest": 0.957
+      }
+    }
+  },
+  "caveat": "Time series are not exchangeable, so conformal coverage is approximate. Realised coverage is reported rather than assumed."
+}

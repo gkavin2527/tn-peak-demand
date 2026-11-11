@@ -1,27 +1,45 @@
 """
 Open-Meteo weather pipeline.
 
-Three modes:
-    python fetch_weather.py backfill [--force]   # history -> weather_daily.csv
-    python fetch_weather.py update               # recent actuals -> weather_daily.csv
-    python fetch_weather.py forecast             # -> weather_forecast_log.csv
+Four modes:
+    python fetch_weather.py backfill [--force]        # history -> weather_daily.csv
+    python fetch_weather.py update                    # recent actuals -> weather_daily.csv
+    python fetch_weather.py reconcile [--days N]      # replace provisional rows with ERA5
+    python fetch_weather.py forecast [--slot=evening] # -> weather_forecast_log.csv
+    python fetch_weather.py archive-forecast [--force] # -> weather_forecast_archive.csv
 
-The forecast mode matters most. At prediction time you do not have tomorrow's
-actual weather, only a forecast. Logging forecasts daily from now on is what
-lets you train and evaluate honestly, and no archive can reconstruct it later.
-Start this cron on day one.
+At prediction time you do not have tomorrow's actual weather, only a forecast,
+and the two differ systematically. Two files cover that gap:
+
+  weather_daily.csv             observed weather. Rows are ERA5 reanalysis
+                                where available and provisional analysis from
+                                the forecast endpoint for the last few days,
+                                tracked in a `source` column and reconciled to
+                                reanalysis once ERA5 catches up. The two differ
+                                by ~0.9 C, so mixing them silently would put a
+                                step in the middle of every temperature series.
+  weather_forecast_log.csv      what WE logged, live, from 2026-08-04 on.
+                                Ground truth about our own pipeline, but short.
+  weather_forecast_archive.csv  Open-Meteo's archived past model runs, resolved
+                                by lead time, back to mid-2021. Long enough for
+                                an operational backtest across real seasons.
+
+The live log is still the one that cannot be reconstructed later, so it runs
+first in the daily job. The archive is a one-time backfill.
 """
 
 import random
 import sys
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import pandas as pd
 import requests
 
-from config import (ARCHIVE_URL, CACHE, CITIES, FORECAST_LOG, FORECAST_URL,
-                    HOURLY_VARS, RAW_WEATHER, START_DATE, TZ)
+from config import (ARCHIVE_URL, CACHE, CITIES, FORECAST_ARCHIVE,
+                    FORECAST_DAYS, FORECAST_LOG, FORECAST_URL, HOURLY_VARS,
+                    MAX_LEAD, PREVIOUS_RUNS_START, PREVIOUS_RUNS_URL,
+                    RAW_WEATHER, START_DATE, TZ)
 
 TIMEOUT = 120
 BACKOFF = [5, 15, 45, 120]      # seconds between attempts, jittered
@@ -148,6 +166,7 @@ def backfill(start=START_DATE, end=None, force=False):
             continue
 
         chunk = _hourly_to_daily(payload, c["name"])
+        chunk["source"] = "archive"
         chunk.to_csv(path, index=False)
         print(f"ok ({len(chunk)} days)")
         time.sleep(1)
@@ -204,6 +223,9 @@ def update(past_days=7):
         df = _hourly_to_daily(payload, c["name"])
         # keep only complete past days; today is partial, tomorrow is a forecast
         df = df[pd.to_datetime(df["date"]).dt.date < today]
+        # provisional: this is the forecast model's own analysis, which runs
+        # ~0.9 C warmer than ERA5. 'reconcile' replaces these once ERA5 lands.
+        df["source"] = "update"
         frames.append(df)
         time.sleep(1)
 
@@ -215,33 +237,216 @@ def update(past_days=7):
     before = len(old)
     merged = (merged.drop_duplicates(subset=["date", "city"], keep="last")
                     .sort_values(["date", "city"]))
+    if "source" not in merged.columns:
+        merged["source"] = "archive"
+    merged["source"] = merged["source"].fillna("archive")
     merged.to_csv(RAW_WEATHER, index=False)
 
+    prov = int((merged["source"] == "update").sum())
     print(f"weather updated: {before:,} -> {len(merged):,} city-days "
-          f"(latest {merged['date'].max()})")
+          f"(latest {merged['date'].max()}, {prov:,} provisional)")
 
 
-def log_forecast():
-    """Pull the next 3 days of forecast for each city and append with a stamp
-    of when it was issued. issued_on is what makes this leak-free later."""
+def reconcile(days=45):
+    """Replace provisional `update` rows with ERA5 reanalysis where available.
+
+    `update` reads the forecast endpoint's past_days window, which is the
+    forecast model's own analysis - current to yesterday, but ~0.9 C warmer
+    than the ERA5 reanalysis the rest of the history is built from. Left alone
+    it puts a step in every temperature series exactly where the model is
+    scored, which shows up as a phantom "forecast cold bias" of -0.75 C that is
+    really just two incompatible definitions of "actual".
+
+    ERA5 lands about 5 days behind, so this reruns over a trailing window and
+    overwrites what it can. The most recent days legitimately stay provisional.
+    """
+    if not RAW_WEATHER.exists():
+        sys.exit("no weather_daily.csv yet - run 'backfill' first")
+
+    old = pd.read_csv(RAW_WEATHER)
+    if "source" not in old.columns:
+        old["source"] = "archive"
+    old["date"] = pd.to_datetime(old["date"]).dt.date
+
+    start = (date.today() - timedelta(days=days)).isoformat()
+    end = (date.today() - timedelta(days=1)).isoformat()
+    frames = []
+
+    for c in CITIES:
+        try:
+            payload = _get(ARCHIVE_URL, {
+                "latitude": c["lat"], "longitude": c["lon"],
+                "start_date": start, "end_date": end,
+                "hourly": ",".join(HOURLY_VARS), "timezone": TZ,
+            }, ctx=f"{c['name']} reconcile")
+        except (RuntimeError, requests.exceptions.RequestException) as e:
+            print(f"  {c['name']}: FAILED - {e}")
+            continue
+        df = _hourly_to_daily(payload, c["name"])
+        # the archive pads the tail with nulls until ERA5 publishes
+        df = df.dropna(subset=["t_mean"])
+        df["source"] = "archive"
+        frames.append(df)
+        time.sleep(1)
+
+    if not frames:
+        sys.exit("reconcile: no archive data retrieved")
+
+    new = pd.concat(frames, ignore_index=True)
+    new["date"] = pd.to_datetime(new["date"]).dt.date
+
+    was = old[old["source"] == "update"]
+    replaced = pd.merge(was[["date", "city"]], new[["date", "city"]],
+                        on=["date", "city"]).shape[0]
+
+    # new last => archive wins over any provisional row for the same city-day
+    merged = (pd.concat([old, new], ignore_index=True)
+                .drop_duplicates(subset=["date", "city"], keep="last")
+                .sort_values(["date", "city"]))
+    merged.to_csv(RAW_WEATHER, index=False)
+
+    left = int((merged["source"] == "update").sum())
+    print(f"reconciled {replaced:,} provisional city-days to ERA5 reanalysis; "
+          f"{left:,} still provisional (ERA5 has not published them yet)")
+    return merged
+
+
+def _previous_runs_to_daily(payload, city, lead):
+    """Collapse one lead time's archived forecast into daily aggregates.
+
+    The previous-runs API returns columns suffixed _previous_day{lead}; strip
+    the suffix so the frame matches the reanalysis schema exactly and the two
+    can be compared column-for-column.
+    """
+    sfx = f"_previous_day{lead}"
+    hourly = {k[: -len(sfx)]: v for k, v in payload["hourly"].items()
+              if k.endswith(sfx)}
+    if not hourly or all(all(x is None for x in v) for v in hourly.values()):
+        return None
+
+    hourly["time"] = payload["hourly"]["time"]
+    out = _hourly_to_daily({"hourly": hourly}, city)
+    out["lead"] = lead
+    return out
+
+
+def archive_forecast(start=PREVIOUS_RUNS_START, end=None, force=False):
+    """Backfill real past forecasts, by lead time, into FORECAST_ARCHIVE.
+
+    One request per city-year returns every lead at once, so this is 5 cities x
+    ~6 years of requests rather than one per day. Chunks are cached exactly
+    like the reanalysis backfill so an interrupted run resumes.
+    """
+    end = end or (date.today() - timedelta(days=1)).isoformat()
+    years = range(int(start[:4]), int(end[:4]) + 1)
+    leads = range(1, MAX_LEAD + 1)
+    variables = ",".join(f"{v}_previous_day{d}" for v in HOURLY_VARS for d in leads)
+
+    jobs = []
+    for c in CITIES:
+        for year in years:
+            y_start = max(f"{year}-01-01", start)
+            y_end = min(f"{year}-12-31", end)
+            if y_start <= y_end:
+                jobs.append((c, year, y_start, y_end))
+
+    failed = []
+    for i, (c, year, y_start, y_end) in enumerate(jobs, start=1):
+        tag = f"[{i}/{len(jobs)}] {c['name']} {year}"
+        path = CACHE / f"fc_{c['name']}_{year}.csv"
+
+        if not force and path.exists() and _chunk_is_complete(path, y_end):
+            print(f"{tag} ... skipping (cached)")
+            continue
+
+        print(f"{tag} ... ", end="", flush=True)
+        try:
+            payload = _get(PREVIOUS_RUNS_URL, {
+                "latitude": c["lat"], "longitude": c["lon"],
+                "start_date": y_start, "end_date": y_end,
+                "hourly": variables, "timezone": TZ,
+            }, ctx=f"{c['name']} {year} past-runs")
+        except (RuntimeError, requests.exceptions.RequestException) as e:
+            print(f"FAILED\n      {e}")
+            failed.append(f"{c['name']} {year}")
+            continue
+
+        parts = [d for d in (_previous_runs_to_daily(payload, c["name"], l)
+                             for l in leads) if d is not None]
+        if not parts:
+            print("no data (before archive start)")
+            continue
+
+        chunk = pd.concat(parts, ignore_index=True)
+        chunk.to_csv(path, index=False)
+        print(f"ok ({len(chunk):,} city-day-leads)")
+        time.sleep(1)
+
+    files = sorted(CACHE.glob("fc_*.csv"))
+    if not files:
+        sys.exit("no forecast chunks cached - nothing to consolidate")
+
+    long = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    long = (long.dropna(subset=["t_mean"])
+                .drop_duplicates(subset=["date", "city", "lead"], keep="last")
+                .sort_values(["date", "city", "lead"])
+                .reset_index(drop=True))
+    long.to_csv(FORECAST_ARCHIVE, index=False)
+    print(f"\nwrote {len(long):,} city-day-leads -> {FORECAST_ARCHIVE}")
+    print(f"  range {long['date'].min()} -> {long['date'].max()}   "
+          f"leads {sorted(long['lead'].unique())}")
+
+    if failed:
+        print(f"\n{len(failed)} chunk(s) still missing after retries:")
+        for f in failed:
+            print(f"  {f}")
+        sys.exit(1)
+    return long
+
+
+def log_forecast(slot=None):
+    """Pull FORECAST_DAYS of forecast for each city and append with a stamp of
+    when it was issued. issued_on is what makes this leak-free later.
+
+    The horizon matters more than it looks. master.csv is built on reanalysis,
+    but at prediction time you substitute a forecast, and the two differ
+    systematically rather than just noisily. This log is the only way to
+    measure that, and it cannot be backfilled from any archive, so log one
+    horizon more than you think you need.
+
+    `slot` ('morning' or 'evening') records WHICH run produced the forecast,
+    and is part of the dedup key. Without it the evening run would overwrite
+    the morning's rows for the same issued_on - losing half the data and, worse,
+    making the forecast actually used at inference indistinguishable from the
+    one logged twelve hours earlier. Inference runs in the evening (H=2, see
+    config.H), so the evening slot is the operationally honest one; the morning
+    slot is kept because it is what the first 98 days of this log contain.
+    """
     issued_on = date.today().isoformat()
+    if slot is None:
+        slot = "morning" if datetime.now().hour < 14 else "evening"
     frames = []
 
     for c in CITIES:
         payload = _get(FORECAST_URL, {
             "latitude": c["lat"], "longitude": c["lon"],
             "hourly": ",".join(HOURLY_VARS),
-            "forecast_days": 3,
+            "forecast_days": FORECAST_DAYS,
             "timezone": TZ,
         })
         df = _hourly_to_daily(payload, c["name"])
         df["issued_on"] = issued_on
+        df["issue_slot"] = slot
         frames.append(df)
 
     new = pd.concat(frames, ignore_index=True)
 
     if FORECAST_LOG.exists():
         old = pd.read_csv(FORECAST_LOG)
+        # the first 98 days of this log predate the slot split and all came
+        # from the 07:00 IST cron
+        if "issue_slot" not in old.columns:
+            old["issue_slot"] = "morning"
         new = pd.concat([old, new], ignore_index=True)
 
     # normalise before deduping: rows read back from CSV carry date strings
@@ -250,12 +455,15 @@ def log_forecast():
     # instead of replacing the first
     new["date"] = pd.to_datetime(new["date"]).dt.date
     new["issued_on"] = pd.to_datetime(new["issued_on"]).dt.date
-    new = (new.drop_duplicates(subset=["issued_on", "city", "date"], keep="last")
-              .sort_values(["issued_on", "city", "date"])
+    new["issue_slot"] = new["issue_slot"].fillna("morning")
+    new = (new.drop_duplicates(subset=["issued_on", "issue_slot", "city", "date"],
+                               keep="last")
+              .sort_values(["issued_on", "issue_slot", "city", "date"])
               .reset_index(drop=True))
 
     new.to_csv(FORECAST_LOG, index=False)
-    print(f"logged forecast issued {issued_on} -> {FORECAST_LOG} ({len(new):,} rows)")
+    print(f"logged {slot} forecast issued {issued_on} -> {FORECAST_LOG} "
+          f"({len(new):,} rows)")
 
 
 if __name__ == "__main__":
@@ -265,6 +473,14 @@ if __name__ == "__main__":
     elif mode == "update":
         update()
     elif mode == "forecast":
-        log_forecast()
+        slot = next((a.split("=")[1] for a in sys.argv if a.startswith("--slot=")),
+                    None)
+        log_forecast(slot)
+    elif mode == "reconcile":
+        n = [a for a in sys.argv if a.startswith("--days=")]
+        reconcile(days=int(n[0].split("=")[1]) if n else 45)
+    elif mode == "archive-forecast":
+        archive_forecast(force="--force" in sys.argv)
     else:
-        sys.exit("usage: fetch_weather.py [backfill|update|forecast]")
+        sys.exit("usage: fetch_weather.py "
+                 "[backfill|update|reconcile|forecast|archive-forecast]")

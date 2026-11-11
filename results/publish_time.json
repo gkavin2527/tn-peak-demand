@@ -1,0 +1,36 @@
+{
+  "measured_at": "2026-11-11T02:33:50",
+  "method": "observed run_day vs newest data date obtained (non-circular)",
+  "H": 2,
+  "min_gap_days": 1,
+  "gap_histogram": {
+    "+1d": 46
+  },
+  "n_run_days": 46,
+  "run_day_span": [
+    "2026-09-21",
+    "2026-11-10"
+  ],
+  "run_clock": {
+    "earliest": "06:00",
+    "median": "07:23",
+    "latest": "18:07"
+  },
+  "api_probe": {
+    "ok": true,
+    "probed_at": "2026-11-11T02:33:50",
+    "n_reports_listed": 1178,
+    "next_day_upload_clock_ist": {
+      "n": 174,
+      "earliest": "08:59",
+      "median": "09:57",
+      "latest": "20:52"
+    },
+    "newest_report_title": "09.11.26_NLDC_PSP",
+    "newest_report_uploaded": "2026-11-10 11:25:00",
+    "caveat": "Field2 is not consistently the data date upstream, so this is a time-of-day distribution only and does not set H"
+  },
+  "issue_time": "evening of day D, target D+1",
+  "rejected_evidence": "report_published in peak_demand.csv is the report's internal 'Date of Reporting'; the extractor sets observation_date = report_date - 1, so comparing them is circular and was not used.",
+  "consequence": "peak_lag_1 unavailable at H=2; anchor differenced targets on peak_lag_2"
+}

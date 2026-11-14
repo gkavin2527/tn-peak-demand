@@ -1,0 +1,184 @@
+{
+  "gate": "phase_5_decision_gate",
+  "horizon_H": 2,
+  "validation_period": "2023-01-01 to 2025-12-31 (1,085 out-of-fold validation days across 3 expanding folds)",
+  "bootstrap_protocol": {
+    "method": "moving_block_bootstrap",
+    "block_size_days": 7,
+    "n_boot": 2000,
+    "seed": 42,
+    "direction_convention": "d_t = |e_model2| - |e_model1| (negative indicates model 2 has lower error)"
+  },
+  "task1_a1_vs_a2": {
+    "model1": "A1_weather_levels (24 features)",
+    "model2": "A2_weather_deltas_anomalies (26 features)",
+    "observed_mean_diff_mw": -10.907712060949663,
+    "ci_95_mw": [
+      -22.050398602173665,
+      -0.8224110519076173
+    ],
+    "p_value_one_sided": 0.0165,
+    "prop_a2_better": 0.5317972350230414,
+    "fold_breakdown": {
+      "2023": {
+        "mean_diff": -2.211710415373644,
+        "ci_95": [
+          -24.21139006526243,
+          19.455549909765043
+        ],
+        "prop_a2_better": 0.5041095890410959,
+        "n": 365
+      },
+      "2024": {
+        "mean_diff": -8.205790376123757,
+        "ci_95": [
+          -26.484803335669714,
+          7.7108507912343764
+        ],
+        "prop_a2_better": 0.5192307692307693,
+        "n": 364
+      },
+      "2025": {
+        "mean_diff": -22.586195470814488,
+        "ci_95": [
+          -39.56415151504745,
+          -8.083707470573314
+        ],
+        "prop_a2_better": 0.5730337078651685,
+        "n": 356
+      }
+    },
+    "summer_mar_jun": {
+      "mean_diff_mw": -21.191948589615667,
+      "ci_95_mw": [
+        -42.83934538476394,
+        0.8392615875049674
+      ],
+      "prop_a2_better": 0.5382513661202186,
+      "n": 366
+    }
+  },
+  "task2_a2_vs_a34": {
+    "model1": "A2_weather_deltas_anomalies (26 features)",
+    "model2": "A3.4_antecedent_heatwave_run (27 features)",
+    "observed_mean_diff_mw": -1.403802041513465,
+    "ci_95_mw": [
+      -2.460767225971487,
+      -0.40524620111882725
+    ],
+    "p_value_one_sided": 0.002,
+    "prop_a34_better": 0.5271889400921659,
+    "fold_breakdown": {
+      "2023": {
+        "mean_diff": -0.3889343844030831,
+        "ci_95": [
+          -1.3419653709252364,
+          0.5086633162887751
+        ],
+        "prop_a34_better": 0.5068493150684932,
+        "n": 365
+      },
+      "2024": {
+        "mean_diff": -1.0929234586714212,
+        "ci_95": [
+          -2.662745129080951,
+          0.2987178493204463
+        ],
+        "prop_a34_better": 0.5137362637362637,
+        "n": 364
+      },
+      "2025": {
+        "mean_diff": -2.7621910836477164,
+        "ci_95": [
+          -5.364832922225903,
+          -0.025223520815915383
+        ],
+        "prop_a34_better": 0.5617977528089888,
+        "n": 356
+      }
+    },
+    "summer_mar_jun": {
+      "mean_diff_mw": -2.956810486415291,
+      "ci_95_mw": [
+        -5.2469037848393425,
+        -0.6972762389565166
+      ],
+      "prop_a34_better": 0.5601092896174863,
+      "n": 366
+    },
+    "decision_rule_evaluation": {
+      "condition_1_statistically_robust_improvement": true,
+      "condition_2_t_minus_1_operational_availability": "Category B (Operational under lead-0 substitution)",
+      "both_conditions_satisfied": false
+    }
+  },
+  "task3_heatwave_subgroups": {
+    "total_days": 1085,
+    "heatwave_days_count": 290,
+    "heatwave_days_pct": 26.72811059907834,
+    "heatwave_days_metrics": {
+      "a2_mae": 555.6964618028983,
+      "a34_mae": 550.8183506685547,
+      "mean_diff": -4.878111134343629,
+      "ci_95": [
+        -7.454760787482948,
+        -2.4131495740223996
+      ],
+      "prop_a34_better": 0.6172413793103448
+    },
+    "non_heatwave_days_metrics": {
+      "a2_mae": 576.6558419008705,
+      "a34_mae": 576.5193978932197,
+      "mean_diff": -0.13644400765088965,
+      "ci_95": [
+        -1.0997885753189174,
+        0.7729476687743441
+      ]
+    },
+    "run_length_breakdown": {
+      "run_len_1": {
+        "n": 46,
+        "mean_diff": -0.07715989097600275,
+        "win_rate": 0.5434782608695652,
+        "mae_a2": 478.1641932733413,
+        "mae_a34": 478.0870333823653
+      },
+      "run_len_2": {
+        "n": 28,
+        "mean_diff": -8.387337139697072,
+        "win_rate": 0.75,
+        "mae_a2": 509.8159656443844,
+        "mae_a34": 501.4286285046873
+      },
+      "run_len_3": {
+        "n": 216,
+        "mean_diff": -5.445636268811288,
+        "win_rate": 0.6157407407407407,
+        "mae_a2": 578.1554351584447,
+        "mae_a34": 572.7097988896334
+      }
+    },
+    "heatwave_gain_distribution_quantiles": {
+      "p05": -39.9851302084031,
+      "p25": -20.2745364684788,
+      "p50_median": -7.367513468409015,
+      "p75": 9.638363063605539,
+      "p95": 32.99154871722659
+    }
+  },
+  "task4_operational_audit": {
+    "forecast_issue_time": "20:00 IST, Day D",
+    "forecast_target": "Day D+1 (H=2)",
+    "upstream_demand_status": "Grid-India PSP published D+1; newest demand is D-1 (H=2 confirmed)",
+    "weather_latency_reality": "ERA5 reanalysis has multi-day lag; Day D is filled from forecast lead-0 analysis",
+    "operational_classification": "Category B",
+    "classification_explanation": "Operational only under an explicit assumption that T-1 observed weather is available (or served via lead-0 forecast-endpoint analysis as implemented in predict_next_day.py)."
+  },
+  "task5_search_accounting": {
+    "total_candidates_tested": 10,
+    "statistically_best_candidate": "A3.7 (+ heat_wave_run_35, t_max_roll3_lag1)",
+    "best_candidate_val_mae": 568.31,
+    "reason_a37_excluded": "Requires active-window target-day forecast rebuilding inside swap_weather(), violating frozen contract interface and risking silent reanalysis leakage.",
+    "final_recommendation": "Freeze A2 as primary specification; retain A3.4 as sensitivity analysis."
+  }
+}

@@ -1,0 +1,274 @@
+{
+  "experiment": "A1_weather_levels",
+  "horizon_H": 2,
+  "selection_protocol": "3-fold historical walk-forward (2023, 2024, 2025)",
+  "selection_metric": "mean_val_mae",
+  "winning_candidate": "A1.12: Full A1 (All 5 Weather Levels)",
+  "winning_weather_features": [
+    "t_max",
+    "t_mean",
+    "t_min",
+    "cdd_max",
+    "hours_above_32"
+  ],
+  "total_winning_features": 24,
+  "validation_ablation_results": [
+    {
+      "candidate": "A0: Baseline (No Weather)",
+      "weather_features": [],
+      "total_features": 19,
+      "f1_2023_mae": 668.3542848173231,
+      "f2_2024_mae": 690.2115800386395,
+      "f3_2025_mae": 728.1877514039743,
+      "mean_val_mae": 695.5845387533122,
+      "mean_val_rmse": 900.3099198790142,
+      "mean_val_mape": 4.2832321659385855,
+      "mean_val_r2": 0.6676234227979917,
+      "delta_vs_a0_mw": 0.0,
+      "delta_vs_a0_pct": 0.0
+    },
+    {
+      "candidate": "A1.1: + t_max",
+      "weather_features": [
+        "t_max"
+      ],
+      "total_features": 20,
+      "f1_2023_mae": 585.8789220354231,
+      "f2_2024_mae": 584.7664535440058,
+      "f3_2025_mae": 639.4689832355683,
+      "mean_val_mae": 603.3714529383324,
+      "mean_val_rmse": 788.0330000196759,
+      "mean_val_mape": 3.7152954938934157,
+      "mean_val_r2": 0.743765552489291,
+      "delta_vs_a0_mw": -92.21308581497988,
+      "delta_vs_a0_pct": -13.256919997136837
+    },
+    {
+      "candidate": "A1.2: + t_mean",
+      "weather_features": [
+        "t_mean"
+      ],
+      "total_features": 20,
+      "f1_2023_mae": 607.0079480158837,
+      "f2_2024_mae": 589.6613947533422,
+      "f3_2025_mae": 639.5312993028546,
+      "mean_val_mae": 612.0668806906934,
+      "mean_val_rmse": 801.6578025731618,
+      "mean_val_mape": 3.775947606534485,
+      "mean_val_r2": 0.7345442380504027,
+      "delta_vs_a0_mw": -83.5176580626188,
+      "delta_vs_a0_pct": -12.006830717126993
+    },
+    {
+      "candidate": "A1.3: + t_min",
+      "weather_features": [
+        "t_min"
+      ],
+      "total_features": 20,
+      "f1_2023_mae": 666.5364399583896,
+      "f2_2024_mae": 680.0357183455087,
+      "f3_2025_mae": 722.0696524514337,
+      "mean_val_mae": 689.5472702517773,
+      "mean_val_rmse": 893.5979438611903,
+      "mean_val_mape": 4.246306759121476,
+      "mean_val_r2": 0.6721723198660087,
+      "delta_vs_a0_mw": -6.037268501534982,
+      "delta_vs_a0_pct": -0.8679417332011872
+    },
+    {
+      "candidate": "A1.4: + cdd_max",
+      "weather_features": [
+        "cdd_max"
+      ],
+      "total_features": 20,
+      "f1_2023_mae": 585.8505859975064,
+      "f2_2024_mae": 584.6824036485291,
+      "f3_2025_mae": 639.4190252481551,
+      "mean_val_mae": 603.3173382980635,
+      "mean_val_rmse": 787.9842901310636,
+      "mean_val_mape": 3.714972334685313,
+      "mean_val_r2": 0.7437943363943184,
+      "delta_vs_a0_mw": -92.26720045524871,
+      "delta_vs_a0_pct": -13.264699733064525
+    },
+    {
+      "candidate": "A1.5: + hours_above_32",
+      "weather_features": [
+        "hours_above_32"
+      ],
+      "total_features": 20,
+      "f1_2023_mae": 597.0630158334174,
+      "f2_2024_mae": 592.8275565138779,
+      "f3_2025_mae": 650.1663805242432,
+      "mean_val_mae": 613.3523176238463,
+      "mean_val_rmse": 801.0485306443878,
+      "mean_val_mape": 3.7950234968127177,
+      "mean_val_r2": 0.735296811134812,
+      "delta_vs_a0_mw": -82.23222112946598,
+      "delta_vs_a0_pct": -11.82203119075214
+    },
+    {
+      "candidate": "A1.6: + (t_max, t_min)",
+      "weather_features": [
+        "t_max",
+        "t_min"
+      ],
+      "total_features": 21,
+      "f1_2023_mae": 583.5119825536951,
+      "f2_2024_mae": 585.9710911943171,
+      "f3_2025_mae": 639.4966728553675,
+      "mean_val_mae": 602.9932488677932,
+      "mean_val_rmse": 787.10427345562,
+      "mean_val_mape": 3.7130214425831554,
+      "mean_val_r2": 0.7445006655010725,
+      "delta_vs_a0_mw": -92.59128988551902,
+      "delta_vs_a0_pct": -13.311292118635826
+    },
+    {
+      "candidate": "A1.7: + (t_max, cdd_max)",
+      "weather_features": [
+        "t_max",
+        "cdd_max"
+      ],
+      "total_features": 21,
+      "f1_2023_mae": 585.9824432016399,
+      "f2_2024_mae": 584.9258773594098,
+      "f3_2025_mae": 639.511962488871,
+      "mean_val_mae": 603.4734276833068,
+      "mean_val_rmse": 788.1225342265152,
+      "mean_val_mape": 3.715922195956505,
+      "mean_val_r2": 0.7437118621911329,
+      "delta_vs_a0_mw": -92.11111107000545,
+      "delta_vs_a0_pct": -13.242259702191639
+    },
+    {
+      "candidate": "A1.8: + (t_max, hours_above_32)",
+      "weather_features": [
+        "t_max",
+        "hours_above_32"
+      ],
+      "total_features": 21,
+      "f1_2023_mae": 586.7983657050979,
+      "f2_2024_mae": 584.0171122183442,
+      "f3_2025_mae": 637.239914792659,
+      "mean_val_mae": 602.685130905367,
+      "mean_val_rmse": 787.4060356548476,
+      "mean_val_mape": 3.7126836974191217,
+      "mean_val_r2": 0.74412048475032,
+      "delta_vs_a0_mw": -92.89940784794521,
+      "delta_vs_a0_pct": -13.355588382462857
+    },
+    {
+      "candidate": "A1.9: + (cdd_max, hours_above_32)",
+      "weather_features": [
+        "cdd_max",
+        "hours_above_32"
+      ],
+      "total_features": 21,
+      "f1_2023_mae": 586.8066576073975,
+      "f2_2024_mae": 584.0050671014317,
+      "f3_2025_mae": 637.2408025514862,
+      "mean_val_mae": 602.6841757534385,
+      "mean_val_rmse": 787.4101462758546,
+      "mean_val_mape": 3.7126401687518626,
+      "mean_val_r2": 0.7441164776334545,
+      "delta_vs_a0_mw": -92.90036299987378,
+      "delta_vs_a0_pct": -13.355725698903253
+    },
+    {
+      "candidate": "A1.10: + (t_max, t_min, hours_above_32)",
+      "weather_features": [
+        "t_max",
+        "t_min",
+        "hours_above_32"
+      ],
+      "total_features": 22,
+      "f1_2023_mae": 583.569368289561,
+      "f2_2024_mae": 583.6697946537322,
+      "f3_2025_mae": 636.1305198253971,
+      "mean_val_mae": 601.1232275895635,
+      "mean_val_rmse": 785.3207932852664,
+      "mean_val_mape": 3.704228540837858,
+      "mean_val_r2": 0.7455656392380586,
+      "delta_vs_a0_mw": -94.46131116374875,
+      "delta_vs_a0_pct": -13.580133815661085
+    },
+    {
+      "candidate": "A1.11: + (t_max, t_min, cdd_max)",
+      "weather_features": [
+        "t_max",
+        "t_min",
+        "cdd_max"
+      ],
+      "total_features": 22,
+      "f1_2023_mae": 583.5973527882546,
+      "f2_2024_mae": 586.1034464125061,
+      "f3_2025_mae": 639.5336476468225,
+      "mean_val_mae": 603.0781489491943,
+      "mean_val_rmse": 787.1867748041954,
+      "mean_val_mape": 3.7135392729501646,
+      "mean_val_r2": 0.7444509823228156,
+      "delta_vs_a0_mw": -92.50638980411793,
+      "delta_vs_a0_pct": -13.299086545240929
+    },
+    {
+      "candidate": "A1.12: Full A1 (All 5 Weather Levels)",
+      "weather_features": [
+        "t_max",
+        "t_mean",
+        "t_min",
+        "cdd_max",
+        "hours_above_32"
+      ],
+      "total_features": 24,
+      "f1_2023_mae": 573.996089352968,
+      "f2_2024_mae": 561.7899522818022,
+      "f3_2025_mae": 610.7531476847014,
+      "mean_val_mae": 582.1797297731572,
+      "mean_val_rmse": 767.7570235011735,
+      "mean_val_mape": 3.594175454425379,
+      "mean_val_r2": 0.7566420369227869,
+      "delta_vs_a0_mw": -113.40480898015505,
+      "delta_vs_a0_pct": -16.303526410090875
+    }
+  ],
+  "diagnostic_2026_results": {
+    "historical_313_days": {
+      "A0": {
+        "mae": 730.0184606949211,
+        "rmse": 926.1947905048861,
+        "mape": 3.9722257424154828,
+        "r2": 0.7114034030159118
+      },
+      "A1": {
+        "mae": 622.110819489686,
+        "rmse": 801.2090629117321,
+        "mape": 3.39818540119788,
+        "r2": 0.7840375507025612
+      },
+      "delta_mae_mw": -107.90764120523511
+    },
+    "full_314_days": {
+      "A0": {
+        "mae": 730.5891816723803,
+        "rmse": 926.1412396593577,
+        "mape": 3.9767917075830272,
+        "r2": 0.7119648745637686
+      },
+      "A1": {
+        "mae": 620.3482046517092,
+        "rmse": 799.9416162007161,
+        "mape": 3.388663052491884,
+        "r2": 0.7851142638167163
+      },
+      "delta_mae_mw": -110.24097702067104
+    },
+    "surge_days": {
+      "n": 16,
+      "threshold_mw": 21218.7,
+      "A0_mae": 903.1844924736092,
+      "A1_mae": 710.4303720560079,
+      "delta_mae_mw": -192.75412041760137
+    }
+  }
+}

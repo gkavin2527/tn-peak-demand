@@ -70,11 +70,12 @@ import json
 import numpy as np
 import pandas as pd
 
-from config import (FEATURE_GROUPS, H as CONFIG_H, H_BY_GROUP, MASTER,
-                    PEAK_TARGET)
+from config import (FEATURE_GROUPS, FORECAST_ARCHIVE, H as CONFIG_H,
+                    H_BY_GROUP, MASTER, PEAK_TARGET, RAW_DEMAND, RAW_WEATHER)
 
 __all__ = ["load_master", "swap_weather", "run_walk_forward", "group_offsets",
-           "feature_groups", "model_features", "verify_no_leakage"]
+           "feature_groups", "model_features", "verify_no_leakage",
+           "load_phase5_data", "verify_phase5_integrity", "PHASE5_FEATURE_SETS"]
 
 
 def feature_groups() -> dict:
@@ -312,3 +313,249 @@ def run_walk_forward(*args, **kwargs):
     except ImportError:
         from src.operational.walkforward import run_walk_forward as impl
     return impl(*args, **kwargs)
+
+
+# --------------------------------------------------------------------------
+# Canonical Phase 5 Feature Contract & Dataset Gateway
+# --------------------------------------------------------------------------
+
+PHASE5_FEATURE_SETS: dict[str, list[str]] = {
+    # A0: Weather-free baseline (19 features, H=2, exact Track A contract)
+    "A0_weather_free": [
+        # Calendar (11)
+        "dow", "is_weekend", "is_holiday", "day_before_holiday",
+        "day_after_holiday", "pongal_window",
+        "sin1", "cos1", "sin2", "cos2", "trend",
+        # Peak lags H >= 2 (5) - literal offsets T-2, T-3, T-7, T-14, T-364
+        "peak_lag_2", "peak_lag_3", "peak_lag_7", "peak_lag_14", "peak_lag_364",
+        # Energy lags H >= 2 (3) - literal offsets T-2, T-7, T-14
+        "energy_lag_2", "energy_lag_7", "energy_lag_14",
+    ],
+
+    # A1: Weather levels (temperature only, no humidity)
+    "A1_weather_levels": [
+        "dow", "is_weekend", "is_holiday", "day_before_holiday",
+        "day_after_holiday", "pongal_window",
+        "sin1", "cos1", "sin2", "cos2", "trend",
+        "peak_lag_2", "peak_lag_3", "peak_lag_7", "peak_lag_14", "peak_lag_364",
+        "energy_lag_2", "energy_lag_7", "energy_lag_14",
+        "t_max", "t_mean", "t_min", "cdd_max", "hours_above_32",
+    ],
+
+    # A2: Weather levels + deltas + anomalies
+    "A2_weather_deltas_anomalies": [
+        "dow", "is_weekend", "is_holiday", "day_before_holiday",
+        "day_after_holiday", "pongal_window",
+        "sin1", "cos1", "sin2", "cos2", "trend",
+        "peak_lag_2", "peak_lag_3", "peak_lag_7", "peak_lag_14", "peak_lag_364",
+        "energy_lag_2", "energy_lag_7", "energy_lag_14",
+        "t_max", "t_mean", "t_min", "cdd_max", "hours_above_32",
+        "d_t_max", "d_cdd_max", "t_max_vs_roll7", "cdd_max_vs_roll7",
+    ],
+}
+
+
+def load_phase5_data(feature_set: str | list[str] = "A0_weather_free",
+                     weather_source: str = "none",
+                     forecast_lead: int = 1,
+                     path: str | Path | None = None,
+                     clean_na: bool = True,
+                     date_range: tuple[str, str] | None = None) -> tuple[pd.DataFrame, list[str]]:
+    """Canonical Phase 5 dataset preparation gateway.
+
+    Implements the agreed architectural decision for Phase 5 research:
+    1. Ingests master.csv using Track A's literal lag representation.
+    2. Preserves literal physical calendar offsets (peak_lag_2 is T-2,
+       peak_lag_7 is T-7, peak_lag_14 is T-14, peak_lag_364 is T-364).
+    3. Enforces H=2 by strictly excluding unavailable T-1 demand/energy features
+       (peak_lag_1, energy_lag_1).
+    4. Preserves 7-day cyclical weekday alignment without shifting lag columns.
+    5. Provides identical non-weather features for Regime A and Regime B, with
+       weather being swapped cleanly via swap_weather().
+
+    Parameters:
+        feature_set: Name of approved feature set ('A0_weather_free', 'A1_weather_levels',
+                     'A2_weather_deltas_anomalies') or explicit list of column names.
+        weather_source: 'none' (for A0), 'reanalysis' (for Regime A), or 'forecast' (for Regime B).
+        forecast_lead: Forecast lead day for Regime B (default: 1 day ahead).
+        path: Optional override path for master.csv.
+        clean_na: Whether to drop rows where any requested feature or target is NaN (default True).
+        date_range: Optional (start_date, end_date) tuple to filter dates.
+
+    Returns:
+        (df, features): DataFrame indexed by date with target in both 'tn_peak_demand_mw'
+                        and 'y', and the resolved feature list.
+    """
+    from build_dataset import state_weather
+
+    if isinstance(feature_set, str):
+        if feature_set not in PHASE5_FEATURE_SETS:
+            raise KeyError(f"Unknown Phase 5 feature set: {feature_set}. "
+                           f"Available: {list(PHASE5_FEATURE_SETS.keys())}")
+        features = list(PHASE5_FEATURE_SETS[feature_set])
+    else:
+        features = list(feature_set)
+
+    # Ingest literal master.csv
+    raw = pd.read_csv(path or MASTER, parse_dates=["date"])
+    raw = raw.sort_values("date").reset_index(drop=True)
+    raw = raw.set_index("date")
+
+    # Handle weather source
+    if weather_source == "forecast":
+        if not FORECAST_ARCHIVE.exists():
+            raise FileNotFoundError(f"Missing forecast archive: {FORECAST_ARCHIVE}. "
+                                    "Run fetch_weather.py archive-forecast")
+        fc_raw = pd.read_csv(FORECAST_ARCHIVE)
+        fc_lead = fc_raw[fc_raw["lead"] == int(forecast_lead)].drop(columns=["lead"])
+        fc_wx = state_weather(fc_lead).set_index("date").sort_index()
+        fc_wx.attrs["source"] = f"forecast_lead_{int(forecast_lead)}"
+
+        obs_raw = pd.read_csv(RAW_WEATHER)
+        obs_wx = state_weather(obs_raw).set_index("date").sort_index()
+        obs_wx.attrs["source"] = "era5_reanalysis"
+
+        raw = swap_weather(raw, fc_wx, observed=obs_wx)
+    elif weather_source in ("none", "reanalysis"):
+        pass
+    else:
+        raise ValueError(f"Unknown weather_source: '{weather_source}'. "
+                         "Must be 'none', 'reanalysis', or 'forecast'.")
+
+    df = raw.reset_index()
+
+    # Ensure target column exists
+    target_col = PEAK_TARGET
+    if target_col not in df.columns:
+        raise ValueError(f"Target column '{target_col}' missing from dataset")
+    df["y"] = df[target_col]
+
+    # Filter date range if specified
+    if date_range is not None:
+        start_d, end_d = pd.Timestamp(date_range[0]), pd.Timestamp(date_range[1])
+        df = df[(df["date"] >= start_d) & (df["date"] <= end_d)].reset_index(drop=True)
+
+    # Check required columns
+    needed = ["date", target_col, "y"] + [f for f in features if f not in ("y",)]
+    missing_cols = [c for c in needed if c not in df.columns]
+    if missing_cols:
+        raise KeyError(f"Requested features missing in dataset: {missing_cols}")
+
+    # Clean NaNs across requested features and target
+    if clean_na:
+        df = df.dropna(subset=needed).reset_index(drop=True)
+
+    # Set index to DatetimeIndex
+    out = df.set_index("date")
+    out["date"] = out.index
+
+    # Set metadata
+    out.attrs.update(
+        H=2,
+        lag_representation="literal_master",
+        feature_set=feature_set if isinstance(feature_set, str) else "custom",
+        features=features,
+        weather_source=weather_source,
+        forecast_lead=forecast_lead if weather_source == "forecast" else None,
+        newest_demand="target - 2",
+        newest_energy="target - 2",
+    )
+
+    return out, features
+
+
+def verify_phase5_integrity(df: pd.DataFrame, features: list[str], H: int = 2,
+                            raw_master: str | Path | None = None) -> dict:
+  """Mechanically proves that a Phase 5 modelling dataset satisfies all integrity,
+  leakage-prevention, and weekday-alignment contracts.
+  """
+  import re
+
+  raw_path = raw_master or MASTER
+  raw = pd.read_csv(raw_path, parse_dates=["date"]).sort_values("date")
+  y_raw = raw.set_index("date")[PEAK_TARGET]
+  if "tn_energy_gwh" in raw.columns:
+      e_raw = raw.set_index("date")["tn_energy_gwh"]
+  elif RAW_DEMAND.exists():
+      e_raw = pd.read_csv(RAW_DEMAND, parse_dates=["date"]).sort_values("date").set_index("date")["tn_energy_gwh"]
+  else:
+      e_raw = None
+
+  df_idx = df.index if isinstance(df.index, pd.DatetimeIndex) else pd.to_datetime(df["date"])
+
+  # 1. Zero forbidden T-1 lags
+  lag1_matches = [
+      f for f in features
+      if re.search(r"(_lag_?1$|_lag_?1_)", f) and ("peak" in f or "energy" in f or "sr_" in f)
+  ]
+  if lag1_matches:
+      raise AssertionError(f"Forbidden T-1 lag leakage detected: {lag1_matches}. "
+                           f"Under H={H}, newest permitted information is T-2.")
+
+  # 2. Target and same-day actual energy isolation
+  forbidden_targets = ["tn_peak_demand_mw", "y", "tn_energy_gwh", "tn_shortage_at_peak_mw"]
+  target_leaks = [f for f in features if f in forbidden_targets]
+  if target_leaks:
+      raise AssertionError(f"Target or same-day context found in feature list: {target_leaks}")
+
+  # 3. Information-age and weekday alignment verification
+  resolved_offsets = {}
+  weekday_alignments = {}
+  for col in features:
+      if not col.startswith("peak_lag_") and not col.startswith("energy_lag_"):
+          continue
+
+      series = y_raw if "peak" in col else e_raw
+      if series is None:
+          continue
+
+      matched_k = None
+      for k in range(0, 400):
+          exp = series.reindex(df_idx - pd.Timedelta(days=k)).to_numpy()
+          act = df[col].to_numpy()
+          both = ~(pd.isna(exp) | pd.isna(act))
+          if both.sum() > 50 and np.allclose(exp[both], act[both], atol=1e-4):
+              matched_k = k
+              break
+
+      resolved_offsets[col] = matched_k
+      if matched_k is not None:
+          if matched_k < H:
+              raise AssertionError(f"{col} resolves to target - {matched_k}, violating H={H}!")
+          # Check literal weekday alignment
+          if col in ("peak_lag_7", "energy_lag_7") and matched_k != 7:
+              raise AssertionError(f"{col} broke weekly weekday alignment! Expected T-7, got T-{matched_k}")
+          if col in ("peak_lag_14", "energy_lag_14") and matched_k != 14:
+              raise AssertionError(f"{col} broke bi-weekly weekday alignment! Expected T-14, got T-{matched_k}")
+          if col == "peak_lag_364" and matched_k != 364:
+              raise AssertionError(f"{col} broke annual seasonal weekday alignment (52*7)! Expected T-364, got T-{matched_k}")
+          if matched_k % 7 == 0:
+              weekday_alignments[col] = f"Preserved (Exact Weekday Match: target - {matched_k}d)"
+
+  # 4. Humidity-dependent feature restrictions
+  forbidden_humidity = [
+      "rh_mean", "app_t_mean", "app_t_max", "cdd_apparent", "thi",
+      "d_rh_mean", "d_app_t_max", "d_thi", "thi_vs_roll7"
+  ]
+  hum_leaks = [f for f in features if f in forbidden_humidity]
+  if hum_leaks:
+      raise AssertionError(f"Humidity-dependent features forbidden in Phase 5 due to archive coverage: {hum_leaks}")
+
+  # 5. Monotonic chronological ordering
+  if not df_idx.is_monotonic_increasing:
+      raise AssertionError("Dates are not strictly monotonically increasing!")
+
+  # 6. Zero nulls in requested feature matrix
+  null_counts = df[features].isna().sum()
+  if null_counts.sum() > 0:
+      bad = null_counts[null_counts > 0].to_dict()
+      raise AssertionError(f"Null values detected in feature matrix: {bad}")
+
+  return {
+      "ok": True,
+      "H": H,
+      "features_count": len(features),
+      "resolved_offsets": resolved_offsets,
+      "weekday_alignments": weekday_alignments,
+  }
+

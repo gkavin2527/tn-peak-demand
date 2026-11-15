@@ -143,21 +143,41 @@ def main():
     print("\n6. A0 baseline reproduction through canonical gateway")
     year = df_a0.index.year
     trainval = df_a0[year <= 2025]
-    test_hist = df_a0[(year == 2026) & (df_a0.index <= "2026-11-09")]
-    test_full = df_a0[year == 2026]
+    # Both reproduction samples are pinned to FIXED end dates. An earlier
+    # version used `year == 2026` for the full sample, which grows every day
+    # the pipeline ingests a new row - so the committed 730.59 MW reference
+    # became unreproducible the moment the cron caught up (it moved to 738.51
+    # once 11-11..11-14 landed). A reproduction check must address a frozen
+    # sample or it is just a staleness alarm.
+    REPRO_HIST_END = "2026-11-09"   # 313 dates
+    REPRO_FULL_END = "2026-11-10"   # 314 dates, as committed
+    test_hist = df_a0[(year == 2026) & (df_a0.index <= REPRO_HIST_END)]
+    test_full = df_a0[(year == 2026) & (df_a0.index <= REPRO_FULL_END)]
 
     model = TrackARidge(alpha=0.001)
     model.fit(trainval[feats_a0], trainval["y"])
 
     preds_hist = model.predict(test_hist[feats_a0])
     mae_hist = float(np.mean(np.abs(test_hist["y"] - preds_hist)))
-    check("A0 on historical 313 test dates reproduces to 730.02 MW (+/- 0.01 MW)",
-          abs(mae_hist - 730.0185) < 0.01, f"observed {mae_hist:.2f} MW")
+    check(f"A0 on 313 test dates (<= {REPRO_HIST_END}) reproduces 730.02 MW",
+          abs(mae_hist - 730.0185) < 0.01,
+          f"observed {mae_hist:.2f} MW on n={len(test_hist)}")
 
     preds_full = model.predict(test_full[feats_a0])
     mae_full = float(np.mean(np.abs(test_full["y"] - preds_full)))
-    check("A0 on full 314 test dates reproduces to 730.59 MW (+/- 0.01 MW)",
-          abs(mae_full - 730.5892) < 0.01, f"observed {mae_full:.2f} MW")
+    check(f"A0 on 314 test dates (<= {REPRO_FULL_END}) reproduces 730.59 MW",
+          abs(mae_full - 730.5892) < 0.01,
+          f"observed {mae_full:.2f} MW on n={len(test_full)}")
+    check("both reproduction samples are the sizes they claim",
+          len(test_hist) == 313 and len(test_full) == 314,
+          f"hist {len(test_hist)}, full {len(test_full)}")
+
+    # Separately, and WITHOUT pinning a number: new data should keep arriving.
+    # This is the staleness alarm the check above was accidentally doubling as.
+    live_2026 = df_a0[year == 2026]
+    check("2026 rows continue to accumulate past the frozen sample",
+          len(live_2026) >= 314,
+          f"{len(live_2026)} rows, newest {live_2026.index.max():%Y-%m-%d}")
 
     # ----------------------------------------------------------------------
     # 7. Missing-Forecast Anti-Leakage Assertions (Regime B Protection)

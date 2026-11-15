@@ -734,6 +734,50 @@ updates stop, check that first.
 
 ---
 
+
+### Dependency tiers, and why the runner ran out of disk
+
+The CI runner is **self-hosted** and persistent, so disk is a finite shared
+resource rather than a fresh allocation per run. Both jobs used to recreate
+`.venv` from scratch nightly and install the **entire** `requirements.txt`.
+
+On **2026-11-12** that filled the disk — `[Errno 28] No space left on device`,
+0 MB free — and the pipeline stayed down for four days. The morning job's
+weather-forecast log is the one artifact that **cannot be backfilled**, so
+those rows are permanently lost.
+
+The daily pipeline never imported most of what it was installing. Measured by
+tracing transitive imports from each job's entry points:
+
+| Tier | File | Packages | Installed size | Used by |
+|---|---|---|---|---|
+| data | `requirements-data.txt` | 7 direct / 21 total | **195 MB** | `daily.yml` |
+| model | `requirements-model.txt` | +3 (scipy, scikit-learn, lightgbm) | **355 MB** | `evening.yml` |
+| full | `requirements.txt` | +5 (xgboost, catboost, optuna, matplotlib, streamlit) | **855 MB** | benchmark, tuning, figures, dashboard |
+
+So the morning job was installing 855 MB nightly to do 195 MB of work, and the
+evening job 855 MB to do 355 MB. Three changes, all in the workflows:
+
+1. **Install the narrowest tier the job actually imports.** `daily.yml` →
+   data, `evening.yml` → model. The evening job can skip XGBoost, CatBoost and
+   Optuna because `src/models.py` imports those *inside* their factory
+   functions, so serving `ridge_gbm_hybrid` never touches them.
+2. **Reuse the venv** unless its tier file's SHA-256 changes, instead of
+   rebuilding nightly. A missing `.venv/bin/python` also forces a rebuild, so
+   a half-finished install self-heals.
+3. **`--no-cache-dir`, plus `pip cache purge` on exit even when the run
+   fails** — a failed pip is exactly the state that leaves a cache behind and
+   the next run needing the space.
+
+A preflight step now refuses to start below `MIN_FREE_MB` (2,000) with an
+actionable message, rather than dying half way through pip and leaving a
+corrupt venv behind.
+
+> Two caveats worth keeping in mind. `xlrd` and `openpyxl` stay in the data
+> tier even though nothing imports them by name: `pandas.read_excel` loads
+> them dynamically by engine, so static import analysis does not see them.
+> And if a job ever gains an import, the narrow tier will fail loudly at
+> import time rather than silently — which is the intended trade.
 ## Known quirks
 
 ### Gaps

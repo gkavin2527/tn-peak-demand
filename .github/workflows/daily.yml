@@ -9,6 +9,11 @@ concurrency:
   group: daily-data
   cancel-in-progress: false
 
+env:
+  # Refuse to start below this much free disk rather than dying half way
+  # through pip with a corrupt venv.
+  MIN_FREE_MB: "2000"
+
 jobs:
   update:
     runs-on: self-hosted
@@ -19,10 +24,45 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      # The runner is self-hosted and persistent, so disk is a finite shared
+      # resource rather than a fresh 14 GB every run. On 2026-11-12 this job
+      # died mid-pip with [Errno 28] No space left on device (0 MB free) and
+      # the pipeline stayed down for four days, losing forecast-log rows that
+      # cannot be backfilled. Three changes keep that from recurring:
+      #   1. install the narrowest requirements tier the job actually imports
+      #   2. reuse the venv unless its tier file changed, instead of
+      #      recreating it nightly
+      #   3. never leave a pip HTTP cache behind
+      - name: Preflight - disk space
+        run: |
+          free_mb=$(df -Pm . | awk 'NR==2 {print $4}')
+          echo "free space: ${free_mb} MB"
+          df -h . || true
+          if [ "$free_mb" -lt "$MIN_FREE_MB" ]; then
+            echo "::error::only ${free_mb} MB free, need ${MIN_FREE_MB} MB. \
+          Reclaim space on the runner: 'pip cache purge', remove stale \
+          .venv directories, or prune docker/actions caches."
+            exit 1
+          fi
+
       - name: Set up Python virtual environment
         run: |
-          python3 -m venv .venv
-          .venv/bin/pip install -r requirements.txt
+          want=$(sha256sum requirements-data.txt | cut -d" " -f1)
+          have=$(cat .venv/.req-sha 2>/dev/null || echo none)
+          if [ ! -x .venv/bin/python ] || [ "$want" != "$have" ]; then
+            echo "building venv (requirements changed or venv absent)"
+            rm -rf .venv
+            python3 -m venv .venv
+            # --no-cache-dir: the wheel cache is pure growth on a persistent
+            # runner and is what pushed this disk over the edge.
+            .venv/bin/pip install --quiet --no-cache-dir --upgrade pip
+            .venv/bin/pip install --quiet --no-cache-dir -r requirements-data.txt
+            echo "$want" > .venv/.req-sha
+          else
+            echo "reusing venv (requirements-data.txt unchanged)"
+          fi
+          .venv/bin/python -c "import pandas, numpy; print('pandas', pandas.__version__)"
 
       # Cannot be backfilled - runs first so a later failure never costs us it
       - name: Log day-ahead weather forecast
@@ -79,6 +119,14 @@ jobs:
             git pull --rebase --autostash
             git push
           fi
+
+      # Runs even on failure: a half-finished pip leaves the cache behind, and
+      # that is exactly the state where the next run needs the space most.
+      - name: Reclaim disk
+        if: always()
+        run: |
+          .venv/bin/pip cache purge 2>/dev/null || true
+          echo "free space after: $(df -Pm . | awk 'NR==2 {print $4}') MB"
 
       - name: Open an issue if this run failed
         if: failure()

@@ -1,53 +1,39 @@
-# Pinned to the exact versions that produced the committed results.
+# FULL environment: benchmarking, tuning, figures and the dashboard.
 #
-# The champion is not pickled - it is reconstructed by re-fitting from
+# Pinned to the exact versions that produced the committed results. The
+# champion is not pickled - it is reconstructed by re-fitting from
 # models/champion_config.json - so the headline numbers depend on the
 # modelling libraries' behaviour, not just on the saved hyperparameters. A
 # LightGBM minor bump can move 520.37 MW with nothing in the repo changing.
-# Versions here were captured from the environment that generated
-# results/phase6_benchmark.json and models/champion_config.json
+# Captured from the environment that generated results/phase6_benchmark.json
 # (python 3.14.7, 2026-11-15); the same set is recorded under "environment"
 # in champion_config.json.
 #
 # Upgrade deliberately: bump, re-run test_phase6_benchmark.py (it asserts the
 # Phase 5 reproduction to 0.01 MW) and record the new numbers. Do not float.
+#
+# TIERS - the CI jobs install the narrowest file they can, because the
+# self-hosted runner recreates its venv every run and filled its disk on
+# 2026-11-12 installing packages the job never imported:
+#
+#   requirements-data.txt    daily.yml    pandas numpy requests holidays
+#                                         pdfplumber xlrd openpyxl
+#   requirements-model.txt   evening.yml  + scipy scikit-learn lightgbm
+#   requirements.txt         benchmark, tuning, figures, dashboard (this file)
 
-# ---- data pipeline -------------------------------------------------------
-pandas==3.1.1
-numpy==2.5.4
-requests==2.34.2
-scipy==1.18.1
+-r requirements-model.txt
 
-# The India/TN calendar changes between releases - some lunisolar festivals
-# gain or lose year coverage - and is_holiday must not change meaning because
-# a dependency floated. tn_holidays.py cross-checks its curated overrides
-# against whatever version is installed and fails loudly on a contradiction,
-# so bump this on purpose and read what it says.
-holidays==0.108
-
-# ---- source ingestion ----------------------------------------------------
-xlrd==2.0.2
-openpyxl==3.1.5
-pdfplumber==0.11.7
-
-# ---- modelling -----------------------------------------------------------
-# baseline.py, run_phase5.py, predict_next_day.py, calibrate_intervals.py.
-# The morning data pipeline (daily.yml) does not import these; the evening
-# forecast job does.
-scikit-learn==1.9.1
-
-# Phase 6 model benchmark (src/models.py). threadlimit.py pins threads to 1 -
-# on ~4,900 rows these are ~10x slower on all cores than on one.
-lightgbm==4.7.0
+# Phase 6 benchmark (src/models.py). threadlimit.py pins threads to 1 - on
+# ~4,900 rows these are ~10x slower on all cores than on one. Imported lazily
+# inside their factories, so the serving tier omits them.
 xgboost==3.4.1
 catboost==1.2.10
 
 # Phase 6b hyperparameter tuning (run_phase6_tuning.py) only.
 optuna==5.0.0
 
-# ---- figures and interpretability ---------------------------------------
+# Figures and interpretability (make_figures.py, run_interpretability.py).
 matplotlib==3.11.2
 
-# ---- dashboard -----------------------------------------------------------
 # Phase 7.3 dashboard only (dashboard/app.py). Not imported by any job.
 streamlit==1.67.0

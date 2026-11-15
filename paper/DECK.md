@@ -5,11 +5,11 @@ committed artifacts. Re-run before presenting; do not edit figures by hand.**
 
 12 slides · ~13 min + questions · figures in `figures/`
 
-> **Placeholders still open — leave visible until resolved**
-> - `[FILL]` India/Tamil Nadu regional STLF citations
-> - `[FILL]` prior work using archived NWP forecasts
-> - `[FILL]` permutation importance under correlated predictors
-> - `[DOI]` Zenodo record for the historical backfill (~3,852 of 4,909 target rows — count itself needs confirming with the DOI)
+> **Status**
+> - ✅ Citations resolved and Crossref-verified — see `paper/RELATED_WORK.md`
+> - ✅ Backfill DOI: 10.5281/zenodo.14983362 (Hunt & Bloomfield 2025, CC-BY-4.0 — **must be attributed**)
+> - ⚠️ **Open:** 269 rows dated 2013 attributed to a dataset whose coverage starts 2014
+> - ⚠️ **Open:** no independent review by anyone who did not build this
 
 ---
 
@@ -327,4 +327,5 @@ typed in. Thank you — happy to take questions.
 | "Isn't 2026 your test set?" | It's a confirmation set. We'd seen some 2026 data during development, so we don't call it blind. The unbiased number is the 2025 replay on slide 8. |
 | "Why is error still autocorrelated?" | Multi-day weather shocks we can't see at H = 2. It's a stated limitation, and it's why all our confidence intervals use a block bootstrap. |
 | "Could you run this at 8pm?" | We never verified what time the forecasts were actually issued. Our claim is "lead-1 forecast matched to the target date" — we deliberately don't claim more. |
-| "Where's the data from?" | Grid-India PSP reports and Open-Meteo. **`[DOI]` — Zenodo record for the historical backfill still to be filled in.** |
+| "Where's the data from?" | Grid-India PSP reports and Open-Meteo forecasts. Historical backfill from Hunt & Bloomfield (2025), Zenodo DOI 10.5281/zenodo.14983362, CC-BY-4.0. |
+| "How does this differ from Hunt & Bloomfield?" | They model total *energy* with contemporaneous reanalysis and report r². We forecast *peak* at H=2 and measure what operational forecast weather costs. Their paper is a clean example of the gap we measure. |

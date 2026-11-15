@@ -18,6 +18,7 @@ Three places things live:
 | [RESULTS.md](RESULTS.md) | Authoritative results. Every number generated from `results/*.json` | **current** |
 | [METHODOLOGY.md](METHODOLOGY.md) | How everything works, in detail — horizon, regimes, protocol, serving | **current** |
 | [CONTRACT.md](CONTRACT.md) | The Track A ↔ Track B interface. Read before touching the serving path | **current** |
+| **[REVIEWER_PACKET.md](REVIEWER_PACKET.md)** | **Hand this to anyone reviewing the project.** One hour, four claims to attack | ⭐ **current** |
 
 ## Historical record
 

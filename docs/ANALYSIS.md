@@ -29,13 +29,14 @@
 | Figures | **Done** | 6, regenerated from the champion |
 | Paper draft | **Draft** | all 7 sections written, `paper/PAPER.md` |
 | Deck | **Draft** | 12 slides + speaker scripts, `paper/DECK.md` |
-| **Citations** | **Blocked** | 3 `[FILL]` gaps |
-| **Data provenance** | **Blocked** | Zenodo DOI missing |
-| **Live validation** | **Blocked** | 1 logged forecast; needs wall-clock |
-| **Co-author review** | **Not started** | nobody but you has read this end to end |
+| Citations | **Resolved** | all `[FILL]` gaps closed, Crossref-verified |
+| Data provenance | **Mostly resolved** | DOI 10.5281/zenodo.14983362, CC-BY-4.0 — but see 269-row issue below |
+| Live validation | **Unblocked, needs time** | champion now wired into `evening.yml`; was serving the stand-in |
+| **Independent review** | **Not started** | the one blocker nobody here can clear — see [REVIEWER_PACKET.md](REVIEWER_PACKET.md) |
 
-**Honest verdict: ~90% complete.** What remains is not engineering. It is a
-literature search, one missing identifier, and the passage of time.
+**Honest verdict: ~95% complete.** What remains is one human-hours task
+(independent review), one unresolved data question (269 rows), and the passage
+of time for live forecasts to accumulate.
 
 ---
 
@@ -133,14 +134,22 @@ Two real errors shipped and survived human reading:
 
 Both were caught late and by accident. Assume more exist.
 
-### 3.2 🔴 Four submission blockers
+### 3.2 🟡 Remaining blockers — down from four to two
 
-| Blocker | Why it matters |
+| Blocker | State |
 |---|---|
-| Zenodo DOI missing | 3,852 of 4,909 target rows have no citable provenance. A referee will ask. |
-| 3 `[FILL]` citations | India/TN regional STLF especially — an ICAIEA audience expects it |
-| 1 live forecast logged | Deployment claims rest entirely on backtests |
-| No co-author review | See §3.1 |
+| ~~Zenodo DOI~~ | **Resolved.** It was in `peak_demand.csv`'s `source_url` all along; my earlier search missed data files. Hunt & Bloomfield (2025), CC-BY-4.0 — attribution now mandatory |
+| ~~`[FILL]` citations~~ | **Resolved**, Crossref-verified |
+| **269 rows dated 2013** | **Open.** Attributed to a dataset whose stated coverage starts 2014. Affects 5.5% of the target series |
+| **No independent review** | **Open** — see §3.1. The only blocker nobody on this project can clear |
+
+> **The closest prior work was found during this process:** Hunt & Bloomfield
+> (2025), *Building and explaining data-driven energy demand models for Indian
+> states* — same authors as our backfill dataset, same Grid-India source, all
+> 32 states, published 2025. It uses **ERA5 reanalysis only, with no forecast
+> comparison, and is a nowcast rather than a forecast**. The most relevant
+> recent paper in this space is itself an instance of the gap we measure,
+> which strengthens the contribution considerably.
 
 ### 3.3 🟡 Festival days are the model's real weakness
 

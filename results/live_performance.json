@@ -1,0 +1,22 @@
+{
+  "updated_at": "2026-11-15T19:54:11",
+  "n_issued": 1,
+  "n_scored": 1,
+  "n_pending": 0,
+  "span": [
+    "2026-11-12",
+    "2026-11-12"
+  ],
+  "mae_mw": 499.8,
+  "mape_pct": 2.722,
+  "bias_mw": -499.8,
+  "worst_abs_error_mw": 499.8,
+  "interval_coverage": {
+    "90%": 1.0,
+    "95%": 1.0
+  },
+  "n_summer_days": 0,
+  "is_provisional": true,
+  "backtest_reference_mae_mw": 524,
+  "note": "live, pre-committed forecasts - the only figures here not produced with hindsight"
+}

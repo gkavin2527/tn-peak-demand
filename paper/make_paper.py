@@ -385,13 +385,30 @@ once:
 | Regime A | {aud['optimism']['A']['reported_2025_fold_mae']:.2f} | {aud['optimism']['A']['honest_2025_mae']:.2f} | **{aud['optimism']['A']['optimism_mw']:+.2f} MW** |
 | Regime B | {aud['optimism']['B']['reported_2025_fold_mae']:.2f} | {aud['optimism']['B']['honest_2025_mae']:.2f} | **{aud['optimism']['B']['optimism_mw']:+.2f} MW** |
 
-Optimism is *honest − reported*; negative means reported figures are
-conservative. This is a **lower bound** — it replays reproducible selection
-rounds, not informal inspection that shaped the search spaces.
+Optimism is *honest − reported*; for MAE a negative value means the reported
+figure is conservative. (The sign inverts for any gain-style metric; we use it
+only for MAE.)
+
+**We state this as "small or negative under stated limitations", not as "no
+selection optimism".** Two limitations matter. The replay ranks model families
+on *default* hyperparameters, so a family with a poorly chosen default never
+reaches the tuning round. And the candidate feature sets were themselves
+selected using data that includes the held-out year, so the replay is not
+fully nested. The estimate is therefore a **lower bound** on total optimism.
 
 **Confirmation evaluation.** Trained through 2025, evaluated once on {fin['protocol']['n_scored']} days
 of 2026 under Regime B: MAE **{fin['metrics_2026']['mae']:.2f}** vs {fin['validation_2023_25_regime_b_mae']:.2f} in validation
 ({fin['delta_vs_validation_mw']:+.2f} MW), MAPE {fin['metrics_2026']['mape']:.2f}%, RMSE {fin['metrics_2026']['rmse']:.2f}.
+
+**This difference is within noise, and we report it as such.** Residual
+autocorrelation (lag-1 ACF {rd['lag1']:+.3f}) reduces the effective sample size from
+{fin['protocol']['n_scored']} to approximately {fin['effective_sample_size']['n_effective_ar1']:.0f} under an AR(1) approximation, giving a
+standard error of {fin['effective_sample_size']['se_of_mae_mw']:.1f} MW on the 2026 MAE. The observed
+difference is **{fin['effective_sample_size']['diff_in_se_units']:.2f} standard errors**. The defensible reading is that the
+held-back year is **not inconsistent** with validation performance — not that
+it independently confirms generalisation. Combined with the fact that 2026 was
+inspected during development, this project contains **no genuinely blind
+evaluation**, and we do not claim one.
 
 > We call this a **confirmation**, not a blind test. 2026 was inspected during
 > exploratory feature work. We do not claim it as an unbiased generalisation

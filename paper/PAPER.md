@@ -337,13 +337,30 @@ once:
 | Regime A | 438.19 | 421.50 | **-16.69 MW** |
 | Regime B | 520.55 | 514.75 | **-5.80 MW** |
 
-Optimism is *honest − reported*; negative means reported figures are
-conservative. This is a **lower bound** — it replays reproducible selection
-rounds, not informal inspection that shaped the search spaces.
+Optimism is *honest − reported*; for MAE a negative value means the reported
+figure is conservative. (The sign inverts for any gain-style metric; we use it
+only for MAE.)
+
+**We state this as "small or negative under stated limitations", not as "no
+selection optimism".** Two limitations matter. The replay ranks model families
+on *default* hyperparameters, so a family with a poorly chosen default never
+reaches the tuning round. And the candidate feature sets were themselves
+selected using data that includes the held-out year, so the replay is not
+fully nested. The estimate is therefore a **lower bound** on total optimism.
 
 **Confirmation evaluation.** Trained through 2025, evaluated once on 314 days
 of 2026 under Regime B: MAE **503.49** vs 497.90 in validation
 (+5.59 MW), MAPE 2.74%, RMSE 689.84.
+
+**This difference is within noise, and we report it as such.** Residual
+autocorrelation (lag-1 ACF +0.481) reduces the effective sample size from
+314 to approximately 110 under an AR(1) approximation, giving a
+standard error of 45.0 MW on the 2026 MAE. The observed
+difference is **0.12 standard errors**. The defensible reading is that the
+held-back year is **not inconsistent** with validation performance — not that
+it independently confirms generalisation. Combined with the fact that 2026 was
+inspected during development, this project contains **no genuinely blind
+evaluation**, and we do not claim one.
 
 > We call this a **confirmation**, not a blind test. 2026 was inspected during
 > exploratory feature work. We do not claim it as an unbiased generalisation

@@ -13,15 +13,14 @@ env:
   # Refuse to start below this much free disk rather than dying half way
   # through pip with a corrupt venv.
   #
-  # Tier-calibrated: the data tier installs to 195 MB measured, and pip still
-  # needs transient space to download and extract the largest wheel even with
-  # --no-cache-dir, so the gate allows roughly 2.5x the installed size.
+  # Matches evening.yml. All jobs on this runner install the SAME tier file so
+  # the venv is actually reused - see the note in requirements-model.txt.
   #
   # An earlier value of 2000 was carried over from when BOTH jobs installed
   # the full 855 MB requirements.txt. After the tier split that threshold
   # blocked runs which would have succeeded: run 43719572988 reclaimed disk
   # to 942 MB free and was then refused by its own preflight.
-  MIN_FREE_MB: "500"
+  MIN_FREE_MB: "800"
 
 jobs:
   update:
@@ -52,14 +51,14 @@ jobs:
       - name: Reclaim disk before setup
         run: |
           before=$(df -Pm . | awk 'NR==2 {print $4}')
-          want=$(sha256sum requirements-data.txt | cut -d" " -f1)
+          want=$(sha256sum requirements-model.txt | cut -d" " -f1)
           have=$(cat .venv/.req-sha 2>/dev/null || echo none)
           if [ "$want" != "$have" ]; then
             sz=$(du -sm .venv 2>/dev/null | cut -f1 || echo 0)
             echo "removing stale venv (${sz:-0} MB) - tier file changed or venv absent"
             rm -rf .venv
           else
-            echo "venv matches requirements-data.txt - keeping it"
+            echo "venv matches requirements-model.txt - keeping it"
           fi
           rm -rf "${PIP_CACHE_DIR:-$HOME/.cache/pip}"
           after=$(df -Pm . | awk 'NR==2 {print $4}')
@@ -79,7 +78,7 @@ jobs:
 
       - name: Set up Python virtual environment
         run: |
-          want=$(sha256sum requirements-data.txt | cut -d" " -f1)
+          want=$(sha256sum requirements-model.txt | cut -d" " -f1)
           have=$(cat .venv/.req-sha 2>/dev/null || echo none)
           if [ ! -x .venv/bin/python ] || [ "$want" != "$have" ]; then
             echo "building venv (requirements changed or venv absent)"
@@ -89,10 +88,10 @@ jobs:
             # --no-cache-dir: the wheel cache is pure growth on a persistent
             # runner and is what pushed this disk over the edge.
             .venv/bin/pip install --quiet --no-cache-dir --upgrade pip
-            .venv/bin/pip install --quiet --no-cache-dir -r requirements-data.txt
+            .venv/bin/pip install --quiet --no-cache-dir -r requirements-model.txt
             echo "$want" > .venv/.req-sha
           else
-            echo "reusing venv (requirements-data.txt unchanged)"
+            echo "reusing venv (requirements-model.txt unchanged)"
           fi
           .venv/bin/python -c "import pandas, numpy; print('pandas', pandas.__version__)"
 

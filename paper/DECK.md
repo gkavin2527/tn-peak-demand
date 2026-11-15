@@ -186,24 +186,35 @@ pipeline with 2025 held out:
 |---|---|---|---|
 | Regime B | 520.55 | 514.75 | **-5.80 MW** |
 
-**(b) Final confirmation**, run **once** on 2026: **503.49 MW** vs 497.90 expected (2.74% MAPE)
+**(b) Held-back year**, run **once** on 2026: **503.49 MW** vs 497.90 expected (2.74% MAPE)
+
+- That gap is **0.12 standard errors** — effective n is 110, not 314, because errors autocorrelate
+- Reads as **"not inconsistent"**, *not* "confirmed"
 
 **Script.**
 Two ways we tried to catch ourselves cheating.
 
 First — we made four rounds of choices against the same validation years. That
 inflates results, and usually nobody measures by how much. So we re-ran the
-whole selection process from scratch, pretending 2025 didn't exist, then
-tested on 2025 once. If we'd been fooling ourselves, the honest number would
-be worse. It came out **5.8 megawatts better**. So our reported figures are
-conservative, not inflated.
+whole selection process pretending 2025 didn't exist, then tested on 2025
+once. It came out **5.8 megawatts better**, so there's no sign we inflated
+anything — though I'd put that as *small or negative under our limitations*
+rather than *zero*, because the replay still ranks models on default settings
+and reuses feature sets that were chosen with 2025 in view.
 
-Second — we froze the model and ran it once on 2026. We got 503 megawatts
-against 498 expected. That's about 2.7% error.
+Second — we froze the model and ran it once on 2026: 503 megawatts against
+498 expected, about 2.7% error.
 
-One honesty note: we call 2026 a *confirmation*, not a blind test, because we
-had looked at some 2026 data earlier in development. We're not going to
-pretend otherwise.
+Now, I want to be careful here, because it would be easy to oversell this.
+Our errors are correlated from one day to the next, so 314 days is really
+worth about 110 independent ones. That gap is **0.12 of a standard error** —
+statistically it's nothing. The right way to say it is that the held-back year
+is **not inconsistent** with what we expected. It does not independently
+confirm anything.
+
+And the honest headline: **we have no genuinely blind evaluation.** We'd
+looked at 2026 during development, and our one live forecast used an older
+model. I'd rather say that than have someone ask.
 
 ---
 
@@ -241,7 +252,7 @@ model. That's a stronger argument for weather mattering than any ranking chart.
 
 **Figure:** `fig4_error_by_segment.png`
 
-- **Surge days under-forecast by 496 MW** (top 5%) — the expensive direction
+- **Surge days under-forecast by 496 MW** (top 5%) — the expensive direction, and **average MAE hides it**
 - **Diwali over-forecast by 1,766 MW** (n=15 — anecdotal, but 3 of the worst 6 days)
 - Residual autocorrelation **+0.481** — structure remains
 - Festival features fix ~⅔ of Diwali but don't clear the bar (-3.4 MW, CI [-14.9, 6.9])

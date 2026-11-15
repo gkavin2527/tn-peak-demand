@@ -271,24 +271,35 @@ pipeline with 2025 held out:
 |---|---|---|---|
 | Regime B | {aud['optimism']['B']['reported_2025_fold_mae']:.2f} | {aud['optimism']['B']['honest_2025_mae']:.2f} | **{aud['optimism']['B']['optimism_mw']:+.2f} MW** |
 
-**(b) Final confirmation**, run **once** on 2026: **{fin['metrics_2026']['mae']:.2f} MW** vs {fin['validation_2023_25_regime_b_mae']:.2f} expected ({fin['metrics_2026']['mape']:.2f}% MAPE)
+**(b) Held-back year**, run **once** on 2026: **{fin['metrics_2026']['mae']:.2f} MW** vs {fin['validation_2023_25_regime_b_mae']:.2f} expected ({fin['metrics_2026']['mape']:.2f}% MAPE)
+
+- That gap is **{fin['effective_sample_size']['diff_in_se_units']:.2f} standard errors** — effective n is {fin['effective_sample_size']['n_effective_ar1']:.0f}, not {fin['protocol']['n_scored']}, because errors autocorrelate
+- Reads as **"not inconsistent"**, *not* "confirmed"
 
 **Script.**
 Two ways we tried to catch ourselves cheating.
 
 First — we made four rounds of choices against the same validation years. That
 inflates results, and usually nobody measures by how much. So we re-ran the
-whole selection process from scratch, pretending 2025 didn't exist, then
-tested on 2025 once. If we'd been fooling ourselves, the honest number would
-be worse. It came out **{abs(aud['optimism']['B']['optimism_mw']):.1f} megawatts better**. So our reported figures are
-conservative, not inflated.
+whole selection process pretending 2025 didn't exist, then tested on 2025
+once. It came out **{abs(aud['optimism']['B']['optimism_mw']):.1f} megawatts better**, so there's no sign we inflated
+anything — though I'd put that as *small or negative under our limitations*
+rather than *zero*, because the replay still ranks models on default settings
+and reuses feature sets that were chosen with 2025 in view.
 
-Second — we froze the model and ran it once on 2026. We got {fin['metrics_2026']['mae']:.0f} megawatts
-against {fin['validation_2023_25_regime_b_mae']:.0f} expected. That's about {fin['metrics_2026']['mape']:.1f}% error.
+Second — we froze the model and ran it once on 2026: {fin['metrics_2026']['mae']:.0f} megawatts against
+{fin['validation_2023_25_regime_b_mae']:.0f} expected, about {fin['metrics_2026']['mape']:.1f}% error.
 
-One honesty note: we call 2026 a *confirmation*, not a blind test, because we
-had looked at some 2026 data earlier in development. We're not going to
-pretend otherwise.
+Now, I want to be careful here, because it would be easy to oversell this.
+Our errors are correlated from one day to the next, so 314 days is really
+worth about {fin['effective_sample_size']['n_effective_ar1']:.0f} independent ones. That gap is **{fin['effective_sample_size']['diff_in_se_units']:.2f} of a standard error** —
+statistically it's nothing. The right way to say it is that the held-back year
+is **not inconsistent** with what we expected. It does not independently
+confirm anything.
+
+And the honest headline: **we have no genuinely blind evaluation.** We'd
+looked at 2026 during development, and our one live forecast used an older
+model. I'd rather say that than have someone ask.
 
 ---
 
@@ -326,7 +337,7 @@ model. That's a stronger argument for weather mattering than any ranking chart.
 
 **Figure:** `fig4_error_by_segment.png`
 
-- **Surge days under-forecast by {abs(seg['surge_top5pct']['bias']):.0f} MW** (top 5%) — the expensive direction
+- **Surge days under-forecast by {abs(seg['surge_top5pct']['bias']):.0f} MW** (top 5%) — the expensive direction, and **average MAE hides it**
 - **Diwali over-forecast by {seg['diwali_window']['bias']:,.0f} MW** (n={seg['diwali_window']['n']} — anecdotal, but 3 of the worst 6 days)
 - Residual autocorrelation **{rd['lag1']:+.3f}** — structure remains
 - Festival features fix ~⅔ of Diwali but don't clear the bar ({gate['delta_mae']:+.1f} MW, CI [{gate['ci_95_low']:.1f}, {gate['ci_95_high']:.1f}])

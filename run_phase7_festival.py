@@ -116,7 +116,12 @@ def main():
     print(f"\nshared scoring sample: {len(scored)} dates "
           f"({scored.min():%Y-%m-%d} .. {scored.max():%Y-%m-%d})")
 
-    models = [("ridge_gbm_hybrid", cfg["hyperparameters"]), ("ridge", None)]
+    # Champion first, read from config rather than hardcoded: the gate was
+    # first run against the Phase 6b mean-head champion, and W1-6 later found
+    # the quantile head makes Diwali WORSE (+1,519 -> +1,766 MW bias). The
+    # gate's answer can therefore change with the champion, so it must track
+    # whatever is currently frozen.
+    models = [(cfg["model_type"], cfg["hyperparameters"]), ("ridge", None)]
     out = {}
 
     for model_name, hp in models:
@@ -201,7 +206,7 @@ def main():
         json.dumps(payload, indent=2, default=str) + "\n")
     print(f"\nwrote {RESULTS / 'phase7_festival.json'}")
 
-    champ_b = out["ridge_gbm_hybrid"]["gates"]["B"]
+    champ_b = out[cfg["model_type"]]["gates"]["B"]
     print("\n" + "=" * 74)
     print(f"DECISION (champion, Regime B): "
           f"{'ADOPT A4' if champ_b['adopt'] else 'KEEP A2'}")

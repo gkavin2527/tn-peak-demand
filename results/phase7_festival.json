@@ -1,6 +1,6 @@
 {
   "phase": "7_festival_gate",
-  "generated_at": "2026-11-15T17:41:04",
+  "generated_at": "2026-11-15T18:45:17",
   "base_feature_set": "A2_weather_deltas_anomalies",
   "candidate_feature_set": "A4_festival",
   "added_features": [
@@ -17,25 +17,25 @@
   },
   "note_selection": "This is an additional selection round against 2023-2025. Quantified by run_selection_audit.py.",
   "results": {
-    "ridge_gbm_hybrid": {
-      "model": "ridge_gbm_hybrid",
+    "quantile_hybrid": {
+      "model": "quantile_hybrid",
       "tuned": true,
       "gates": {
         "A": {
-          "base_mae": 455.9557196849469,
-          "candidate_mae": 442.6139109233756,
-          "delta_mae": -13.341808761571345,
-          "ci_95_low": -27.470176367932595,
-          "ci_95_high": -2.2373471361977533,
-          "ci_excludes_zero": true,
-          "adopt": true
+          "base_mae": 443.6230160823632,
+          "candidate_mae": 437.6697871675844,
+          "delta_mae": -5.953228914778784,
+          "ci_95_low": -18.189172131168917,
+          "ci_95_high": 4.816111775802811,
+          "ci_excludes_zero": false,
+          "adopt": false
         },
         "B": {
-          "base_mae": 520.3716911351204,
-          "candidate_mae": 511.13175515230125,
-          "delta_mae": -9.239935982819047,
-          "ci_95_low": -21.564708828762665,
-          "ci_95_high": 1.2059625557552685,
+          "base_mae": 497.904400179841,
+          "candidate_mae": 494.53051106070996,
+          "delta_mae": -3.3738891191310127,
+          "ci_95_low": -14.939297583404445,
+          "ci_95_high": 6.91429399784245,
           "ci_excludes_zero": false,
           "adopt": false
         }
@@ -43,17 +43,17 @@
       "segments_regime_b": {
         "diwali_window": {
           "n": 15,
-          "base_mae": 1558.3557663097117,
-          "candidate_mae": 1217.9713415924575,
-          "base_bias": 1518.7786638755272,
-          "candidate_bias": 259.13923290130384
+          "base_mae": 1801.7036896841757,
+          "candidate_mae": 1275.3313740274673,
+          "base_bias": 1766.438466324557,
+          "candidate_bias": 605.1504564065364
         },
         "rest": {
           "n": 1051,
-          "base_mae": 505.5574559994221,
-          "candidate_mae": 501.04365448950176,
-          "base_bias": -92.28075185383662,
-          "candidate_bias": -91.93939858628995
+          "base_mae": 479.29641793191985,
+          "candidate_mae": 483.38682605166963,
+          "base_bias": -7.971482792769284,
+          "candidate_bias": -11.1449132941087
         }
       }
     },

@@ -115,3 +115,95 @@ def subset_metrics(dates, y_true, y_pred, mask, label: str) -> dict:
     out = compute_metrics(np.asarray(y_true)[mask], np.asarray(y_pred)[mask])
     out["label"] = label
     return out
+
+
+def newey_west_lrv(x: np.ndarray, lag: int | None = None) -> float:
+    """Long-run variance of a mean, Newey-West (Bartlett kernel).
+
+    Daily peak-demand loss differentials are autocorrelated, so the naive
+    variance of the mean understates uncertainty - the same reason this module
+    uses a moving-block bootstrap rather than an iid one. `lag` defaults to
+    the standard floor(4 * (n/100)^(2/9)) truncation.
+    """
+    x = np.asarray(x, dtype=float).ravel()
+    n = x.size
+    if n < 3:
+        raise ValueError(f"need at least 3 observations, got {n}")
+    if lag is None:
+        lag = int(np.floor(4.0 * (n / 100.0) ** (2.0 / 9.0)))
+    lag = max(0, min(int(lag), n - 2))
+
+    d = x - x.mean()
+    gamma0 = float(d @ d) / n
+    lrv = gamma0
+    for k in range(1, lag + 1):
+        gk = float(d[k:] @ d[:-k]) / n
+        lrv += 2.0 * (1.0 - k / (lag + 1.0)) * gk   # Bartlett weight
+    # A Bartlett-weighted sum can still go non-positive in small samples.
+    if lrv <= 0:
+        lrv = gamma0
+    return lrv
+
+
+def diebold_mariano(e_candidate: np.ndarray, e_reference: np.ndarray,
+                    loss: str = "abs", lag: int | None = None) -> dict:
+    """Diebold-Mariano test of equal predictive accuracy.
+
+    Reported ALONGSIDE moving_block_bootstrap, never instead of it. The
+    bootstrap is arguably the stronger instrument here - it makes no
+    asymptotic-normality assumption on a 356-day sample - but DM is the
+    forecasting literature's lingua franca and referees ask for it by name.
+
+    H0: equal expected loss. The statistic is
+
+        DM = mean(d) / sqrt(LRV(d) / n),   d_t = L(e_cand) - L(e_ref)
+
+    so **negative DM favours the candidate**, matching the sign convention of
+    moving_block_bootstrap's `diffs`. The long-run variance uses Newey-West
+    because d_t is serially correlated.
+
+    Uses the Harvey-Leybourne-Newbold small-sample correction and refers the
+    statistic to t(n-1) rather than the normal, both of which matter at these
+    sample sizes.
+
+    loss: "abs" (|e|, pairs with MAE) or "sq" (e^2, pairs with RMSE).
+    """
+    ec = np.asarray(e_candidate, dtype=float).ravel()
+    er = np.asarray(e_reference, dtype=float).ravel()
+    if ec.shape != er.shape:
+        raise ValueError(f"unpaired errors: {ec.shape} vs {er.shape}")
+    finite = np.isfinite(ec) & np.isfinite(er)
+    ec, er = ec[finite], er[finite]
+    n = ec.size
+    if n < 3:
+        raise ValueError(f"need at least 3 paired observations, got {n}")
+
+    if loss == "abs":
+        d = np.abs(ec) - np.abs(er)
+    elif loss == "sq":
+        d = ec ** 2 - er ** 2
+    else:
+        raise ValueError(f"unknown loss {loss!r}; use 'abs' or 'sq'")
+
+    dbar = float(d.mean())
+    lrv = newey_west_lrv(d, lag=lag)
+    se = float(np.sqrt(lrv / n))
+    if se == 0:
+        # Identical forecasts - OLS and Ridge at alpha=0.001 do this exactly.
+        return {"dm_stat": 0.0, "p_value": 1.0, "mean_loss_diff": dbar,
+                "n": n, "loss": loss, "se": 0.0, "nw_lag": lag,
+                "hln_corrected": True, "note": "identical loss series"}
+
+    dm = dbar / se
+    # Harvey-Leybourne-Newbold correction for h=1 (one-step-ahead losses).
+    dm *= float(np.sqrt((n - 1.0) / n))
+
+    from scipy import stats
+    p_two = float(2.0 * stats.t.sf(abs(dm), df=n - 1))
+    p_one = float(stats.t.cdf(dm, df=n - 1))   # H1: candidate better (dm < 0)
+    return {"dm_stat": float(dm), "p_value": p_two, "p_value_one_sided": p_one,
+            "mean_loss_diff": dbar, "se": se, "n": n, "loss": loss,
+            "nw_lag": int(lag) if lag is not None
+                      else int(np.floor(4.0 * (n / 100.0) ** (2.0 / 9.0))),
+            "hln_corrected": True,
+            "favours": "candidate" if dm < 0 else "reference"}

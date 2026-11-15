@@ -13,50 +13,76 @@ contract change."* Append at the top. Anything that changes a shared file
 ### For Track B: the champion now exists — your `--champion` stub can be built
 
 `models/champion_config.json` is written and frozen. This is the artefact
-`predict_next_day.py` and `run_phase5.py` have been waiting for since G0. The
-schema:
+`predict_next_day.py` and `run_phase5.py` have been waiting for since G0.
+
+> **Re-frozen at Phase 7 (2026-11-15).** The champion is now
+> **`quantile_hybrid`**, not `ridge_gbm_hybrid`. The previous config is kept
+> at `models/champion_config.phase6b.json`. Both hazards flagged below are
+> now **fixed and regression-tested** — see `test_serving.py`.
 
 ```json
 {
-  "champion": "ridge_gbm_hybrid",
-  "model_type": "ridge_gbm_hybrid",
-  "hyperparameters": {"alpha": 1.08e-05, "n_estimators": 700,
-                      "learning_rate": 0.0258, "num_leaves": 10},
+  "champion": "quantile_hybrid",
+  "model_type": "quantile_hybrid",
+  "hyperparameters": {"alpha": 7.249e-05, "n_estimators": 700,
+                      "learning_rate": 0.0550, "num_leaves": 13,
+                      "quantile": 0.5906},
   "feature_set": "A2_weather_deltas_anomalies",
   "feature_count": 26,
-  "features": [...],
+  "target_parameterisation": "level",
+  "lag_representation": "literal",
   "H": 2,
   "selected_on": "Regime B ... mean validation MAE",
-  "validation_performance": {"regime_a_mae": 455.96, "regime_b_mae": 520.37,
-                             "degradation_mw": 64.42, "degradation_pct": 14.13},
+  "validation_performance": {"regime_a_mae": 443.62, "regime_b_mae": 497.90,
+                             "degradation_mw": 54.28, "degradation_pct": 12.24},
+  "environment": {"python": "3.14.7", "lightgbm": "4.7.0", ...},
   "frozen": true
 }
 ```
 
-Build it with `src.models.build_model(cfg["model_type"])` and apply
-`cfg["hyperparameters"]`; `src/models.py` exposes the same `fit`/`predict`
-interface as `TrackARidge`, so the serving path does not need to branch.
+Build it with `src.models.build_from_config(cfg)` — **one** construction path
+shared by tuning and serving, returning `(model, features, parameterisation)`
+so a caller cannot take the feature list without also taking how the target
+was expressed.
 
-**Two things that will bite if missed.**
+**Three things that bite, all now fixed in code and asserted in tests.**
 
-1. **The champion uses the 26-feature A2 set, not Track B's 46-column
-   `model_features()` default.** Serving must read `cfg["features"]`.
-2. **The champion anchors nothing** — it is a direct-level model, not a
-   differenced one. `predict_next_day.py` currently adds `peak_lag_1` back
-   after predicting a difference. That must be conditional on the champion's
-   target parameterisation, or the forecast will be roughly double.
+1. **The champion uses the 26-feature A2 set**, not Track B's 46-column
+   `model_features()` default. Serving reads `cfg["features"]`.
+2. **The champion anchors nothing** — direct-level, not differenced. The old
+   serving path added `peak_lag_1` back after predicting a difference, which
+   would have produced a 95% overshoot (34,498 MW against a true 17,679).
+   Now read from `cfg["target_parameterisation"]`.
+3. **Lag representation — the silent one.** `load_master(H=2)` *shifts* the
+   demand block, so its `peak_lag_2` holds T−3 and `peak_lag_7` lands on the
+   wrong weekday. The champion trained on `load_phase5_data`'s **literal**
+   offsets, which enforce H=2 by *excluding* `peak_lag_1`/`energy_lag_1`
+   instead. Serving the champion from a shifted frame raises no error and
+   returns a plausible number while every demand lag is a day stale:
+   backtested on 2025 that costs **+245 MW MAE (+56%)**, about 2.3× the
+   champion's entire gain over Ridge. Read from `cfg["lag_representation"]`.
 
 ### Champion
 
-**`ridge_gbm_hybrid`** — Ridge for the trend, LightGBM on the residual.
-Selected on **Regime B**, the deployable regime.
+**`quantile_hybrid`** — Ridge for the trend, LightGBM **quantile** regression
+(τ = 0.591) on the residual. Selected on **Regime B**, the deployable regime.
 
 | | Regime A | Regime B | degradation |
 |---|---|---|---|
-| **ridge_gbm_hybrid** | 455.96 | **520.37** | +64.42 (14.13%) |
+| **quantile_hybrid** (current) | 443.62 | **497.90** | +54.28 (12.24%) |
+| ridge_gbm_hybrid (Phase 6b) | 455.96 | 520.37 | +64.42 (14.13%) |
 | ridge (tuned) | 571.61 | 611.95 | +40.34 (7.06%) |
 
-Paired vs Ridge in Regime B: **−91.58 MW, CI [−115.99, −68.30], p=0.0000.**
+Why a quantile head wins is mundane and worth stating plainly: **MAE is
+minimised by the conditional median, not the mean**, so a squared-error
+residual head was never the right estimator for the reported metric — and the
+Phase 6b champion carried a −69.6 MW bias that a modest upward shift corrects
+at the same time.
+
+Paired vs `ridge_gbm_hybrid` in Regime B: **−22.47 MW, CI [−34.49, −9.46],
+DM p = 5.6e−04.**
+
+
 
 **Why Regime B decided it:** A→B degradation is model-dependent (14.13% vs
 7.06%). A Regime-A-only ranking would have overstated the margin. Track B's

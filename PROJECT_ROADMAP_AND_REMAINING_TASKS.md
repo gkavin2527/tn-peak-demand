@@ -1,5 +1,14 @@
 # Tamil Nadu Peak Electricity Demand Forecasting — Project Completion Roadmap (v4)
 
+> ### ⚠️ Status: Waves 0–2 of the remediation plan are complete
+>
+> Champion re-frozen as **`quantile_hybrid`** (Regime B 497.90 MW); the 2026
+> confirmation has been **run once and consumed** (MAE 503.49). Selection
+> optimism measured and found negative. Any `ridge_gbm_hybrid` reference
+> below is one generation old.
+> Current numbers: **[`PHASE7_RESULTS.md`](PHASE7_RESULTS.md)**.
+> Remaining: Wave 3 (related work, deck) and the Zenodo DOI.
+
 This document lists everything left to take the **Tamil Nadu Next-Day Peak Electricity Demand Forecasting** project from its finished data foundation to modelling, the operational-forecast experiment, deployment and the paper.
 
 **v4 changes (this revision) — Track B is built.** `H` is **measured: H = 2**, and the consequence is sharper than anyone had assumed — `peak_lag_1`, the second-most-predictive column in the dataset, is **not available for a genuine day-ahead forecast**. Gate **G0 is MET** (22/22 checks, prediction-level identity exact to 0.000e+00 MW); the contract files exist and are frozen. Phase 5 is complete end-to-end with a stand-in model and all artefacts exported. Phase 7 is built: evening inference with conformal intervals, an evening workflow, live scoring, and a dashboard. Four latent bugs were found and fixed, three of them the same failure - a feature present in training and missing at serving - and the test suite now asserts that property instead of relying on someone noticing. **Track A remains entirely unstarted** and is the only thing between here and the paper.

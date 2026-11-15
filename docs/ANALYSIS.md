@@ -140,7 +140,7 @@ Both were caught late and by accident. Assume more exist.
 |---|---|
 | ~~Zenodo DOI~~ | **Resolved.** It was in `peak_demand.csv`'s `source_url` all along; my earlier search missed data files. Hunt & Bloomfield (2025), CC-BY-4.0 — attribution now mandatory |
 | ~~`[FILL]` citations~~ | **Resolved**, Crossref-verified |
-| **269 rows dated 2013** | **Open.** Attributed to a dataset whose stated coverage starts 2014. Affects 5.5% of the target series |
+| ~~269 rows dated 2013~~ | **Resolved.** Deposit downloaded and checked: it covers 2013-01-01 → 2024-04-28 despite its title. All 269 rows match the source exactly |
 | **No independent review** | **Open** — see §3.1. The only blocker nobody on this project can clear |
 
 > **The closest prior work was found during this process:** Hunt & Bloomfield

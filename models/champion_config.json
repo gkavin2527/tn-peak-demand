@@ -63,6 +63,18 @@
     "degradation_mw": 64.41597145017346,
     "degradation_pct": 14.127681410528892
   },
+  "environment": {
+    "python": "3.14.7",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "xgboost": "3.4.1",
+    "catboost": "1.2.10",
+    "optuna": "5.0.0"
+  },
   "frozen": true,
   "note_2026": "2026 has NOT been used in tuning or selection. It was inspected during Track A diagnostics, so it is a confirmation set, not a blind test."
 }

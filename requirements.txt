@@ -21,3 +21,5 @@ streamlit
 lightgbm
 xgboost
 catboost
+# Phase 6b hyperparameter tuning (run_phase6_tuning.py) only.
+optuna

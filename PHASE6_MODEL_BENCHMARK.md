@@ -133,12 +133,55 @@ python run_phase6_benchmark.py --regime-b \
 
 ---
 
-## Next: Phase 6b
+---
 
-1. Tune **two** candidates only — `ridge_gbm_hybrid` and `ridge` (tune α; 0.001 is doing nothing).
-2. Optuna, ≤50 trials, objective = mean validation MAE across the three folds, monthly refit inside tuning for speed.
-3. Freeze hyperparameters, then re-run Regime B on the tuned finalists.
-4. Select on the **Regime B** number — that is the deployable configuration.
-5. Hand `models/champion_config.json` to Track B (Gate G2).
+# Phase 6b — Tuning and Champion Selection
 
-Festival features, heat persistence and extreme-day work remain **conditional** on post-tuning diagnostics, per the agreed order.
+**Done.** `python run_phase6_tuning.py --trials 50`
+
+## Procedure (documented per handover §8.5)
+
+| | |
+|---|---|
+| Candidates | **Top 2 only** by benchmark MAE: `ridge_gbm_hybrid`, `ridge` |
+| Sampler | Optuna TPE, seed 42 |
+| Budget | **50 trials per model** (roadmap cap) |
+| Objective | **Mean validation MAE across folds 2023 / 2024 / 2025** |
+| Tuning regime | A (reanalysis) — weather realism settled separately |
+| Scored dates | 1,066, shared with Regime B so tuned/untuned stay comparable |
+| 2026 | **Never touched.** Not a tuning signal |
+| Champion rule | Lowest **Regime B** MAE — the deployable regime |
+
+Search spaces: `ridge` → α over 1e-6…1e3 (log). `ridge_gbm_hybrid` → α, `n_estimators` 100–800, `learning_rate` 0.01–0.15 (log), `num_leaves` 3–31. The residual GBM is bounded deliberately small: it corrects a residual, and a strong learner there would overwrite Ridge's extrapolation with leaf averages, reintroducing the failure the hybrid exists to avoid.
+
+## Results
+
+| model | Regime A | Regime B | degradation | surge bias (B) |
+|---|---|---|---|---|
+| **ridge_gbm_hybrid** 🏆 | **455.96** | **520.37** | +64.42 (14.13%) | **−549.0** |
+| ridge | 571.61 | 611.95 | +40.34 (7.06%) | −823.0 |
+
+**Champion: `ridge_gbm_hybrid`**, selected on Regime B.
+Paired vs Ridge in Regime B: **−91.58 MW, 95% CI [−115.99, −68.30], p = 0.0000.**
+
+Best hyperparameters: `alpha=1.08e-05, n_estimators=700, learning_rate=0.0258, num_leaves=10`.
+
+## Two findings from tuning
+
+**1. Ridge's L2 penalty is confirmed inert.** Optuna searched α across **nine orders of magnitude** and chose 1.02e-06 — the smallest end. Of 50 trials, the 41 with α < 0.01 span a total MAE range of **0.01 MW** (571.42–571.43). The benchmark's OLS≡Ridge result was not an artifact of α=0.001; regularisation simply does not help here, because with 26 standardised features on ~3,000 rows the problem is not over-parameterised. Report Ridge honestly as *effectively unregularised least squares*.
+
+**2. Tuning widened the operational gap.** The hybrid's A→B degradation rose from 12.98% (untuned) to **14.13%** — it extracts more from weather after tuning, so it loses more when weather is imperfect. It still wins the operational regime by 91.6 MW. This is the concrete reason the champion is selected on Regime B: a Regime-A-only ranking would have overstated the margin.
+
+## Artifacts
+
+- `models/champion_config.json` — frozen champion, hyperparameters, feature list, validation performance *(Gate G2 hand-off to Track B)*
+- `results/champion_regime_ab.json` — tuning trials, both regimes, paired comparison
+- `results/champion_regime_ab_predictions.csv` — row-level predictions
+
+---
+
+## Next
+
+Festival features, heat persistence and extreme-day work remain **conditional** on post-tuning diagnostics, per the agreed order. The champion's Regime B surge bias is still **−549 MW**, so extreme-day work has a live diagnostic trigger if the team chooses to pursue it.
+
+Final step: a **single** 2026 confirmation run with the frozen champion — described as a confirmation evaluation, never a blind test.

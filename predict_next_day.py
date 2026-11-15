@@ -40,6 +40,7 @@ import threadlimit  # noqa: F401  - must precede numpy/sklearn
 import argparse
 import json
 from datetime import date, timedelta
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -59,6 +60,19 @@ TRAIN_TAIL_YEARS = None        # None = full history; set to e.g. 8 to recency-t
 # today's own analysis; 1 tolerates a logger that missed one run. Above that the
 # substitute stops being "a day that already happened" and becomes a forecast.
 MAX_FILL_LEAD = 1
+
+# Demand/energy columns that do not exist at H=2. The literal representation
+# drops these rather than shifting the block (see build_features).
+UNAVAILABLE_AT_H2 = ("peak_lag_1", "energy_lag_1")
+
+# A served forecast further than this from the newest known peak (T-2) is
+# treated as a construction fault, not a bold forecast. Calibrated against the
+# measured distribution of |y(T) - y(T-2)| over all 4,839 observed pairs:
+# q99 3,194 / q99.9 4,384 / max 5,124 MW (2026-11-08, a Diwali week). 7,000 MW
+# therefore never refuses a swing this series has actually produced, while
+# still catching the faults worth catching - the differenced/level mix-up this
+# guard was added for was off by +16,819 MW.
+SANITY_BAND_MW = 7000.0
 
 
 def target_weather(target: pd.Timestamp):
@@ -161,8 +175,24 @@ def best_known_observed(target: pd.Timestamp) -> pd.DataFrame:
     return merged
 
 
-def build_features(target: pd.Timestamp):
+def build_features(target: pd.Timestamp, literal_lags: bool = False):
     """Feature row for the target day: demand shifted by H, weather forecast.
+
+    `literal_lags` selects the representation. The two are NOT interchangeable:
+
+        False -> load_master(H) convention. Demand columns are shifted by
+                 H-1, so the column named peak_lag_1 holds T-2. Used by the
+                 differenced stand-in, whose anchor is that column.
+        True  -> Phase 5 / load_phase5_data convention. peak_lag_N is a
+                 literal T-N and nothing is shifted; H=2 is honoured by
+                 excluding peak_lag_1 / energy_lag_1 instead. This is what
+                 every Phase 5 and Phase 6 model - including the champion -
+                 was trained on.
+
+    Serving a literal-lag model from a shifted frame is silent: every demand
+    lag is one day stale and peak_lag_7 / peak_lag_364 land on the wrong
+    weekday, so the model keeps returning plausible numbers while being fed
+    features it never saw.
 
     Built from build_dataset.merged_frame(extend_to=target) and the real
     add_lags(), not a hand-rolled copy. Sharing that code is what guarantees
@@ -187,12 +217,22 @@ def build_features(target: pd.Timestamp):
     # sr_*_lag1 column NaN on the predicted row.
     groups = feature_groups()["groups"]
     offsets = group_offsets(H)
-    for gname, off in offsets.items():
-        cols = [c for c in groups[gname] if c in df.columns]
-        if off and cols:
-            df[cols] = df[cols].shift(off)
-    df.attrs.update(H=H, lag_offset=offsets.get("demand", H - 1),
-                    group_offsets=offsets, newest_demand=f"target - {H}")
+    if literal_lags:
+        # Deliberately no shift. Availability is enforced by exclusion below,
+        # matching load_phase5_data step 3.
+        df = df.drop(columns=[c for c in UNAVAILABLE_AT_H2 if c in df.columns])
+        df.attrs.update(H=H, lag_offset=0, group_offsets={},
+                        lag_representation="literal",
+                        excluded_unavailable=list(UNAVAILABLE_AT_H2),
+                        newest_demand=f"target - {H}")
+    else:
+        for gname, off in offsets.items():
+            cols = [c for c in groups[gname] if c in df.columns]
+            if off and cols:
+                df[cols] = df[cols].shift(off)
+        df.attrs.update(H=H, lag_offset=offsets.get("demand", H - 1),
+                        group_offsets=offsets, lag_representation="shifted",
+                        newest_demand=f"target - {H}")
 
     obs = best_known_observed(target)
     wx, issued, lead, slot = target_weather(target)
@@ -244,6 +284,75 @@ def fit_and_predict(df: pd.DataFrame, target: pd.Timestamp):
     return yhat, int(ok.sum()), missing, float(anchor_val)
 
 
+def load_champion(path: str) -> dict:
+    cfg = json.loads(Path(path).read_text())
+    if not cfg.get("frozen", False):
+        print("WARNING     champion config is not marked frozen=true")
+    return cfg
+
+
+def fit_and_predict_champion(df: pd.DataFrame, target: pd.Timestamp, cfg: dict):
+    """Refit and serve the frozen Phase 6 champion.
+
+    Three things the stand-in path got wrong for this model, all silent:
+      * target parameterisation - the champion is direct-level, so adding the
+        anchor would have roughly doubled the forecast;
+      * feature list - 26 selected columns, not model_features()'s 46;
+      * lag representation - literal, not shifted (see build_features).
+
+    All three now come from the config rather than from constants here, so a
+    re-tuned champion cannot drift away from its serving path.
+    """
+    from src.models import build_from_config
+
+    model, feats, param = build_from_config(cfg)
+    if param != "level":
+        raise SystemExit(
+            f"champion declares target_parameterisation={param!r}; this path "
+            f"only serves 'level'. A differenced champion needs its anchor "
+            f"added back - implement it deliberately, do not guess.")
+    if df.attrs.get("lag_representation") != "literal":
+        raise SystemExit(
+            "champion requires the literal lag representation; build the "
+            "frame with build_features(target, literal_lags=True)")
+
+    absent = [f for f in feats if f not in df.columns]
+    if absent:
+        raise SystemExit(f"champion needs {len(absent)} absent feature(s): {absent}")
+
+    train = df[df.index < target]
+    y = train["y"]
+    ok = y.notna() & np.isfinite(y) & train[feats].notna().all(axis=1)
+    if int(ok.sum()) < 1000:
+        raise SystemExit(f"only {int(ok.sum())} usable training rows; expected >1000")
+    model.fit(train.loc[ok, feats], y[ok])
+
+    row = df.loc[[target], feats]
+    nan_feats = row.columns[row.isna().any()].tolist()
+    if nan_feats:
+        # Fail closed. Ridge propagates NaN to the prediction, so the
+        # alternative is emitting a NaN forecast into the log.
+        raise SystemExit(
+            f"refusing to forecast {target:%Y-%m-%d}: {len(nan_feats)} champion "
+            f"feature(s) are NaN on the target row: {nan_feats}")
+
+    yhat = float(model.predict(row)[0])
+    if not np.isfinite(yhat):
+        raise SystemExit("champion returned a non-finite forecast")
+
+    # Reference level for reporting and the sanity band. Under the literal
+    # representation the newest observed peak is T-2 = peak_lag_2.
+    ref = float(df.loc[target, "peak_lag_2"])
+    if np.isfinite(ref) and abs(yhat - ref) > SANITY_BAND_MW:
+        raise SystemExit(
+            f"refusing to issue {yhat:,.0f} MW: it is {abs(yhat - ref):,.0f} MW "
+            f"from the newest observed peak ({ref:,.0f} MW on "
+            f"{target - pd.Timedelta(days=H):%Y-%m-%d}), beyond the "
+            f"{SANITY_BAND_MW:,.0f} MW sanity band. This usually means a "
+            f"feature-construction fault, not a real swing.")
+    return yhat, int(ok.sum()), [], ref
+
+
 def append_log(record: dict):
     PREDICTIONS_LOG.parent.mkdir(parents=True, exist_ok=True)
     new = pd.DataFrame([record])
@@ -270,14 +379,26 @@ def main():
     print(f"=== Tamil Nadu peak demand forecast ===")
     print(f"target      {target:%Y-%m-%d} ({target:%A})")
     print(f"issued      {now:%Y-%m-%d %H:%M}")
-    if args.champion:
-        print(f"model       {args.champion} (requested)")
-        print("            NOTE: champion loading lands at G2; using stand-in")
-    print(f"model       {MODEL_VERSION}")
+    cfg = load_champion(args.champion) if args.champion else None
+    if cfg:
+        version = (f"champion-{cfg['model_type']}-"
+                   f"{cfg.get('target_parameterisation', 'level')}-"
+                   f"{cfg.get('feature_set', 'custom')}")
+        print(f"model       {version}")
+        print(f"            {cfg['feature_count']} features, "
+              f"{cfg.get('lag_representation', 'literal')} lags, "
+              f"from {args.champion}")
+    else:
+        version = MODEL_VERSION
+        print(f"model       {version} (stand-in; pass --champion to serve "
+              f"the frozen model)")
     print(f"H           {H} (measured; newest demand = target - {H})")
 
-    df, issued, lead, slot = build_features(target)
-    yhat, n_train, missing, anchor_val = fit_and_predict(df, target)
+    df, issued, lead, slot = build_features(target, literal_lags=bool(cfg))
+    if cfg:
+        yhat, n_train, missing, anchor_val = fit_and_predict_champion(df, target, cfg)
+    else:
+        yhat, n_train, missing, anchor_val = fit_and_predict(df, target)
 
     print(f"weather     {slot} forecast issued {issued:%Y-%m-%d}, lead {lead}")
     filled = df.attrs.get("observed_filled_from_forecast") or []
@@ -288,7 +409,11 @@ def main():
             print(f"WARNING     fill used a lead>0 forecast - the logger likely "
                   f"missed a run; today's own analysis was unavailable")
     print(f"train rows  {n_train:,}")
-    print(f"{ANCHOR:<11} {anchor_val:,.0f} MW  (the level the change is added to)")
+    if cfg:
+        print(f"peak_lag_2  {anchor_val:,.0f} MW  (newest observed peak, "
+              f"reference only - prediction is direct-level)")
+    else:
+        print(f"{ANCHOR:<11} {anchor_val:,.0f} MW  (the level the change is added to)")
     if missing:
         print(f"WARNING     {len(missing)} feature(s) NaN: {missing[:6]}")
 
@@ -309,9 +434,16 @@ def main():
         print(f"  95% PI    {lo95:,.0f} - {hi95:,.0f} MW  "
               f"(+/-{(hi95 - lo95) / 2:,.0f})")
     print(f"\n  horizon   day-ahead with one-day demand-data latency (H={H})")
-    print(f"  expected  ~524 MW MAE / ~3.0% MAPE under forecast weather")
-    print(f"            (results/operational_gap.json; NOT the 481 MW")
-    print(f"             reanalysis figure, which is unservable)")
+    if cfg:
+        vp = cfg.get("validation_performance", {})
+        print(f"  expected  ~{vp.get('regime_b_mae', float('nan')):,.0f} MW MAE "
+              f"under forecast weather (Regime B validation 2023-2025)")
+        print(f"            NOT the {vp.get('regime_a_mae', float('nan')):,.0f} MW "
+              f"reanalysis figure, which is unservable")
+    else:
+        print(f"  expected  ~524 MW MAE / ~3.0% MAPE under forecast weather")
+        print(f"            (results/operational_gap.json; NOT the 481 MW")
+        print(f"             reanalysis figure, which is unservable)")
 
     record = {
         "target_date": f"{target:%Y-%m-%d}",
@@ -321,14 +453,18 @@ def main():
         "lo90": round(lo90, 1), "hi90": round(hi90, 1),
         "lo95": round(lo95, 1), "hi95": round(hi95, 1),
         "H": H,
-        "anchor_col": ANCHOR, "anchor_mw": round(anchor_val, 1),
+        "anchor_col": "" if cfg else ANCHOR,
+        "anchor_mw": round(anchor_val, 1),
+        "target_parameterisation": (
+            cfg.get("target_parameterisation", "level") if cfg else "differenced"),
+        "lag_representation": df.attrs.get("lag_representation", ""),
         "weather_source": f"live_log_{slot}_lead_{lead}",
         "weather_issue_slot": slot,
         "weather_issued_on": f"{issued:%Y-%m-%d}",
         "observed_filled_from_forecast": ";".join(
             df.attrs.get("observed_filled_from_forecast") or []),
-        "model_version": MODEL_VERSION,
-        "model_is_champion": False,
+        "model_version": version,
+        "model_is_champion": bool(cfg),
         "n_train_rows": n_train,
         "features_nan": ";".join(missing) if missing else "",
         "actual_mw": "",        # filled later by track_predictions.py

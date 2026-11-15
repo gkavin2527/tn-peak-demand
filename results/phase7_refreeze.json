@@ -1,0 +1,69 @@
+{
+  "phase": "7_refreeze",
+  "generated_at": "2026-11-15T18:32:08",
+  "tuned": {
+    "ridge_gbm_hybrid": {
+      "best_params": {
+        "alpha": 1.0829403003940016e-05,
+        "n_estimators": 700,
+        "learning_rate": 0.025787043483521396,
+        "num_leaves": 10
+      },
+      "best_value": 455.94735331776536
+    },
+    "quantile_hybrid": {
+      "best_params": {
+        "alpha": 7.248645036748854e-05,
+        "n_estimators": 700,
+        "learning_rate": 0.054974829550241175,
+        "num_leaves": 13,
+        "quantile": 0.59055755470205
+      },
+      "best_value": 443.61658909815196
+    }
+  },
+  "metrics": {
+    "ridge_gbm_hybrid_A": {
+      "mae": 455.9557196849469,
+      "rmse": 618.368665944491,
+      "mape": 2.8219634439210792,
+      "bias": -47.20328249826022,
+      "n_samples": 1066
+    },
+    "ridge_gbm_hybrid_B": {
+      "mae": 520.3716911351204,
+      "rmse": 680.0380964734255,
+      "mape": 3.2065786633813955,
+      "bias": -69.61106026289808,
+      "n_samples": 1066
+    },
+    "quantile_hybrid_A": {
+      "mae": 443.6230160823632,
+      "rmse": 624.1906151753961,
+      "mape": 2.7642008246204286,
+      "bias": 29.564166837758577,
+      "n_samples": 1066
+    },
+    "quantile_hybrid_B": {
+      "mae": 497.904400179841,
+      "rmse": 675.0567716687218,
+      "mape": 3.09043316165681,
+      "bias": 16.996762269857264,
+      "n_samples": 1066
+    }
+  },
+  "champion": "quantile_hybrid",
+  "n_scored": 1066,
+  "environment": {
+    "python": "3.14.7",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "xgboost": "3.4.1",
+    "catboost": "1.2.10",
+    "optuna": "5.0.0"
+  }
+}

@@ -94,14 +94,34 @@ def main():
     model, feats, param = build_from_config(cfg)
     check("returns the declared parameterisation", param == "level", param)
     check("returns the 26 selected features", len(feats) == 26, f"{len(feats)}")
-    check("rebuilt model is the champion type",
-          type(model).__name__ == "RidgeGBMHybrid", type(model).__name__)
+    # Config-driven, not hardcoded: the champion type changed at the Phase 7
+    # re-freeze and a literal class name here would have to be edited every
+    # time, which is exactly how a test stops tracking reality.
+    from src.models import MODEL_ZOO, build_model
+    check("declared model_type is a real zoo entry",
+          cfg["model_type"] in MODEL_ZOO, cfg["model_type"])
+    check("rebuilt model matches the declared type",
+          type(model) is type(build_model(cfg["model_type"])),
+          f"{type(model).__name__} from model_type={cfg['model_type']!r}")
+
     hp = cfg["hyperparameters"]
-    check("tuned hyperparameters survive the rebuild",
-          abs(model.alpha - hp["alpha"]) < 1e-15
-          and model._gbm_kw["n_estimators"] == hp["n_estimators"]
-          and model._gbm_kw["num_leaves"] == hp["num_leaves"],
-          f"alpha={model.alpha:g}, {model._gbm_kw}")
+    # Every tuned hyperparameter must survive the rebuild - check each by
+    # name rather than spot-checking three, so a silently dropped one (tau,
+    # for instance) cannot pass.
+    gbm_keys = {"n_estimators", "learning_rate", "num_leaves"}
+    missed = []
+    for k, v in hp.items():
+        if k == "alpha":
+            got = model.alpha
+        elif k in gbm_keys:
+            got = model._gbm_kw.get(k)
+        else:
+            got = getattr(model, k, None)        # e.g. quantile, half_life_years
+        if got is None or abs(float(got) - float(v)) > 1e-12:
+            missed.append(f"{k}: want {v}, got {got}")
+    check(f"all {len(hp)} tuned hyperparameters survive the rebuild",
+          not missed, "; ".join(missed) if missed
+          else ", ".join(f"{k}={hp[k]:g}" for k in hp))
 
     # a config that lies about its own shape must not load
     for label, mutate in [

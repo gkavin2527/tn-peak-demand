@@ -1,15 +1,21 @@
 {
-  "phase": "6b_tuning",
-  "generated_at": "2026-11-15T15:38:38",
-  "champion": "ridge_gbm_hybrid",
+  "phase": "7_refreeze",
+  "generated_at": "2026-11-15T18:32:08",
+  "champion": "quantile_hybrid",
   "selected_on": "Regime B (archived lead-1 forecast weather) mean validation MAE",
-  "selection_rationale": "Regime A is a reanalysis benchmark and is not reproducible on any real forecast evening. The benchmark showed A->B degradation is model-dependent, so the operational regime decides.",
-  "model_type": "ridge_gbm_hybrid",
+  "selection_rationale": "Regime A is a reanalysis benchmark and is not reproducible on any real forecast evening, so the operational regime decides. The quantile residual head replaced the mean-targeting one because MAE is minimised by the conditional median, not the mean, and the previous champion carried a -69.6 MW bias.",
+  "supersedes": {
+    "config": "models/champion_config.phase6b.json",
+    "model": "ridge_gbm_hybrid",
+    "regime_b_mae": 520.3716911351204
+  },
+  "model_type": "quantile_hybrid",
   "hyperparameters": {
-    "alpha": 1.0829403003940016e-05,
+    "alpha": 7.248645036748854e-05,
     "n_estimators": 700,
-    "learning_rate": 0.025787043483521396,
-    "num_leaves": 10
+    "learning_rate": 0.054974829550241175,
+    "num_leaves": 13,
+    "quantile": 0.59055755470205
   },
   "feature_set": "A2_weather_deltas_anomalies",
   "feature_count": 26,
@@ -55,14 +61,44 @@
     "n_trials": 50,
     "objective": "mean validation MAE across 3 folds",
     "regime": "A",
-    "seed": 42
+    "seed": 42,
+    "finalists": [
+      "ridge_gbm_hybrid",
+      "quantile_hybrid"
+    ]
   },
   "validation_performance": {
-    "regime_a_mae": 455.9557196849469,
-    "regime_b_mae": 520.3716911351204,
-    "degradation_mw": 64.41597145017346,
-    "degradation_pct": 14.127681410528892
+    "regime_a_mae": 443.6230160823632,
+    "regime_b_mae": 497.904400179841,
+    "degradation_mw": 54.28138409747777,
+    "degradation_pct": 12.23592602945558,
+    "regime_b_bias": 16.996762269857264,
+    "regime_b_surge_mae": 548.1960150497147,
+    "regime_b_surge_bias": -496.0237810623568
   },
+  "vs_displaced_model_regime_b": {
+    "model": "ridge_gbm_hybrid",
+    "delta_mae_mw": -22.467290955279385,
+    "ci_95_low": -34.493912633019015,
+    "ci_95_high": -9.464988949668337,
+    "dm_p_two_sided": 0.0005606682245390732
+  },
+  "honest_estimates": {
+    "method": "hyperparameters re-selected on inner folds 2023/2024 only, 2025 scored once - see run_phase7_surge.py honest_validation and run_selection_audit.py",
+    "quantile_head_2025_regime_b_mae": 491.0954366828133,
+    "prior_champion_2025_regime_b_mae": 520.5457827779996,
+    "paired_delta_mw": -29.45034609518635,
+    "paired_ci_95": [
+      -55.113198890315125,
+      -3.086808122528493
+    ],
+    "prior_champion_selection_optimism_mw": -5.796626166568444
+  },
+  "known_limitations": [
+    "Surge-day bias is reduced but NOT solved: on untouched 2025 the inner-selected quantile level cuts surge |bias| by only 7%. A global quantile shift cannot fix a conditional problem - see results/phase7_surge.json.",
+    "Recency weighting was tested across half-lives 1-8 years and is not adopted; it is redundant with the trend feature and Ridge extrapolation - see results/phase7_recency.json.",
+    "A4_festival reduces Diwali bias +1,519 -> +259 MW but its overall gain does not clear the paired-CI bar on this cell; it is reported as an extension, not adopted."
+  ],
   "environment": {
     "python": "3.14.7",
     "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",

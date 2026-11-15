@@ -146,14 +146,23 @@ def main():
               "moving-block" in g["protocol"]["bootstrap"])
         check("gate discloses it is another selection round",
               "selection round" in g["note_selection"])
-        champ = g["results"]["ridge_gbm_hybrid"]["gates"]["B"]
+        # Read the champion from config, not hardcoded: the champion changed
+        # at the Phase 7 re-freeze and a literal name here stops the test
+        # tracking reality - which is exactly what happened.
+        cfg_now = json.loads(
+            Path("models/champion_config.json").read_text())
+        champ_model = cfg_now["model_type"]
+        check("gate was run against the frozen champion",
+              champ_model in g["results"],
+              f"gate has {sorted(g['results'])}, champion is {champ_model}")
+        champ = g["results"][champ_model]["gates"]["B"]
         # the decision cell: champion, operational regime
         consistent = champ["adopt"] == (champ["ci_95_high"] < 0)
         check("adopt flag follows the CI, not the point estimate", consistent,
               f"delta {champ['delta_mae']:+.2f}, "
               f"CI [{champ['ci_95_low']:+.2f}, {champ['ci_95_high']:+.2f}], "
               f"adopt={champ['adopt']}")
-        seg = g["results"]["ridge_gbm_hybrid"]["segments_regime_b"]["diwali_window"]
+        seg = g["results"][champ_model]["segments_regime_b"]["diwali_window"]
         check("the feature reduces Diwali bias where it is supposed to act",
               abs(seg["candidate_bias"]) < abs(seg["base_bias"]),
               f"bias {seg['base_bias']:+.0f} -> {seg['candidate_bias']:+.0f} MW "

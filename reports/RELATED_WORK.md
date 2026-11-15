@@ -15,10 +15,11 @@
 
 The paper's contribution is **a measurement, not a leaderboard result**:
 
-> Weather reduces next-day peak-demand MAE by 17.8% under reanalysis, but
-> 7.1% of that gain is lost when only operationally available lead-1 forecasts
-> are used — a penalty invisible to the reanalysis-based evaluations standard
-> in the literature.
+> Weather reduces next-day peak-demand MAE by 17.9% under reanalysis
+> (696 → 572 MW), but **32.4% of that gain is given back**
+> (612 MW, 95% CI on the penalty [25.9, 54.1]) when only operationally
+> available lead-1 forecasts are used — a penalty invisible to the
+> reanalysis-based evaluations standard in the literature.
 
 Related work therefore has to establish three things, in order:
 

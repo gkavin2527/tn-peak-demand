@@ -73,22 +73,12 @@ def fig1_actual_vs_pred(cfg):
 
 def fig2_weather_ladder(cfg):
     """THE headline figure: what operational weather actually costs."""
-    gap = load("operational_gap.json") if (RESULTS / "operational_gap.json").exists() else {}
-    ab = load("phase5_regime_ab_results.json")
-
-    # Phase 5 Ridge ladder - the committed three-condition result
-    a0 = load("experiment_a0_results.json")
-    def dig(d, *keys):
-        for k in keys:
-            if isinstance(d, dict) and k in d:
-                d = d[k]
-            else:
-                return None
-        return d
-    mae_a0 = (dig(a0, "overall", "mae") or dig(a0, "metrics", "overall", "mae")
-              or 695.58)
-    rid_a = dig(ab, "regime_a", "overall", "mae") or 571.61
-    rid_b = dig(ab, "regime_b", "overall", "mae") or 611.95
+    # All three rungs come from results/weather_ladder.json, which measures
+    # them on the SAME 1,066 shared dates. An earlier version fell back to a
+    # hardcoded A0 of 695.58 taken from a different sample - close enough to
+    # look right, which is what made it worth removing.
+    L = load("weather_ladder.json")
+    mae_a0, rid_a, rid_b = L["a0_mae"], L["regime_a_mae"], L["regime_b_mae"]
 
     ch_a = cfg["validation_performance"]["regime_a_mae"]
     ch_b = cfg["validation_performance"]["regime_b_mae"]

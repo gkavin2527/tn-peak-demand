@@ -99,8 +99,8 @@ step "figures"
 run make_figures.py
 
 step "paper and deck (numbers read from results/, never typed)"
-run make_paper.py
-run make_deck.py
+run paper/make_paper.py
+run paper/make_deck.py
 
 step "re-verify after regeneration"
 for t in test_serving.py test_phase7_festival.py; do

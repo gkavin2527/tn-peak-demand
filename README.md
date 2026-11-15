@@ -1,5 +1,15 @@
 # Tamil Nadu Daily Peak Electricity Demand Dataset
 
+> ### Where things are
+>
+> | | |
+> |---|---|
+> | **[docs/ANALYSIS.md](docs/ANALYSIS.md)** | **Start here** — complete project analysis: what's done, strong, weak, missing, and what would improve the model |
+> | [docs/](docs/README.md) | All project documentation, with an index |
+> | [paper/](paper/) | Manuscript, deck and their generators. Self-contained — deletable as a unit |
+> | this file | The dataset and pipeline reference |
+
+
 A daily-updating dataset of Tamil Nadu's peak electricity demand (MW), joined with
 energy consumption, weather features, and calendar indicators. Built for next-day peak demand forecasting.
 
@@ -21,7 +31,7 @@ Updates automatically every morning at 07:00 IST via GitHub Actions.
 | Columns | 64 (62 features) |
 | Primary Target | `tn_peak_demand_mw` (Tamil Nadu Peak Demand in MW) |
 | Freshness | ~1–2 days behind real time |
-| Baseline to beat | 1,044 MW persistence → **520 MW** with the frozen champion at H=2 under real forecast weather (`models/champion_config.json`; see [PHASE6_MODEL_BENCHMARK.md](PHASE6_MODEL_BENCHMARK.md)) |
+| Baseline to beat | 1,044 MW persistence → **520 MW** with the frozen champion at H=2 under real forecast weather (`models/champion_config.json`; see [PHASE6_MODEL_BENCHMARK.md](docs/BENCHMARK.md)) |
 
 ```python
 import pandas as pd

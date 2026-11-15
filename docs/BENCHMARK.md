@@ -6,7 +6,7 @@
 > `ridge_gbm_hybrid` (520.37). The benchmark below is still the valid record
 > of how the nine model FAMILIES ranked, and its conclusion holds — every
 > pure GBM lost to Ridge. But any champion number here is one generation old.
-> See **[`PHASE7_RESULTS.md`](PHASE7_RESULTS.md)**.
+> See **[`PHASE7_RESULTS.md`](RESULTS.md)**.
 
 **Branch:** `phase-6-modeling` (from `phase-5-regime-ab` @ `1607acd`)
 **Question:** Phase 5 fixed *what information* the model gets. Phase 6 asks *which model class best exploits it.*

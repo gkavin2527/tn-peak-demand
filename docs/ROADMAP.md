@@ -6,7 +6,7 @@
 > confirmation has been **run once and consumed** (MAE 503.49). Selection
 > optimism measured and found negative. Any `ridge_gbm_hybrid` reference
 > below is one generation old.
-> Current numbers: **[`PHASE7_RESULTS.md`](PHASE7_RESULTS.md)**.
+> Current numbers: **[`PHASE7_RESULTS.md`](RESULTS.md)**.
 > Remaining: Wave 3 (related work, deck) and the Zenodo DOI.
 
 This document lists everything left to take the **Tamil Nadu Next-Day Peak Electricity Demand Forecasting** project from its finished data foundation to modelling, the operational-forecast experiment, deployment and the paper.

@@ -1,6 +1,6 @@
 # Remediation Plan — fixing every finding in `AUDIT_REPORT.md`
 
-**Created:** 2026-11-15 · **Against:** `phase-6-modeling` @ `871f6dc` · **Audit:** [`AUDIT_REPORT.md`](AUDIT_REPORT.md)
+**Created:** 2026-11-15 · **Against:** `phase-6-modeling` @ `871f6dc` · **Audit:** [`AUDIT_REPORT.md`](AUDIT.md)
 
 Every item traces to a specific audit finding. Each has an exact file, the change,
 effort, an **acceptance criterion** (how you know it's done), and a **verify**

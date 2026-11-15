@@ -23,8 +23,9 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-R = Path("results")
-OUT = Path("reports/PAPER.md")
+ROOT = Path(__file__).resolve().parent.parent
+R = ROOT / "results"
+OUT = ROOT / "paper" / "PAPER.md"
 
 
 def j(name):
@@ -32,7 +33,7 @@ def j(name):
 
 
 def main():
-    cfg = json.loads(Path("models/champion_config.json").read_text())
+    cfg = json.loads((ROOT / "models" / "champion_config.json").read_text())
     L, fin, aud = j("weather_ladder.json"), j("final_evaluation.json"), j("selection_audit.json")
     ea, fi, iv = j("error_analysis.json"), j("feature_importance.json"), j("intervals.json")
     sur, fes, dm = j("phase7_surge.json"), j("phase7_festival.json"), j("dm_tests.json")
@@ -474,7 +475,7 @@ versions that produced them and recorded in the model configuration
 ({cfg['environment']['python']}, LightGBM {cfg['environment']['lightgbm']}, scikit-learn {cfg['environment']['scikit-learn']}). Every headline
 figure is recomputed from saved per-row predictions rather than transcribed.
 """
-    OUT.parent.mkdir(exist_ok=True)
+    OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(doc)
     print(f"wrote {OUT} ({len(doc.splitlines())} lines, ~{len(doc.split())} words)")
 

@@ -26,7 +26,10 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  MIN_FREE_MB: "2000"
+  # Tier-calibrated, same reasoning as daily.yml. The model tier installs to
+  # 355 MB measured (it adds scipy, scikit-learn and lightgbm on top of the
+  # data tier), so this gate sits higher than the morning job's 500 MB.
+  MIN_FREE_MB: "800"
 
 jobs:
   forecast:

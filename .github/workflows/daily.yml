@@ -12,7 +12,16 @@ concurrency:
 env:
   # Refuse to start below this much free disk rather than dying half way
   # through pip with a corrupt venv.
-  MIN_FREE_MB: "2000"
+  #
+  # Tier-calibrated: the data tier installs to 195 MB measured, and pip still
+  # needs transient space to download and extract the largest wheel even with
+  # --no-cache-dir, so the gate allows roughly 2.5x the installed size.
+  #
+  # An earlier value of 2000 was carried over from when BOTH jobs installed
+  # the full 855 MB requirements.txt. After the tier split that threshold
+  # blocked runs which would have succeeded: run 43719572988 reclaimed disk
+  # to 942 MB free and was then refused by its own preflight.
+  MIN_FREE_MB: "500"
 
 jobs:
   update:

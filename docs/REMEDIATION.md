@@ -22,7 +22,7 @@ measurement items must come first or you will redo them.
 
 | Rule | Why |
 |---|---|
-| Run `test_contract.py`, `test_phase5_gateway.py`, `test_phase6_benchmark.py` before every commit | 3 suites, 44+ checks; they caught 6 real bugs |
+| Run `tests/test_contract.py`, `tests/test_phase5_gateway.py`, `tests/test_phase6_benchmark.py` before every commit | 3 suites, 44+ checks; they caught 6 real bugs |
 | Never change `PHASE5_FEATURE_SETS["A2_weather_deltas_anomalies"]` in place | Phase 5's gate selected it. **Add `A4_*` as a new key** |
 | Assert feature-list **identity**, never length | A count check already let a swapped pair through once |
 | 2026 is touched **once**, after the champion is frozen | Already partly contaminated; don't make it worse |
@@ -61,7 +61,7 @@ The champion's 520.37 MW is optimistically biased by an **unknown** amount.
 will ask "how much of your improvement is selection noise?" and right now there
 is no answer.
 
-**File:** new `run_selection_audit.py`
+**File:** new `experiments/run_selection_audit.py`
 
 **Change:** replay the *entire* selection pipeline inside an outer fold that
 never sees 2025.
@@ -84,7 +84,7 @@ honest figure and the paper is *stronger* for having measured it.
 `reported_2025_mae`, `honest_2025_mae`, `optimism_mw`, and the inner-selected
 feature set + model (which may differ from A2/hybrid — that itself is a result).
 
-**Verify:** `python run_selection_audit.py && python -c "import json;d=json.load(open('results/selection_audit.json'));print(d['optimism_mw'])"`
+**Verify:** `python experiments/run_selection_audit.py && python -c "import json;d=json.load(open('results/selection_audit.json'));print(d['optimism_mw'])"`
 
 ---
 
@@ -120,7 +120,7 @@ so the serving path reads it rather than inferring.
 models/champion_config.json --dry-run` emits a forecast within ±3,000 MW of
 `peak_lag_1`, and a regression test asserts the level/differenced branch.
 
-**Verify:** add to `test_phase6_benchmark.py`: assert the served prediction for a
+**Verify:** add to `tests/test_phase6_benchmark.py`: assert the served prediction for a
 known date is within 5% of the benchmark's prediction for that same date.
 
 ---
@@ -132,7 +132,7 @@ known date is within 5% of the benchmark's prediction for that same date.
 is reconstructed by **re-fitting**, so a LightGBM minor bump can silently move
 520.37 MW.
 
-**Files:** `requirements.txt`; `run_phase6_tuning.py` (champion_config writer)
+**Files:** `requirements.txt`; `experiments/run_phase6_tuning.py` (champion_config writer)
 
 **Change:** `pip freeze` the five modelling libraries into exact pins. Add to
 `champion_config.json`:
@@ -145,7 +145,7 @@ is reconstructed by **re-fitting**, so a LightGBM minor bump can silently move
 **Effort:** 1 h · **Acceptance:** fresh venv from `requirements.txt` reproduces
 520.37 MW to 0.01 MW.
 
-**Verify:** `python -m venv /tmp/v && /tmp/v/bin/pip install -r requirements.txt && /tmp/v/bin/python run_phase6_tuning.py --trials 5 --models ridge`
+**Verify:** `python -m venv /tmp/v && /tmp/v/bin/pip install -r requirements.txt && /tmp/v/bin/python experiments/run_phase6_tuning.py --trials 5 --models ridge`
 
 ---
 
@@ -168,7 +168,7 @@ Add a BibTeX block.
 
 **Finding:** §1, §5. No `results/final_evaluation.json`.
 
-**File:** new `run_final_evaluation.py`
+**File:** new `experiments/run_final_evaluation.py`
 
 **Change:** load the frozen champion, train on ≤2025, predict 2026 **once**,
 under **Regime B**. Report MAE/RMSE/MAPE/bias overall and on the segments in
@@ -233,7 +233,7 @@ model is systematically low exactly when reserve margin is thinnest.
 **Finding:** §6 item 4. 2026 runs ~10% above 2025; `TrackARidge.fit` already
 accepts `sample_weight` (verified, line ~30).
 
-**File:** `src/models.py`, `run_phase6_tuning.py:SPACES`
+**File:** `src/models.py`, `experiments/run_phase6_tuning.py:SPACES`
 
 **Change:** exponential half-life as a tuned hyperparameter (1 / 2 / 3 / 5 yr / none).
 
@@ -260,7 +260,7 @@ bootstrap in every comparison table.
 floods, 2020 COVID, post-COVID), heat waves, long weekends, weekday/weekend,
 per-festival.
 
-**File:** new `run_error_analysis.py` → `results/error_analysis.json` + figures.
+**File:** new `experiments/run_error_analysis.py` → `results/error_analysis.json` + figures.
 
 **Effort:** 3 h · **Acceptance:** a table a referee can read: n, MAE, bias, CI
 per segment. Flag any segment with n<20 as anecdotal (Pongal is n=8).
@@ -272,7 +272,7 @@ per segment. Flag any segment with n<20 as anecdotal (Pongal is n=8).
 **Finding:** §5. The +0.41 lag-1 residual ACF was measured on the **old
 weather-free Ridge**, not the champion. It is quoted in docs as if current.
 
-**File:** `run_error_analysis.py`
+**File:** `experiments/run_error_analysis.py`
 
 **Effort:** 1 h · **Acceptance:** champion ACF reported; correct or retract the
 old figure wherever it appears.
@@ -288,7 +288,7 @@ old figure wherever it appears.
 **weather-free model**; `fig5_feature_coefficients.png` shows coefficients for a
 feature set no longer in use. **These cannot go in the paper.**
 
-**File:** new `make_figures.py`, writing to `figures/` (overwrite deliberately)
+**File:** new `experiments/make_figures.py`, writing to `figures/` (overwrite deliberately)
 
 Minimum set:
 
@@ -311,7 +311,7 @@ caption names the model and regime.
 **Finding:** §3.3, §5. No SHAP anywhere. For a paper claiming weather matters,
 this is a predictable referee complaint.
 
-**File:** new `run_interpretability.py`
+**File:** new `experiments/run_interpretability.py`
 
 **Note the structure:** the champion is Ridge + GBM-residual, so attribution has
 **two parts** — standardised linear coefficients for the Ridge component, and
@@ -363,12 +363,12 @@ WAVE 1 — accuracy + analyses
 [ ] W1-2  surge-day bias (quantile head)     4h  src/models.py
 [ ] W1-3  recency weighting                  2h  src/models.py
 [ ] W1-4  Diebold-Mariano                    2h  src/evaluation.py
-[ ] W1-5  segment error analysis             3h  run_error_analysis.py
-[ ] W1-6  champion residual ACF              1h  run_error_analysis.py
+[ ] W1-5  segment error analysis             3h  experiments/run_error_analysis.py
+[ ] W1-6  champion residual ACF              1h  experiments/run_error_analysis.py
 
 WAVE 2 — paper assets
-[ ] W2-1  regenerate all figures             3h  make_figures.py
-[ ] W2-2  SHAP (two-part attribution)        4h  run_interpretability.py
+[ ] W2-1  regenerate all figures             3h  experiments/make_figures.py
+[ ] W2-2  SHAP (two-part attribution)        4h  experiments/run_interpretability.py
 [ ] W2-3  conformal intervals on champion    3h  calibrate_intervals.py
 
 WAVE 3 — polish

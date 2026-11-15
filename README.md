@@ -258,7 +258,7 @@ month runs cold.
 
 **So do not hard-code a bias correction.** A constant fitted on the whole
 archive would be roughly 1 °C wrong for current data, in the wrong direction.
-`forecast_skew.py` reports a trailing-90-day estimate alongside the
+`tools/forecast_skew.py` reports a trailing-90-day estimate alongside the
 full-archive figure for exactly this reason; re-estimate it on a rolling window
 or skip the correction entirely and let the model see raw forecasts.
 
@@ -282,10 +282,10 @@ reanalysis and not synthetic noise added to actuals.
 
 ```bash
 python fetch_weather.py archive-forecast   # one-time, ~30 requests
-python forecast_skew.py                    # bias tables + operational backtest
+python tools/forecast_skew.py                    # bias tables + operational backtest
 ```
 
-`forecast_skew.py` does three things:
+`tools/forecast_skew.py` does three things:
 
 1. Reports bias and MAE per variable, per lead, **per season** — a cold bias
    that only appears in the monsoon matters differently from a constant one.
@@ -295,7 +295,7 @@ python forecast_skew.py                    # bias tables + operational backtest
    check is the reason to trust the backtest.
 3. Runs the **operational backtest**: train on reanalysis, score with forecast
    weather substituted in, as a real morning would. The gap between that and
-   `baseline.py` is the honest cost of not knowing tomorrow's weather.
+   `tools/baseline.py` is the honest cost of not knowing tomorrow's weather.
 
 Substitution is lead-aware, which is easy to get wrong. Predicting day *T* at
 lead 1 you hold the forecast for *T*, but **yesterday's weather is already
@@ -304,7 +304,7 @@ forecast. Treating both sides as forecast would overstate the degradation.
 
 ### Results
 
-Run `python run_phase5.py` (~13 min). The cross-check passes — our live log and
+Run `python experiments/run_phase5.py` (~13 min). The cross-check passes — our live log and
 Open-Meteo's archived runs agree to **0.36 °C MAE** on `t_max`, under the
 0.5 °C threshold fixed before any demand result was looked at, so the archive
 is a valid stand-in for forecasts we would actually have held.
@@ -416,11 +416,11 @@ residual). Trees are the wrong tool for that question.
 
 ## Baseline
 
-[`baseline.py`](baseline.py) is a reference model, not a tuned one, so there is
+[`tools/baseline.py`](tools/baseline.py) is a reference model, not a tuned one, so there is
 a number to beat that is not accidentally inflated:
 
 ```bash
-python baseline.py
+python tools/baseline.py
 ```
 
 | model | 2023 | 2024 | 2025 | 2026 | mean MAE | MAPE |
@@ -470,7 +470,7 @@ Two consequences worth stating plainly:
   PSP terms are not published in a form that clearly permits republishing a
   derived daily series, so `data/peak_demand.csv` and `data/master.csv` should
   be treated as *reproducible from source* rather than as freely
-  redistributable. [`backfill_peak_demand.py`](backfill_peak_demand.py) and
+  redistributable. [`tools/backfill_peak_demand.py`](tools/backfill_peak_demand.py) and
   [`fetch_weather.py`](fetch_weather.py) rebuild both from the primaries.
 - **Neither source endorses this work.** Any error in the derived dataset is
   this repository's, not theirs.
@@ -569,10 +569,10 @@ of day *D* for target *D+1* is built on demand through *D−1*.
 It is the second-most-predictive column in the file (r = 0.927), and training
 on it produces a model that cannot be run. `src/contract.py` shifts the whole
 demand/energy/grid block by `H−1` so this cannot happen by accident, and
-`test_contract.py` proves it mechanically rather than trusting column names.
+`tests/test_contract.py` proves it mechanically rather than trusting column names.
 
 ```bash
-python measure_publish_time.py --probe   # re-measure H from pipeline evidence
+python tools/measure_publish_time.py --probe   # re-measure H from pipeline evidence
 ```
 
 Measured, not assumed — `results/publish_time.json`. Note the lag names: under
@@ -601,7 +601,7 @@ mistake moves the champion's MAE from **438.2 → 683.7 MW (+56%)** — roughly
 `predict_next_day.py` therefore takes the representation from
 `models/champion_config.json` (`"lag_representation": "literal"`) rather than
 inferring it, and refuses to serve a champion from the wrong frame.
-[`test_serving.py`](test_serving.py) asserts the served feature row is
+[`tests/test_serving.py`](tests/test_serving.py) asserts the served feature row is
 identical to `load_phase5_data` for all 26 features and that `peak_lag_N`
 resolves against the **raw series** at T−N rather than being trusted by name.
 
@@ -620,7 +620,7 @@ X  = model_features(df)                 # drops weather levels and `trend`
 | `swap_weather(df, weather)` | Track B | replaces **only** target-day weather |
 | `run_walk_forward(...)` | Track A | expanding window, weekly refit |
 
-`feature_groups.json` is the shared column taxonomy. `python test_contract.py`
+`feature_groups.json` is the shared column taxonomy. `python tests/test_contract.py`
 is Gate G0's acceptance check — **22 checks**, including the identity test that
 swapping reanalysis back in reproduces predictions to `0.000e+00 MW`. Run it
 after any change to feature engineering.
@@ -705,7 +705,7 @@ One-time setup:
 python fetch_weather.py backfill           # reanalysis history
 python fetch_weather.py archive-forecast   # 5.4y historical forecast archive
 python tn_holidays.py --export             # resolved holiday calendar
-python measure_publish_time.py             # H
+python tools/measure_publish_time.py             # H
 python calibrate_intervals.py              # interval multipliers
 ```
 
@@ -720,17 +720,17 @@ python calibrate_intervals.py              # interval multipliers
 | `tn_holidays.py` | Tamil Nadu holiday calendar, gap-filled and self-validating |
 | `build_dataset.py` | Merge and feature engineering |
 | `health_check.py` | Validation, exits non-zero on failure |
-| `measure_publish_time.py` | Measures `H` from pipeline evidence |
-| `check_weather_lag_source.py` | Train/serve skew on the lagged weather columns |
+| `tools/measure_publish_time.py` | Measures `H` from pipeline evidence |
+| `tools/check_weather_lag_source.py` | Train/serve skew on the lagged weather columns |
 | `src/contract.py` | `load_master`, `swap_weather` — the frozen contract |
 | `src/operational/walkforward.py` | Stand-in walk-forward until Track A ships theirs |
 | `src/operational/metrics.py` | Surge subsets, bias, block-bootstrap CIs |
 | `src/operational/intervals.py` | Split-conformal calibration |
-| `test_contract.py` | **Gate G0 acceptance (22 checks) — run after touching features** |
+| `tests/test_contract.py` | **Gate G0 acceptance (22 checks) — run after touching features** |
 | `threadlimit.py` | Pins BLAS/OpenMP threads to 1; import before numpy |
-| `baseline.py` | Reference model — the number to beat |
-| `forecast_skew.py` | Forecast bias tables and drift |
-| `run_phase5.py` | The operational degradation experiment |
+| `tools/baseline.py` | Reference model — the number to beat |
+| `tools/forecast_skew.py` | Forecast bias tables and drift |
+| `experiments/run_phase5.py` | The operational degradation experiment |
 | `calibrate_intervals.py` | Writes `results/intervals.json` |
 | `predict_next_day.py` | Issues tomorrow's forecast |
 | `track_predictions.py` | Scores forecasts once actuals land |

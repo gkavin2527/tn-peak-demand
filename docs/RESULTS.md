@@ -27,7 +27,7 @@ residual head was never the right estimator for the metric being reported —
 and the Phase 6b champion carried a −69.6 MW bias that a modest upward shift
 corrects at the same time.
 
-*`run_phase7_refreeze.py` → `results/phase7_refreeze.json`*
+*`experiments/run_phase7_refreeze.py` → `results/phase7_refreeze.json`*
 
 ---
 
@@ -53,7 +53,7 @@ reproducible from committed code, not the informal inspection that shaped the
 search spaces), and the A2→A3.4 gate is not replayed because the A3 variants
 were never registered.
 
-*`run_selection_audit.py` → `results/selection_audit.json`*
+*`experiments/run_selection_audit.py` → `results/selection_audit.json`*
 
 ### 2.2 The 2026 confirmation — one-shot, consumed
 
@@ -72,7 +72,7 @@ Trained on 3,982 rows ≤2025-12-31 (Regime A), scored on
 > **This is a confirmation set, not a blind test, and must never be described
 > as one.** 2026 was inspected during Track A feature diagnostics
 > (`diagnostic_2026_results` in `experiment_a1/a2/a3_results.json`). The
-> least-biased estimate is §2.1 — though that replay is not fully nested either: it ranks families on default hyperparameters and reuses feature sets selected with 2025 in view. **No genuinely blind evaluation exists in this project.** `run_final_evaluation.py` refuses to overwrite its
+> least-biased estimate is §2.1 — though that replay is not fully nested either: it ranks families on default hyperparameters and reuses feature sets selected with 2025 in view. **No genuinely blind evaluation exists in this project.** `experiments/run_final_evaluation.py` refuses to overwrite its
 > own artifact without `--force`.
 
 **Interval coverage is genuinely out-of-sample.** The operational conformal
@@ -84,7 +84,7 @@ reported against a parallel **2026-free** calibration fitted ≤2025-12-31:
 | 90% | 91.1% | +1.1 pts | 2,174 MW |
 | 95% | 93.9% | -1.1 pts | 2,761 MW |
 
-*`run_final_evaluation.py` → `results/final_evaluation.json`*
+*`experiments/run_final_evaluation.py` → `results/final_evaluation.json`*
 
 ---
 
@@ -116,7 +116,7 @@ Ridge carries the level (sd 1,398 MW); the residual GBM supplies
 27% of total sd. A TreeSHAP-only chart would have badly
 misrepresented the model.
 
-*`run_interpretability.py` → `results/feature_importance.json`*
+*`experiments/run_interpretability.py` → `results/feature_importance.json`*
 
 ---
 
@@ -137,7 +137,7 @@ trend is already carried by the `trend` feature and Ridge's linear
 extrapolation — the property the hybrid exists to preserve — so down-weighting
 history removes data and adds nothing.
 
-*`run_phase7_recency.py` → `results/phase7_recency.json`*
+*`experiments/run_phase7_recency.py` → `results/phase7_recency.json`*
 
 ### 4.2 Surge-day bias — reduced, not solved
 
@@ -154,7 +154,7 @@ a conditional correction — heat-persistence features, or a surge-probability
 head. Both would re-open selection and invalidate §2.2, so this is stated as a
 limitation and left to future work.
 
-*`run_phase7_surge.py` → `results/phase7_surge.json`*
+*`experiments/run_phase7_surge.py` → `results/phase7_surge.json`*
 
 ### 4.3 A4 festival features — rejected at the bar, large segment effect
 
@@ -170,7 +170,7 @@ the one festival already over-forecast. The two Phase 7 results pull against
 each other. The honest reading: A4 is a targeted festival remedy whose value
 cannot show up in an aggregate MAE gate over 15 of 1,066 days.
 
-*`run_phase7_festival.py` → `results/phase7_festival.json`*
+*`experiments/run_phase7_festival.py` → `results/phase7_festival.json`*
 
 ---
 
@@ -202,7 +202,7 @@ Residuals are clearly non-Gaussian (skew +1.18, excess kurtosis
 +4.48), which retrospectively justifies split-conformal intervals over
 normal theory, and the moving-block bootstrap over an iid one.
 
-*`run_error_analysis.py` → `results/error_analysis.json`*
+*`experiments/run_error_analysis.py` → `results/error_analysis.json`*
 
 ---
 
@@ -213,7 +213,7 @@ Ridge** and have been deleted (recoverable at `01dfc7e`). Six replacements,
 each caption naming the model **and** the regime — the thing the old ones
 lacked that made them actively misleading rather than merely stale.
 
-`make_figures.py` reads only committed `results/*.json` and `*.csv`; it never
+`experiments/make_figures.py` reads only committed `results/*.json` and `*.csv`; it never
 refits, so a figure cannot silently disagree with the experiment that produced
 it.
 

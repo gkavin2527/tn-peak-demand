@@ -5,8 +5,8 @@
 > ### ⚠️ Conflict of interest — read this first
 >
 > I built a substantial part of what I am auditing: `src/contract.py`'s Phase 5
-> gateway, `src/evaluation.py`, `src/models.py`, `run_phase6_benchmark.py`,
-> `run_phase6_tuning.py`, `test_contract.py`, `test_phase6_benchmark.py`, the
+> gateway, `src/evaluation.py`, `src/models.py`, `experiments/run_phase6_benchmark.py`,
+> `experiments/run_phase6_tuning.py`, `tests/test_contract.py`, `tests/test_phase6_benchmark.py`, the
 > Track B operational pipeline, and most of the documentation. **A referee
 > cannot neutrally audit their own work.** I have tried to compensate by
 > re-deriving every number from raw artifacts rather than reading it from a
@@ -29,8 +29,8 @@ run against source via `inspect.getsource`. Claims below are marked
 | Leakage-safe feature prep | **DONE** | `notebooks/02`, `src/contract.py:load_phase5_data` |
 | Evaluation protocol + baselines | **DONE** | `src/evaluation.py`, naive + seasonal-naive + OLS + Ridge in `src/models.py` |
 | Weather feature selection (A0–A3) | **DONE** | `run_experiment_a0..a3.py`, `results/experiment_a*_results.json` |
-| Forecast-gap experiment (Regime A/B) | **DONE** | `run_phase5_regime_ab.py`, verified below |
-| GBDT benchmark + tuning | **DONE** | `run_phase6_benchmark.py`, `run_phase6_tuning.py`, `models/champion_config.json` |
+| Forecast-gap experiment (Regime A/B) | **DONE** | `experiments/run_phase5_regime_ab.py`, verified below |
+| GBDT benchmark + tuning | **DONE** | `experiments/run_phase6_benchmark.py`, `experiments/run_phase6_tuning.py`, `models/champion_config.json` |
 | Daily inference + dashboard | **DONE (barely exercised)** | `predict_next_day.py`, `dashboard/app.py`; `data/predictions_log.csv` holds **1** forecast |
 | SHAP / interpretability | **NOT STARTED** | no SHAP anywhere in repo |
 | Error analysis by segment | **PARTIAL** | surge/summer in `src/operational/metrics.py`; no festival/regime/post-COVID study |
@@ -77,7 +77,7 @@ resolves each lag column against the raw series rather than trusting its name �
 that caught a genuine weekday-misalignment bug. The `swap_weather` coverage guard
 and fail-closed masking are regression-tested against a planted missing date.
 
-**[VERIFIED] H=2 is measured, not assumed.** `measure_publish_time.py` →
+**[VERIFIED] H=2 is measured, not assumed.** `tools/measure_publish_time.py` →
 `results/publish_time.json`: Grid-India's day-D report was never in hand on day D
 across 46 observed runs. The consequence — `peak_lag_1` is unusable — is
 enforced in code and asserted in tests.
@@ -174,7 +174,7 @@ the absolute Regime B number is slightly optimistic.
 
 **[VERIFIED]** Expanding folds (train ≤2022 → val 2023; ≤2023 → 2024; ≤2024 →
 2025). No random splitting anywhere. Training and scoring are explicitly
-separated in `run_phase6_benchmark.py:117-148`; `test_phase6_benchmark.py`
+separated in `experiments/run_phase6_benchmark.py:117-148`; `tests/test_phase6_benchmark.py`
 asserts `n_train > 2500` for Regime B — this check exists because an earlier
 version silently trained fold 1 on 364 rows instead of 2,897.
 
@@ -246,11 +246,11 @@ Grounded in the **champion's actual Regime B residuals** [VERIFIED, n=1,066]:
 | 1 | **Diwali window feature** (±2 days), like `pongal_window`. Holiday MAE is 77% above working-day and the three worst days are Diwali. `tn_holidays.csv` already resolves Diwali to 2030 | **High** | 2 h | `build_dataset.py:calendar_features` |
 | 2 | **Generic multi-day festival window** + `days_to_nearest_holiday` (signed). Generalises #1 and fixes `day_before/after` being too narrow | **High** | 3 h | same |
 | 3 | **Surge-day bias correction**: quantile regression (τ≈0.9) as a second head, or asymmetric loss. Bias −549 MW on top-5% is the operational risk | **High** | 4 h | `src/models.py` |
-| 4 | **Recency weighting** (exponential half-life 2–4 yr) in `TrackARidge.fit` — already supports `sample_weight`. 2026 runs ~10% above 2025 | **Med** | 2 h | `src/models.py`, `run_phase6_tuning.py` |
+| 4 | **Recency weighting** (exponential half-life 2–4 yr) in `TrackARidge.fit` — already supports `sample_weight`. 2026 runs ~10% above 2025 | **Med** | 2 h | `src/models.py`, `experiments/run_phase6_tuning.py` |
 | 5 | **Long-weekend / bridge-day flags** (holiday adjacent to weekend) | **Med** | 2 h | `build_dataset.py` |
 | 6 | **Stack Ridge + LightGBM + XGBoost residuals** rather than LightGBM alone | **Med** | 3 h | `src/models.py` |
 | 7 | **Heat-persistence**: consecutive days > 32 °C, 3-day rolling `cdd_max`. Hottest-decile bias is −99 MW | **Med** | 2 h | `build_dataset.py` |
-| 8 | **Tune the residual GBM's `min_child_samples`/`reg_lambda`** — not in the current search space | **Low–Med** | 1 h | `run_phase6_tuning.py:SPACES` |
+| 8 | **Tune the residual GBM's `min_child_samples`/`reg_lambda`** — not in the current search space | **Low–Med** | 1 h | `experiments/run_phase6_tuning.py:SPACES` |
 | 9 | **Regime dummy for 2020–21 COVID**, or drop/downweight | **Low–Med** | 2 h | `build_dataset.py` |
 | 10 | **Target transform**: model `log(y)` or `y − peak_lag_7` as an ablation | **Low** | 2 h | `src/models.py` |
 
@@ -304,10 +304,10 @@ issue hour unverified, 2026 inspected during development, single region.
 
 | # | Action | Hours | File |
 |---|---|---|---|
-| 1 | **Nested/forward validation to quantify selection optimism.** Re-select features+model+hyperparameters using only ≤2024, then evaluate once on 2025. The gap vs the reported 2025 fold *is* the optimism estimate | 6 | new `run_selection_audit.py` |
-| 2 | **Freeze and run the single 2026 confirmation**, labelled a *confirmation set*, never a blind test | 2 | new `run_final_evaluation.py` |
-| 3 | **Regenerate all 5 figures from the champion.** Current ones depict the weather-free model | 3 | new `make_figures.py` |
-| 4 | **Pin all dependencies**; record versions in `champion_config.json` | 1 | `requirements.txt`, `run_phase6_tuning.py` |
+| 1 | **Nested/forward validation to quantify selection optimism.** Re-select features+model+hyperparameters using only ≤2024, then evaluate once on 2025. The gap vs the reported 2025 fold *is* the optimism estimate | 6 | new `experiments/run_selection_audit.py` |
+| 2 | **Freeze and run the single 2026 confirmation**, labelled a *confirmation set*, never a blind test | 2 | new `experiments/run_final_evaluation.py` |
+| 3 | **Regenerate all 5 figures from the champion.** Current ones depict the weather-free model | 3 | new `experiments/make_figures.py` |
+| 4 | **Pin all dependencies**; record versions in `champion_config.json` | 1 | `requirements.txt`, `experiments/run_phase6_tuning.py` |
 | 5 | **Add licence + citation block** (Grid-India PSP terms, Zenodo DOI, Open-Meteo attribution) | 1 | `README.md` |
 
 ### High impact
@@ -315,11 +315,11 @@ issue hour unverified, 2026 inspected during development, single region.
 | # | Action | Hours | File |
 |---|---|---|---|
 | 6 | Diwali + generic festival window; re-run benchmark | 4 | `build_dataset.py` |
-| 7 | SHAP for the champion (linear coefficients + TreeSHAP on the residual GBM) | 4 | new `run_interpretability.py` |
+| 7 | SHAP for the champion (linear coefficients + TreeSHAP on the residual GBM) | 4 | new `experiments/run_interpretability.py` |
 | 8 | Conformal intervals fitted on the champion | 3 | `calibrate_intervals.py` |
 | 9 | Surge-day bias work (quantile head) | 4 | `src/models.py` |
 | 10 | Diebold–Mariano alongside the bootstrap | 2 | `src/evaluation.py` |
-| 11 | Segment error analysis incl. COVID/floods regimes | 3 | new `run_error_analysis.py` |
+| 11 | Segment error analysis incl. COVID/floods regimes | 3 | new `experiments/run_error_analysis.py` |
 
 ### Polish
 
@@ -348,9 +348,9 @@ issue hour unverified, 2026 inspected during development, single region.
 
 | Check | Result |
 |---|---|
-| `test_contract.py` | **PASS** 22/22, exit 0 |
-| `test_phase5_gateway.py` | **PASS** all, exit 0 |
-| `test_phase6_benchmark.py` | **PASS** 22/22, exit 0 |
+| `tests/test_contract.py` | **PASS** 22/22, exit 0 |
+| `tests/test_phase5_gateway.py` | **PASS** all, exit 0 |
+| `tests/test_phase6_benchmark.py` | **PASS** 22/22, exit 0 |
 | `master.csv` shape | 4,905 × 64 |
 | Duplicate dates / target NaN | 0 / 0 |
 | Missing calendar days / cells | 157 / 1,801 |

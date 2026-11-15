@@ -256,7 +256,7 @@ The data engineering pipeline is fully implemented, verified, and automated. It 
 10. **NEW (v4) — Source-staleness drift:** warns if any upstream publication's observed lag stops matching the horizons declared in `config.H_BY_GROUP`, so a change in Grid-India's or CICERO's cadence surfaces as a CI warning instead of as silently-NaN features at inference.
 11. **Automated Issue Tracking:** opens a GitHub issue tagged `automation` on failure, auto-closes on the next green run.
 
-Separately, `python test_contract.py` is a **22-check** acceptance gate (Gate G0) covering `feature_groups.json` exhaustiveness, the $H$ shift proven against the raw series rather than trusted from column names, the identity test that `swap_weather` perturbs nothing outside target-day weather, and **train/serve parity**. Run it after any feature-engineering change.
+Separately, `python tests/test_contract.py` is a **22-check** acceptance gate (Gate G0) covering `feature_groups.json` exhaustiveness, the $H$ shift proven against the raw series rather than trusted from column names, the identity test that `swap_weather` perturbs nothing outside target-day weather, and **train/serve parity**. Run it after any feature-engineering change.
 
 ---
 
@@ -325,13 +325,13 @@ Unchanged — expanding-window walk-forward, tuning on three expanding folds (va
 
 ## 12. Expected Deliverables & Outcomes
 
-1. **Production-Ready Modelling Table:** verified **64-column** `data/master.csv` covering 2013–present with zero temporal leakage — **now actually leak-free, following the §7/§10 fixes**, and with a regression test (`test_contract.py`) plus a CI guard (`health_check.py`) so it stays that way.
+1. **Production-Ready Modelling Table:** verified **64-column** `data/master.csv` covering 2013–present with zero temporal leakage — **now actually leak-free, following the §7/§10 fixes**, and with a regression test (`tests/test_contract.py`) plus a CI guard (`health_check.py`) so it stays that way.
 2. **Automated CI/CD ETL Service:** unchanged, plus the leak guard, holiday-drift and provenance checks in §9.
 3. **Operational Weather Forecast Repository:** `weather_forecast_log.csv` (98 days, growing) **plus** `weather_forecast_archive.csv` (NEW — 5.4 years of real historical day-ahead forecasts, enabling the operational backtest that objective 5 and Phase 5 need without waiting years for the log to grow).
 4. **Comprehensive Model Comparison Suite:** **COMPLETE (Phase 6).** Nine models benchmarked on the frozen 26-feature A2 specification under one shared evaluation sample — naive persistence, seasonal naive, OLS, Ridge, LightGBM, LightGBM linear-tree, XGBoost, CatBoost and a Ridge + GBM residual hybrid. Top two tuned with Optuna (50 trials each). Champion: **`ridge_gbm_hybrid`**, frozen in `models/champion_config.json`. See `PHASE6_MODEL_BENCHMARK.md`.
 5. **Research Paper / Technical Report:** not yet started.
-6. **NEW (v4) — Modelling contract:** `src/contract.py` (`load_master(H)`, `swap_weather`, `verify_no_leakage`), `feature_groups.json`, and `test_contract.py` as Gate G0's acceptance check. Lets Track A and Track B work independently against a frozen, tested interface.
-7. **NEW (v4) — Operational forecast experiment:** `run_phase5.py` plus `results/operational_gap.json`, `results/archive_vs_log_overlap.csv`, and `notebooks/05_operational_forecast_experiment.ipynb`. Regime A vs B across both $H$ values, leads 1–3, on overall / March–June / three surge subsets, with moving-block bootstrap CIs.
+6. **NEW (v4) — Modelling contract:** `src/contract.py` (`load_master(H)`, `swap_weather`, `verify_no_leakage`), `feature_groups.json`, and `tests/test_contract.py` as Gate G0's acceptance check. Lets Track A and Track B work independently against a frozen, tested interface.
+7. **NEW (v4) — Operational forecast experiment:** `experiments/run_phase5.py` plus `results/operational_gap.json`, `results/archive_vs_log_overlap.csv`, and `notebooks/05_operational_forecast_experiment.ipynb`. Regime A vs B across both $H$ values, leads 1–3, on overall / March–June / three surge subsets, with moving-block bootstrap CIs.
 8. **NEW (v4) — Production forecasting service:** `predict_next_day.py` (evening inference with conformal intervals), `track_predictions.py` (live scoring once actuals land), `calibrate_intervals.py`, `dashboard/app.py` (Streamlit), and `.github/workflows/evening.yml`.
 
 ---
@@ -357,8 +357,8 @@ Unchanged — expanding-window walk-forward, tuning on three expanding folds (va
 ## 15. Team Topic Assignment Guide
 
 ### Person 1 — Data Pipeline, Automation & Quality Engineering (Track B)
-- **Current Status:** **Complete.** Beyond the pipeline itself: the modelling contract (`src/contract.py`, `feature_groups.json`, `test_contract.py`), the `H` measurement, the Phase 5 operational experiment, and the Phase 7 forecasting service (evening inference, conformal intervals, live scoring, dashboard).
-- **Ongoing:** monitor both workflows; re-run `measure_publish_time.py` if Grid-India's publishing schedule shifts (it would change `H`, which changes every demand feature); keep the evening cron running — `predictions_log.csv` cannot be backfilled.
+- **Current Status:** **Complete.** Beyond the pipeline itself: the modelling contract (`src/contract.py`, `feature_groups.json`, `tests/test_contract.py`), the `H` measurement, the Phase 5 operational experiment, and the Phase 7 forecasting service (evening inference, conformal intervals, live scoring, dashboard).
+- **Ongoing:** monitor both workflows; re-run `tools/measure_publish_time.py` if Grid-India's publishing schedule shifts (it would change `H`, which changes every demand feature); keep the evening cron running — `predictions_log.csv` cannot be backfilled.
 
 ### Person 2 — Literature Review & Domain Benchmarking
 - Unchanged — independent of both tracks, not yet started.
@@ -462,13 +462,13 @@ Three findings that bear on §13 (research directions):
 
 ### v4 (this revision) — Track B built
 
-1. **`H = 2`, measured** (`results/publish_time.json`). Day *D*'s report was never in hand on day *D* across 46 observed runs. The circular evidence (`report_published`, which the extractor derives from the data date) was identified and rejected. **Consequence: `peak_lag_1` is unavailable for a day-ahead forecast**, so `baseline.py`'s 392 MW is an $H=1$ number.
+1. **`H = 2`, measured** (`results/publish_time.json`). Day *D*'s report was never in hand on day *D* across 46 observed runs. The circular evidence (`report_published`, which the extractor derives from the data date) was identified and rejected. **Consequence: `peak_lag_1` is unavailable for a day-ahead forecast**, so `tools/baseline.py`'s 392 MW is an $H=1$ number.
 2. **Sources arrive on different days.** `sr_*` are a further day behind the PSP report, so `config.H_BY_GROUP` gives each group its own horizon. Found by end-to-end smoke test, worth 204 MW on a test forecast. §10 item 11.
-3. **Gate G0 MET.** `src/contract.py` (`load_master`, `swap_weather`, `verify_no_leakage`), `feature_groups.json`, and `test_contract.py` — **22 checks**, prediction-level identity exact to 0.000e+00 MW.
+3. **Gate G0 MET.** `src/contract.py` (`load_master`, `swap_weather`, `verify_no_leakage`), `feature_groups.json`, and `tests/test_contract.py` — **22 checks**, prediction-level identity exact to 0.000e+00 MW.
 4. **Phase 5 complete** with a stand-in model: dual-regime walk-forward at both $H$ values, leads 1–3, overall / March–June / three surge subsets, moving-block bootstrap CIs, sensitivity analysis and a real-log check. Artefacts in `results/`.
 5. **Phase 7 complete:** evening inference with split-conformal intervals, `issue_slot`-aware forecast logging, live scoring, a Streamlit dashboard, and `evening.yml`.
 6. **0.5.3 resolved favourably:** training-time and inference-time lagged weather are the *same* Open-Meteo product (bit-identical for recent data), and archive values are never revised. No second train/serve skew.
 7. **Four latent bugs fixed** (§10 items 9 and 11, the `swap_weather` trailing-mean index, and the `holiday_name` `"None"` sentinel). Missing values 6,996 → 2,419 → **1,801**.
-7a. **Train/serve parity is now tested, not hoped for.** Three of those bugs shipped features present in training and missing at serving — a failure a model cannot report, since it just stops using the column. Two were caught only by running inference by hand. `test_contract.py` now builds the real inference row and requires all 46 features populated, checks each source's observed freshness against `config.H_BY_GROUP`, and verifies the serving path reproduces `build_dataset.py` on a shared date. Reintroducing any bug turns the suite red.
+7a. **Train/serve parity is now tested, not hoped for.** Three of those bugs shipped features present in training and missing at serving — a failure a model cannot report, since it just stops using the column. Two were caught only by running inference by hand. `tests/test_contract.py` now builds the real inference row and requires all 46 features populated, checks each source's observed freshness against `config.H_BY_GROUP`, and verifies the serving path reproduces `build_dataset.py` on a shared date. Reintroducing any bug turns the suite red.
 7b. **A 10x performance bug.** `HistGradientBoostingRegressor` on ~4,900 rows is ten times slower on all cores than on one (9.68 s vs 0.95 s per fit) — thread synchronisation dominates at this data size. `threadlimit.py` pins threads to 1; interval calibration went from 15+ minutes to under a minute, and the full Phase 5 run from hours to minutes. This is what makes G3's "one command rebuilds everything" realistic.
 8. **Track A is now the entire critical path** and has no remaining Track B dependency. See `SYNC.md`.

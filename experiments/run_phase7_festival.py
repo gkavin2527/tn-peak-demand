@@ -39,7 +39,7 @@ from src.contract import PHASE5_FEATURE_SETS, load_phase5_data, swap_weather
 from src.evaluation import compute_metrics, moving_block_bootstrap
 from src.models import build_model
 from src.envinfo import capture_environment
-from run_phase6_benchmark import FOLDS
+from experiments.run_phase6_benchmark import FOLDS
 
 RESULTS = Path("results")
 CHAMPION = Path("models/champion_config.json")

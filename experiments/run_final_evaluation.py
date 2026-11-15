@@ -44,7 +44,7 @@ from src.contract import PHASE5_FEATURE_SETS
 from src.envinfo import capture_environment
 from src.evaluation import compute_metrics, moving_block_bootstrap, surge_mask
 from src.models import build_from_config, build_model
-from run_phase7_festival import load_set
+from experiments.run_phase7_festival import load_set
 
 RESULTS = Path("results")
 CHAMPION = Path("models/champion_config.json")

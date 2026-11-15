@@ -51,16 +51,47 @@ forecast-weather uncertainty; leakage control; conformal prediction; Tamil Nadu
 
 ## 1. Introduction
 
-*(Draft the motivation here. The structure that works:)*
+Daily peak demand is the quantity a control room commits reserve against. The
+cost of error is asymmetric: under-forecasting risks load shedding or
+expensive last-minute procurement, while over-forecasting idles thermal
+capacity that was backed down at a cost. In Tamil Nadu the problem has been
+sharpening — the annual peak rose from 17,563 MW in 2022 to 21,724 MW in 2026,
+a 7.8% increase in 2026 alone — so a forecaster calibrated on
+historical levels drifts out of date rather than merely staying imprecise.
 
-1. Peak demand sets reserve commitment; errors are asymmetrically costly.
-2. Weather — principally temperature — is the dominant exogenous driver, and
-   the STLF literature has established this thoroughly.
-3. **But** evaluation in that literature overwhelmingly conditions on
-   target-day weather that is observed or reanalysed, i.e. unavailable at
-   forecast time. Reported errors are therefore not operational errors.
-4. We measure the difference, under one fixed harness, with a real forecast
-   archive.
+Weather, principally temperature, is the dominant exogenous driver of that
+peak, and the short-term load forecasting (STLF) literature has established
+this thoroughly [Hong & Fan 2016]. Adding temperature features to a load model
+is not a contribution, and we do not claim it as one.
+
+What we claim is a measurement. Across the STLF literature, models are
+routinely *evaluated* using target-day weather drawn from observations or from
+reanalysis — information that postdates the moment a forecast must be issued.
+Reanalysis in particular is a retrospective best estimate that assimilates
+observations recorded after the fact [Hersbach et al. 2020]; it is an
+excellent benchmark and an impossible input. An evaluation conditioned on it
+answers "how much does weather explain?" rather than "how well can this be
+forecast?" — two different questions that the reported error figure silently
+conflates.
+
+The gap between them has an operational size, and that size is measurable. We
+measure it here.
+
+Two things make the measurement possible. First, a 29,535-row archive of genuine
+**lead-1** numerical weather forecasts spanning 5.4 years, so the operational
+condition can be reconstructed rather than simulated by adding noise. Second,
+a forecasting horizon derived from evidence rather than convention: by
+measuring when the system operator actually publishes demand data, we find
+that a forecast issued the evening before the target day has demand
+observations only through two days prior. We denote this H = 2, and it has a
+sharp consequence — the second-most-predictive variable in the dataset becomes
+unusable.
+
+Holding the pipeline, the splits, the feature set and the scoring sample
+fixed, and varying only the source of target-day weather, yields a
+three-condition ladder: no weather, reanalysis weather, operational forecast
+weather. The distance between the second and third rungs is the quantity this
+paper reports.
 
 **Contributions.**
 
@@ -77,7 +108,73 @@ forecast-weather uncertainty; leakage control; conformal prediction; Tamil Nadu
 
 ---
 
-## 2. Data
+## 2. Related work
+
+**Short-term load forecasting.** The field is mature. Hong & Fan's tutorial
+review [2016] consolidates decades of work and establishes temperature as the
+principal exogenous driver, alongside calendar structure and autoregressive
+load terms. The Global Energy Forecasting Competitions [Hong et al. 2014;
+Hong et al. 2016] provide the field's reference benchmarks and established
+probabilistic forecasting as a standard target. Gradient boosting has been
+applied successfully in this setting [Taieb & Hyndman 2014], though our own
+results below qualify when that holds.
+
+*[FILL — India and Tamil Nadu. An ICAIEA audience will expect the regional
+literature: state-level demand forecasting, CEA demand projection
+methodology, and POSOCO/Grid-India report-based studies. Three to five
+references, with an explicit statement of how this work differs: daily peak
+rather than hourly load, H = 2 rather than an assumed horizon, and a
+forecast-weather ladder.]*
+
+**Weather information available at forecast time.** This is where our
+contribution sits. Reanalysis products such as ERA5 [Hersbach et al. 2020]
+assimilate observations that postdate the forecast instant, and observed
+station data is unavailable by construction. Where a study conditions on
+either for the target day, its reported error is a lower bound on operational
+error, by an amount that is typically neither stated nor measured.
+
+We are not aware of a study that isolates that amount as a separate measured
+quantity for daily peak demand, under a single fixed harness, with a paired
+confidence interval. We put the claim no more strongly than that: the point is
+not that the penalty is unknown in principle, but that it is rarely
+quantified, and that quantifying it changes how a reported MAE should be read.
+
+*[FILL — any STLF work that does evaluate on archived NWP forecasts, and one
+or two references from wind and solar forecasting, where NWP error has long
+been treated as a first-class component because the resource is the weather.
+The contrast is useful: load forecasting has been slower to adopt the same
+discipline despite a real weather dependence.]*
+
+**Evaluation methodology.** We follow rolling-origin evaluation [Tashman 2000]
+and the arguments against random cross-validation for temporally dependent
+data [Bergmeir & Benítez 2012]. Comparisons use the Diebold–Mariano test
+[Diebold & Mariano 1995] with the small-sample correction of Harvey,
+Leybourne & Newbold [1997], reported alongside a moving-block bootstrap
+[Künsch 1989] — the latter because our residuals are measurably
+autocorrelated, which would make an i.i.d. bootstrap substantially
+anti-conservative.
+
+**Selection bias.** Sequential model and feature selection against a single
+validation set inflates reported performance in a way that is invisible from
+within [Cawley & Talbot 2010], with nested validation the standard remedy
+[Varma & Simon 2006]. Our pipeline made four such selection passes. Rather
+than assert that the effect is small, we replay the entire selection procedure
+with one year withheld and report the measured difference (§5.4).
+
+**Interpretation and uncertainty.** Attribution for the tree component uses
+exact TreeSHAP [Lundberg et al. 2020]; the linear component is reported
+through standardised coefficients, since the two answer different questions
+and combining them into one ranking would mislead. Prediction intervals use
+split conformal prediction [Vovk et al. 2005; Lei et al. 2018], chosen for its
+distribution-free guarantee given clearly non-Gaussian residuals.
+
+*[FILL — permutation importance under correlated predictors. This matters
+because our strongest interpretability result is precisely a disagreement
+between attribution and permutation for collinear demand lags.]*
+
+---
+
+## 3. Data
 
 | | |
 |---|---|
@@ -99,9 +196,9 @@ package happened to know about" in a year-dependent way.
 
 ---
 
-## 3. Problem formulation
+## 4. Problem formulation
 
-### 3.1 The horizon is a measurement, not a choice
+### 4.1 The horizon is a measurement, not a choice
 
 Grid-India publishes day *D*'s peak demand report on *D+1*, around
 09:00–11:00 IST. Across 46 observed pipeline runs — including one at 18:07 —
@@ -113,7 +210,7 @@ second-most-correlated predictor in the dataset (r = 0.927), **cannot be
 used**. Training on it yields a model that cannot be run. This is enforced in
 the data gateway and asserted mechanically in the test suite.
 
-### 3.2 Two weather regimes
+### 4.2 Two weather regimes
 
 - **Regime A (reanalysis).** Target-day weather from ERA5. A retrospective
   best estimate assimilating observations that postdate the forecast moment —
@@ -133,7 +230,7 @@ computed as forecast(*T*) − observed(*T−1*).
 > hour*. Our claim is "archived lead-1 aligned to valid date", never
 > "available at 20:00 IST".
 
-### 3.3 Protocol
+### 4.3 Protocol
 
 Expanding-window walk-forward, validation years 2023 / 2024 / 2025; no random
 splitting anywhere. Models train on the full ERA5 history in both regimes;
@@ -148,9 +245,9 @@ correction is reported alongside.
 
 ---
 
-## 4. Results
+## 5. Results
 
-### 4.1 The operational weather penalty *(headline)*
+### 5.1 The operational weather penalty *(headline)*
 
 **Figure 2.** All three conditions, Ridge, same 1,066 shared dates:
 
@@ -171,7 +268,7 @@ across seasons (summer 43.4, non-summer 38.7 MW).
 > Regime A MAE (7.1%). Both are correct arithmetic; only the first
 > answers "how much of the benefit survives contact with operations?"
 
-### 4.2 Model families: linear beats boosted trees
+### 5.2 Model families: linear beats boosted trees
 
 **Figure 3.** Nine candidates, Regime A, paired against Ridge:
 
@@ -192,7 +289,7 @@ leaf averages and cannot exceed the training range, while the target grew
 from 17,563 MW (2022) to 21,724 MW (2026). OLS and Ridge are numerically
 identical here, confirming the L2 penalty is inert at this scale.
 
-### 4.3 Final model
+### 5.3 Final model
 
 `quantile_hybrid` — a linear trend component plus a **quantile-regression**
 gradient-boosted residual learner (τ = 0.5906) on 26 features.
@@ -217,7 +314,7 @@ The operational penalty persists for the stronger model (+54.28 MW), though
 it is smaller than for Ridge — a median-targeting model is somewhat less
 sensitive to forecast weather error.
 
-### 4.4 Validity
+### 5.4 Validity
 
 **Selection optimism.** One validation set drove four sequential selection
 rounds. We replayed the entire pipeline — feature set, model ranking, 50
@@ -239,7 +336,7 @@ of 2026 under Regime B: MAE **503.49** vs 497.90 in validation
 
 > We call this a **confirmation**, not a blind test. 2026 was inspected during
 > exploratory feature work. We do not claim it as an unbiased generalisation
-> estimate; §4.4's held-out replay serves that role.
+> estimate; §5.4's held-out replay serves that role.
 
 **Prediction intervals.** Split-conformal on relative residuals, fitted on
 data through 2025 only. Realised 2026 coverage: 91.1% (nominal 90%) and
@@ -247,7 +344,7 @@ data through 2025 only. Realised 2026 coverage: 91.1% (nominal 90%) and
 non-Gaussian (skew +1.18, excess kurtosis +4.48), supporting a
 distribution-free method over normal theory.
 
-### 4.5 What the model uses
+### 5.5 What the model uses
 
 **Figure 5.** Attribution is reported in two parts (linear coefficients;
 exact TreeSHAP on the residual learner), with permutation importance as a
@@ -271,7 +368,7 @@ ranking alone would provide.
 
 ---
 
-## 5. Error structure and limitations
+## 6. Error structure and limitations
 
 **Figure 4.**
 
@@ -309,7 +406,7 @@ Segments with n < 20 are anecdotal and no claim rests on them alone.
 
 ---
 
-## 6. Conclusion
+## 7. Conclusion
 
 We measured what the standard evaluation assumption costs. Weather improves
 next-day peak demand forecasting for Tamil Nadu by 17.9% under reanalysis,

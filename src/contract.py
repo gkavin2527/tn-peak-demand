@@ -377,7 +377,7 @@ PHASE5_FEATURE_SETS: dict[str, list[str]] = {
         "t_max", "t_mean", "t_min", "cdd_max", "hours_above_32",
     ],
 
-    # A2: Weather levels + deltas + anomalies
+    # A2: Weather levels + deltas + anomalies (canonical decision gate specification: 26 features)
     "A2_weather_deltas_anomalies": [
         "dow", "is_weekend", "is_holiday", "day_before_holiday",
         "day_after_holiday", "pongal_window",
@@ -385,7 +385,7 @@ PHASE5_FEATURE_SETS: dict[str, list[str]] = {
         "peak_lag_2", "peak_lag_3", "peak_lag_7", "peak_lag_14", "peak_lag_364",
         "energy_lag_2", "energy_lag_7", "energy_lag_14",
         "t_max", "t_mean", "t_min", "cdd_max", "hours_above_32",
-        "d_t_max", "d_cdd_max", "t_max_vs_roll7", "cdd_max_vs_roll7",
+        "d_cdd_max", "cdd_max_vs_roll7",
     ],
 }
 

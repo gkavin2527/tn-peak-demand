@@ -50,6 +50,14 @@ def main():
     check("A1 contains exactly 24 features (19 baseline + 5 weather)", len(a1_feats) == 24)
     check("A1 contains no humidity features", not any("rh" in f or "app_t" in f or "thi" in f for f in a1_feats))
 
+    a2_feats = PHASE5_FEATURE_SETS["A2_weather_deltas_anomalies"]
+    check("A2 contains exactly 26 features", len(a2_feats) == 26, f"{len(a2_feats)} features")
+    check("A2 contains d_cdd_max", "d_cdd_max" in a2_feats)
+    check("A2 contains cdd_max_vs_roll7", "cdd_max_vs_roll7" in a2_feats)
+    check("A2 does not contain non-canonical extra d_t_max", "d_t_max" not in a2_feats)
+    check("A2 does not contain non-canonical extra t_max_vs_roll7", "t_max_vs_roll7" not in a2_feats)
+    check("A2 contains all 24 A1 features as subset", all(f in a2_feats for f in a1_feats))
+
     # ----------------------------------------------------------------------
     # 2. Canonical Gateway Loading: A0 Weather-Free
     # ----------------------------------------------------------------------
@@ -61,6 +69,9 @@ def main():
     check("Index is DatetimeIndex", isinstance(df_a0.index, pd.DatetimeIndex))
     check("H=2 recorded in attrs", df_a0.attrs.get("H") == 2)
     check("lag_representation recorded as literal_master", df_a0.attrs.get("lag_representation") == "literal_master")
+
+    df_a2, feats_a2 = load_phase5_data(feature_set="A2_weather_deltas_anomalies", weather_source="none")
+    check("Canonical gateway returns exact canonical A2 list", feats_a2 == a2_feats)
 
     # ----------------------------------------------------------------------
     # 3. Mechanical Integrity & Weekday Alignment

@@ -49,7 +49,7 @@ BOOT_SEED = RANDOM_SEED or 42
 
 A0_FEATS = list(PHASE5_FEATURE_SETS["A0_weather_free"])
 A1_FEATS = list(PHASE5_FEATURE_SETS["A1_weather_levels"])
-A2_FEATS = A1_FEATS + ["d_t_max", "t_max_vs_roll7"]
+A2_FEATS = list(PHASE5_FEATURE_SETS["A2_weather_deltas_anomalies"])
 
 FOLDS = [
     {"name": "Fold 1 (Val 2023)", "train_end": 2022, "val_year": 2023},
@@ -127,12 +127,12 @@ def main():
     # -------------------------------------------------------------------------
     print("\n[1/5] Ingesting datasets via canonical Phase 5 gateway...")
     df_regime_a, feats_a = load_phase5_data(
-        feature_set=A2_FEATS,
+        feature_set="A2_weather_deltas_anomalies",
         weather_source="reanalysis",
         clean_na=True,
     )
     df_regime_b, feats_b = load_phase5_data(
-        feature_set=A2_FEATS,
+        feature_set="A2_weather_deltas_anomalies",
         weather_source="forecast",
         forecast_lead=1,
         clean_na=True,
@@ -146,8 +146,11 @@ def main():
     # 2. Strict Pre-Execution Integrity Audit & Assertions
     # -------------------------------------------------------------------------
     print("\n[2/5] Running pre-execution integrity audit and anti-leakage checks...")
-    assert feats_a == feats_b == A2_FEATS, f"Feature mismatch! feats_a={feats_a}, feats_b={feats_b}"
+    canonical_a2 = list(PHASE5_FEATURE_SETS["A2_weather_deltas_anomalies"])
+    assert feats_a == feats_b == canonical_a2 == A2_FEATS, "Feature mismatch with canonical A2 specification!"
     assert len(feats_a) == 26, f"Expected 26 A2 features, got {len(feats_a)}"
+    assert "d_cdd_max" in feats_a and "cdd_max_vs_roll7" in feats_a, "Missing canonical A2 features!"
+    assert "d_t_max" not in feats_a and "t_max_vs_roll7" not in feats_a, "Non-canonical derived features detected!"
 
     # Run mechanical verification on both datasets
     rep_a = verify_phase5_integrity(df_regime_a, feats_a, H=2)
@@ -381,7 +384,7 @@ def main():
             "validation_protocol": "Expanding walk-forward (2023, 2024, 2025)",
             "common_scored_days_total": len(pred_df),
             "forecast_lead": 1,
-            "forecast_archive": str(FORECAST_ARCHIVE),
+            "forecast_archive": "data/weather_forecast_archive.csv",
             "forecast_framing": "Archived day-ahead lead-1 forecasts aligned to target/valid date. Exact forecast initialization hour unverified.",
             "random_seed": BOOT_SEED,
             "bootstrap_block_days": BLOCK_DAYS,

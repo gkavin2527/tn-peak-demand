@@ -76,6 +76,28 @@ def main():
           f"{len(avail)}/{len(MODEL_ZOO)}")
     check("reference model is in the zoo", REFERENCE_MODEL in MODEL_ZOO)
 
+    # quantile_hybrid (W1-2): same model as ridge_gbm_hybrid except the
+    # residual GBM's objective. Checked explicitly because its DEFAULT tau is
+    # deliberately NOT the value W1-2 found useful - rank-then-tune screens it
+    # out at the default, and the honest validation tunes tau from inner folds
+    # only. A default silently "corrected" to 0.65 would smuggle a selection
+    # made on 2023-25 into what looks like an untuned baseline.
+    from src.models import QuantileHybrid, RidgeGBMHybrid
+    qh = build_model("quantile_hybrid")
+    check("quantile_hybrid subclasses the plain hybrid",
+          isinstance(qh, RidgeGBMHybrid), type(qh).__name__)
+    check("quantile_hybrid default tau is left at 0.9, not tuned in",
+          abs(qh.quantile - 0.9) < 1e-12, f"tau={qh.quantile}")
+    bad = 0
+    for t in (0.0, 1.0, -0.1, 1.5):
+        try:
+            QuantileHybrid(quantile=t)
+        except ValueError:
+            bad += 1
+    check("quantile_hybrid rejects tau outside (0,1)", bad == 4, f"{bad}/4")
+    check("quantile objective reaches LightGBM",
+          build_model("quantile_hybrid", quantile=0.65).quantile == 0.65)
+
     df_a = load_regime("A", feats)
     small = df_a.head(500)
     iface_ok, bad = True, []

@@ -21,7 +21,8 @@
         "lightgbm_linear": 606.5717484405603,
         "xgboost": 662.0328601758893,
         "catboost": 674.3943232324425,
-        "ridge_gbm_hybrid": 459.0096513692547
+        "ridge_gbm_hybrid": 459.0096513692547,
+        "quantile_hybrid": 668.9999129436197
       },
       "finalists": [
         "ridge_gbm_hybrid",
@@ -64,7 +65,7 @@
     }
   },
   "phase": "w0_1_selection_audit",
-  "generated_at": "2026-11-15T17:52:38",
+  "generated_at": "2026-11-15T18:16:28",
   "protocol": {
     "outer_holdout": 2025,
     "inner_folds": [

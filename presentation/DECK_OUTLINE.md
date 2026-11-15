@@ -63,12 +63,13 @@ misalignment. Credibility comes from a specific catch, not from a count.
 
 | condition | MAE |
 |---|---|
-| no weather | 695.6 |
+| no weather | 696.3 |
 | reanalysis (Regime A) | 571.6 |
 | **genuine lead-1 forecast (Regime B)** | **612.0** |
 
-- Weather buys **124 MW**… but **40 MW of it is given back** (95% CI [25.9, 54.2])
-- **7.1% of the gain is lost** to forecast error — invisible to reanalysis-only evaluation
+- Weather buys **125 MW**… but **40 MW is given back** (95% CI [25.9, 54.1])
+- **32% of the weather gain is lost** to forecast error — nearly a third,
+  and invisible to reanalysis-only evaluation
 
 **Say, slowly:** *"Most papers report the middle bar. We can report the third,
 because we archived real forecasts for 5.4 years."* Pause here.

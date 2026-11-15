@@ -1,0 +1,9 @@
+{
+  "n_scored": 1066,
+  "a0_mae": 696.2727677233419,
+  "regime_a_mae": 571.612738791416,
+  "regime_b_mae": 611.9504184783249,
+  "weather_gain_mw": 124.66002893192592,
+  "forecast_penalty_mw": 40.33767968690893,
+  "penalty_pct_of_gain": 32.358150429225745
+}

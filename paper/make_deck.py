@@ -420,7 +420,7 @@ typed in. Thank you — happy to take questions.
 |---|---|
 | "Why not deep learning?" | About {len(m):,} rows. And four tuned gradient boosting models already lost to ridge regression — capacity isn't the binding constraint, extrapolation is. |
 | "Is {vp['regime_b_mae']:.0f} MW good?" | Roughly {fin['metrics_2026']['mape']:.1f}% error on a ~{mean_peak:,.0f} MW average {conf_year} peak. Compare against the no-weather baseline of {L['a0_mae']:.0f} MW, not against other papers on other grids. |
-| "Isn't 2026 your test set?" | It's a confirmation set. We'd seen some 2026 data during development, so we don't call it blind. The unbiased number is the 2025 replay on slide 8. |
+| "Isn't 2026 your test set?" | It's a confirmation set, not a blind test — we'd seen some 2026 data during development. Our **least biased** estimate is the 2025 replay on slide 8, though even that isn't fully nested: it ranks models on default settings and reuses feature sets chosen with 2025 in view. We have no genuinely blind evaluation. |
 | "Why is error still autocorrelated?" | Multi-day weather shocks we can't see at H = 2. It's a stated limitation, and it's why all our confidence intervals use a block bootstrap. |
 | "Could you run this at 8pm?" | We never verified what time the forecasts were actually issued. Our claim is "lead-1 forecast matched to the target date" — we deliberately don't claim more. |
 | "Where's the data from?" | Grid-India PSP reports and Open-Meteo forecasts. Historical backfill from Hunt & Bloomfield (2025), Zenodo DOI 10.5281/zenodo.14983362, CC-BY-4.0. |

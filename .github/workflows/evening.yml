@@ -46,6 +46,28 @@ jobs:
       #   2. reuse the venv unless its tier file changed, instead of
       #      recreating it nightly
       #   3. never leave a pip HTTP cache behind
+      # Runs BEFORE the free-space gate on purpose. The runner is currently
+      # at 0 MB, and a gate that refuses to start would otherwise block the
+      # one step that reclaims the space - the pipeline could never heal
+      # itself. Both actions below are idempotent and harmless on a healthy
+      # runner: the venv is rebuilt from a pinned tier file, and pip's HTTP
+      # cache is pure disk growth on a persistent runner.
+      - name: Reclaim disk before setup
+        run: |
+          before=$(df -Pm . | awk 'NR==2 {print $4}')
+          want=$(sha256sum requirements-model.txt | cut -d" " -f1)
+          have=$(cat .venv/.req-sha 2>/dev/null || echo none)
+          if [ "$want" != "$have" ]; then
+            sz=$(du -sm .venv 2>/dev/null | cut -f1 || echo 0)
+            echo "removing stale venv (${sz:-0} MB) - tier file changed or venv absent"
+            rm -rf .venv
+          else
+            echo "venv matches requirements-model.txt - keeping it"
+          fi
+          rm -rf "${PIP_CACHE_DIR:-$HOME/.cache/pip}"
+          after=$(df -Pm . | awk 'NR==2 {print $4}')
+          echo "free: ${before} MB -> ${after} MB"
+
       - name: Preflight - disk space
         run: |
           free_mb=$(df -Pm . | awk 'NR==2 {print $4}')
@@ -64,7 +86,8 @@ jobs:
           have=$(cat .venv/.req-sha 2>/dev/null || echo none)
           if [ ! -x .venv/bin/python ] || [ "$want" != "$have" ]; then
             echo "building venv (requirements changed or venv absent)"
-            rm -rf .venv
+            rm -rf .venv          # no-op after the reclaim step; kept for
+                                  # manual/workflow_dispatch robustness
             python3 -m venv .venv
             # --no-cache-dir: the wheel cache is pure growth on a persistent
             # runner and is what pushed this disk over the edge.

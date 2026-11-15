@@ -16,3 +16,8 @@ pdfplumber
 scikit-learn
 # Phase 7.3 dashboard only (dashboard/app.py). Not imported by any job.
 streamlit
+# Phase 6 model benchmark (src/models.py). Pin threads to 1 via threadlimit -
+# on ~4,900 rows these are ~10x slower on all cores than on one.
+lightgbm
+xgboost
+catboost

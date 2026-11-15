@@ -95,7 +95,7 @@ def main():
     if gate.exists():
         print("\n3. Phase 7 festival gate (A4 vs A2) - DM on the same pairs")
         print("   (recomputed from the gate's own walk-forward)")
-        import run_phase7_festival as F
+        import experiments.run_phase7_festival as F
         from src.contract import PHASE5_FEATURE_SETS
         cfg = json.loads(Path("models/champion_config.json").read_text())
         sets = {t: list(PHASE5_FEATURE_SETS[t])

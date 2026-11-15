@@ -15,7 +15,7 @@ This document lists everything left to take the **Tamil Nadu Next-Day Peak Elect
 
 See the "v4 status" box in each section for specifics. Earlier revision notes below.
 
-**v3 changes:** the Phase 0.5 count audit is resolved — real figures below, not provisional ones. A same-day leakage bug was found and fixed in `master.csv` (two columns that are published the morning *after* the day they describe were being used as same-day features). The Tamil Nadu holiday calendar's lunisolar coverage gap is fixed. **Track B's Phase 5.1 and 5.2 are done**, ahead of the plan in two ways: the forecast archive reaches **mid-2021**, not January 2024, and it has already been cross-validated against the real log. A stand-in model (`baseline.py`) has run the growth-handling question (D1) and the operational-gap question (5.3) end-to-end as a dry run, which is informative but is **not** Track A's frozen champion and is **not** yet built to the `src/contract.py` shape this document specifies — see the status notes inline. **`H` (the data-latency horizon, Section B) is still unmeasured** — this is now the single largest open item blocking Phase 7, and whoever is free should pick it up next.
+**v3 changes:** the Phase 0.5 count audit is resolved — real figures below, not provisional ones. A same-day leakage bug was found and fixed in `master.csv` (two columns that are published the morning *after* the day they describe were being used as same-day features). The Tamil Nadu holiday calendar's lunisolar coverage gap is fixed. **Track B's Phase 5.1 and 5.2 are done**, ahead of the plan in two ways: the forecast archive reaches **mid-2021**, not January 2024, and it has already been cross-validated against the real log. A stand-in model (`tools/baseline.py`) has run the growth-handling question (D1) and the operational-gap question (5.3) end-to-end as a dry run, which is informative but is **not** Track A's frozen champion and is **not** yet built to the `src/contract.py` shape this document specifies — see the status notes inline. **`H` (the data-latency horizon, Section B) is still unmeasured** — this is now the single largest open item blocking Phase 7, and whoever is free should pick it up next.
 
 Everything in Section A, B and C.1–C.2 (the locked decisions, the `H` definition, the track split and the integration contract) is unchanged from v2. This revision only updates status, counts and what Track B has actually shipped.
 
@@ -81,7 +81,7 @@ the champion through that path unchanged would roughly double the forecast.
 
 | # | Issue | Decision |
 |---|---|---|
-| **D1** | Trees cannot extrapolate beyond the training range (2026 mean is about 19,095 MW; the record is 21,724 MW). | **Main model (Option A):** raw-MW target, **no `trend` feature**, weekly walk-forward refit, recent years weighted higher (exponential half-life tuned in Optuna). **Comparison rows:** (B) Ridge on trend and lags plus LightGBM on the Ridge residuals, (C) LightGBM with `linear_tree=True`, (D) predict the change, `Y − peak_roll_mean_7`, and add the level back. Champion = best mean validation MAPE across the three folds; if two models are within one standard error, prefer the one with the smaller top-5% bias, then the simpler one. The comparison itself becomes a paper paragraph ("three ways of handling demand growth"). <br><br>*Status note: this is still Track A's decision to make formally, with Optuna and the real walk-forward engine. A quick, informal preview exists — a plain `HistGradientBoostingRegressor` fit on the raw level, no trend, rolling-origin CV, mean MAE 547, 2026 bias −420 MW on 75% of days (the extrapolation failure D1 describes, reproduced exactly). The same features fit to `Y − peak_lag_1` (the sibling of Option D) instead: mean MAE 392, bias −52. This doesn't replace the formal comparison — it has no Optuna, no weekly refit, no recency weighting, and uses `peak_lag_1` rather than `peak_roll_mean_7` as the anchor — but it is one independent data point suggesting the champion will land in the "predict-the-change" family. Reproducible with `python baseline.py`.* |
+| **D1** | Trees cannot extrapolate beyond the training range (2026 mean is about 19,095 MW; the record is 21,724 MW). | **Main model (Option A):** raw-MW target, **no `trend` feature**, weekly walk-forward refit, recent years weighted higher (exponential half-life tuned in Optuna). **Comparison rows:** (B) Ridge on trend and lags plus LightGBM on the Ridge residuals, (C) LightGBM with `linear_tree=True`, (D) predict the change, `Y − peak_roll_mean_7`, and add the level back. Champion = best mean validation MAPE across the three folds; if two models are within one standard error, prefer the one with the smaller top-5% bias, then the simpler one. The comparison itself becomes a paper paragraph ("three ways of handling demand growth"). <br><br>*Status note: this is still Track A's decision to make formally, with Optuna and the real walk-forward engine. A quick, informal preview exists — a plain `HistGradientBoostingRegressor` fit on the raw level, no trend, rolling-origin CV, mean MAE 547, 2026 bias −420 MW on 75% of days (the extrapolation failure D1 describes, reproduced exactly). The same features fit to `Y − peak_lag_1` (the sibling of Option D) instead: mean MAE 392, bias −52. This doesn't replace the formal comparison — it has no Optuna, no weekly refit, no recency weighting, and uses `peak_lag_1` rather than `peak_roll_mean_7` as the anchor — but it is one independent data point suggesting the champion will land in the "predict-the-change" family. Reproducible with `python tools/baseline.py`.* |
 | **D2** | The real forecast log has only about 80 days (August 2026 onward), so it cannot support a 2025–2026 operational test. | **Main result:** archived day-ahead forecasts from Open-Meteo's **Previous Runs API** (`*_previous_day1`), which was assumed to be available from January 2024. That covers the whole 2025-to-2026 test period, including three March–June summers. **Small gold-standard check:** the real log (about 80 days, no heat season), labelled as a small sample. Compare archive and real log on the overlap and report any difference. If the archive disagrees badly with the log, call the result preliminary. Keep logging daily and re-run the experiment on real forecasts after summer 2027. <br><br>*Status note: done, and better than assumed — see Phase 5.1/5.2 below. The archive actually reaches back to 2021-06, not Jan 2024, and the cross-check against the real log passed (0.36°C MAE on `t_max` at lead 1).* |
 | **D3** | A 07:00 run may not have yesterday's demand, and an evening run does not fix that by itself. | The model is built around a configurable data-latency horizon **`H`** (Section B). Inference moves to the evening, and the forecast logger gets a matching evening run. <br><br>*Status note: **unmeasured**. This is 0.5.2 below and is now the single biggest open item.* |
 | **D4** | The 19,000 MW "peak surge" threshold drifts with demand growth. | **Primary:** top 5% of days within each calendar year. **Secondary:** top 5% of March–June days. **Legacy:** `Y > 19,000 MW`, kept for continuity only. Always report **bias** (mean of prediction minus actual) next to error on these subsets, with block-bootstrap confidence intervals, because each subset has only about 15–20 days per year. |
@@ -112,7 +112,7 @@ So day *D*'s report is never in hand on day *D*. An evening-of-*D* forecast for
 target *D+1* holds demand through *D−1* → **`H = 2`**.
 
 ```bash
-python measure_publish_time.py --probe   # -> results/publish_time.json
+python tools/measure_publish_time.py --probe   # -> results/publish_time.json
 ```
 
 ### The consequence nobody had flagged
@@ -120,7 +120,7 @@ python measure_publish_time.py --probe   # -> results/publish_time.json
 **`peak_lag_1` is not available for a genuine day-ahead forecast.** It
 correlates 0.927 with the target and is the natural anchor for a differenced
 model — and it cannot be used. The newest usable demand observation is
-`peak_lag_2`. `baseline.py`'s 392 MW figure anchors on `peak_lag_1` and is
+`peak_lag_2`. `tools/baseline.py`'s 392 MW figure anchors on `peak_lag_1` and is
 therefore an **H=1 number**: real as a feature-selection benchmark, not
 achievable in production.
 
@@ -154,7 +154,7 @@ renamed (shifting `{1,2,3,7,14,364}` by one collides with itself at 2 and 3), so
 the convention is: **lag numbers are relative to the newest available demand
 day, `target − H`**. Rather than trusting that convention,
 `verify_no_leakage()` resolves each lag column against the raw series and
-proves no column carries data newer than `target − H`; `test_contract.py`
+proves no column carries data newer than `target − H`; `tests/test_contract.py`
 runs it.
 
 *(Original Section B text follows, unchanged, for reference.)*
@@ -195,14 +195,14 @@ Rules: each track edits only what it owns; shared files (`config.py`, `src/contr
 
 ### C.2 Integration contract (frozen at Gate 0)
 
-**Status: FROZEN. Gate G0 is MET — 22 of 22 checks pass** (`python test_contract.py`), including the identity test the roadmap specifies literally: swapping ERA5 weather through `swap_weather` reproduces the Regime A predictions to **0.000e+00 MW** over 313 days.
+**Status: FROZEN. Gate G0 is MET — 22 of 22 checks pass** (`python tests/test_contract.py`), including the identity test the roadmap specifies literally: swapping ERA5 weather through `swap_weather` reproduces the Regime A predictions to **0.000e+00 MW** over 313 days.
 
 **Shared files**
 - `config.py`: **DONE** — `H = 2`, `H_IDEALISED`, `TUNING_FOLDS`, `TEST_START`, `REFIT_DAYS`, `SURGE_QUANTILE`, `SURGE_LEGACY_MW`, `SUMMER_MONTHS`, `RANDOM_SEED`, plus `RESULTS`/`MODELS`/`FEATURE_GROUPS` paths.
 - `feature_groups.json`: **DONE** — all 62 columns classified into the six agreed groups, verified exhaustive and non-overlapping by G0. Also carries `weather_swap_rules` (how each weather column kind is rebuilt) and `recommended_drops` (advisory, not contract).
 - `src/contract.py`: **DONE**
   - `load_master(H) -> DataFrame` — target-date index, target renamed `y`, demand/energy/grid shifted by `H−1`, `.attrs` carrying `H` / `lag_offset` / `newest_demand`.
-  - `swap_weather(df, weather_df, observed=None) -> DataFrame` — replaces only `weather_target_day`. Lead-aware: deltas are `forecast(T) − observed(T−1)` and anomalies are `forecast(T) − mean(observed[T−7..T−1])`, because yesterday is already known at issue time. `forecast_skew.py`'s private `substitute()` has been deleted in favour of this.
+  - `swap_weather(df, weather_df, observed=None) -> DataFrame` — replaces only `weather_target_day`. Lead-aware: deltas are `forecast(T) − observed(T−1)` and anomalies are `forecast(T) − mean(observed[T−7..T−1])`, because yesterday is already known at issue time. `tools/forecast_skew.py`'s private `substitute()` has been deleted in favour of this.
   - `verify_no_leakage(df)` — **added beyond the contract.** Resolves each lag column against the raw series and asserts nothing is newer than `target − H`, so the H shift is proven rather than named.
   - `model_features(df)` — convenience feature list (advisory).
   - `run_walk_forward(...)` — **Track A's to write.** Re-exported here, preferring `src/walkforward.py` the moment it exists and otherwise falling back to Track B's stand-in at `src/operational/walkforward.py`, which implements the identical frozen signature. Delete the stand-in at G2.
@@ -220,22 +220,22 @@ Rules: each track edits only what it owns; shared files (`config.py`, `src/contr
 - `results/archive_vs_log_overlap.csv` — **exported.**
 - `results/operational_gap.json` — **exported.** Regime A vs B for both `H=2` and `H=1`, leads 1–3, on overall / March–June / three surge subsets, with moving-block bootstrap CIs.
 - `predict_next_day.py` and `data/predictions_log.csv` — **built.** Plus `track_predictions.py` (live scoring), `results/intervals.json`, `results/live_performance.json`, `dashboard/app.py`, and `.github/workflows/evening.yml`.
-- Also delivered beyond the contract: `measure_publish_time.py`, `check_weather_lag_source.py`, `test_contract.py`, `src/operational/{metrics,intervals,walkforward}.py`, `notebooks/05_operational_forecast_experiment.ipynb`.
+- Also delivered beyond the contract: `tools/measure_publish_time.py`, `tools/check_weather_lag_source.py`, `tests/test_contract.py`, `src/operational/{metrics,intervals,walkforward}.py`, `notebooks/05_operational_forecast_experiment.ipynb`.
 
 ### C.3 Dependencies and how each track avoids waiting
 
 *(unchanged — this is still the right plan)*
 
 - Track A needs only `load_master(H)` to start. Until Track B ships it, A builds on `master.csv` with `H=2` as the conservative default.
-- Track B's Phase 5 needs a model. Until A's champion exists, B runs the experiment end to end with a **stand-in** (Ridge, then LightGBM with default parameters on the same feature groups). The code is identical; only `champion_config.json` changes at hand-over. *Status: Track B has already done this, informally — `baseline.py`'s differenced `HistGradientBoostingRegressor` served as the stand-in for the Phase 5 dry run. It should be treated as disposable, exactly as this clause anticipates: swap it for the real champion at G2 without re-deriving the experiment design.*
+- Track B's Phase 5 needs a model. Until A's champion exists, B runs the experiment end to end with a **stand-in** (Ridge, then LightGBM with default parameters on the same feature groups). The code is identical; only `champion_config.json` changes at hand-over. *Status: Track B has already done this, informally — `tools/baseline.py`'s differenced `HistGradientBoostingRegressor` served as the stand-in for the Phase 5 dry run. It should be treated as disposable, exactly as this clause anticipates: swap it for the real champion at G2 without re-deriving the experiment design.*
 - Track B's dashboard reads `results/leaderboard.json`; build it first against a small fake file.
 
 ### C.4 Integration gates
 
 | Gate | When | Acceptance check | Status |
 |---|---|---|---|
-| **G0 Contract freeze** | End of Phase 0.5 | `H` decided. `load_master`, `swap_weather`, `run_walk_forward` signatures agreed. **Identity test:** swapping ERA5 weather into `swap_weather` reproduces the Regime A predictions exactly. | **MET.** `H=2` measured. 22/22 checks; identity exact to 0.000e+00 MW, plus train/serve parity. `python test_contract.py` |
-| **G1 Dry run** | A has Phase 2 baselines; B has archive and overlap check (5.1–5.2) | Ridge baseline run through Regime A and Regime B on the real archive, end to end. Row counts and date alignment verified. Fix contract issues now, not later. | **Track B side complete.** The full dual-regime experiment runs end to end on the real archive with weekly refit, both H values, leads 1–3 (`python run_phase5.py`). Row counts and date alignment verified by G0. Formally passes once Track A runs *its* Phase 2 baseline through the same path — which is now a one-line model swap. |
+| **G0 Contract freeze** | End of Phase 0.5 | `H` decided. `load_master`, `swap_weather`, `run_walk_forward` signatures agreed. **Identity test:** swapping ERA5 weather into `swap_weather` reproduces the Regime A predictions exactly. | **MET.** `H=2` measured. 22/22 checks; identity exact to 0.000e+00 MW, plus train/serve parity. `python tests/test_contract.py` |
+| **G1 Dry run** | A has Phase 2 baselines; B has archive and overlap check (5.1–5.2) | Ridge baseline run through Regime A and Regime B on the real archive, end to end. Row counts and date alignment verified. Fix contract issues now, not later. | **Track B side complete.** The full dual-regime experiment runs end to end on the real archive with weekly refit, both H values, leads 1–3 (`python experiments/run_phase5.py`). Row counts and date alignment verified by G0. Formally passes once Track A runs *its* Phase 2 baseline through the same path — which is now a one-line model swap. |
 | **G2 Champion hand-off** | A has finished Phase 3 and the intervals | `champion_config.json` loads in B's scripts. Final Phase 5 and the production inference script run on the champion. A's top-5% bias and B's gap numbers use the same definitions. | **Waiting on Track A only.** Both consumers already take `--champion`; the loader is the one stub left (it needs `champion_config.json`'s schema, which Track A defines). Surge definitions live in `config.py` + `src/operational/metrics.py` and follow D4 exactly — reconcile against Track A's `src/evaluation.py` here, preferring theirs. |
 | **G3 Release** | Phases 4, 6, 7 done | Clean-clone reproduction: one command rebuilds the leaderboard, operational gap table and figures. Paper tables are generated from `results/` files, not typed by hand. | Pending. |
 
@@ -246,9 +246,9 @@ Rules: each track edits only what it owns; shared files (`config.py`, `src/contr
 **COMPLETE. Gate G0 is MET.**
 
 - [x] **0.5.1 Count audit.** Resolved: **4,904 rows / 64 columns**, 157 missing days, 1,801 missing values (all legitimate lag warm-up), 0 rows with a missing target. See the Count Audit box above. *(Figures changed again in v4 — see "bugs found" below.)*
-- [x] **0.5.2 Publish-time check.** **`H = 2`.** `python measure_publish_time.py --probe` → `results/publish_time.json`. Evening run time chosen: **20:00 IST** (`evening.yml`). Full method and the rejected circular evidence are in Section B.
+- [x] **0.5.2 Publish-time check.** **`H = 2`.** `python tools/measure_publish_time.py --probe` → `results/publish_time.json`. Evening run time chosen: **20:00 IST** (`evening.yml`). Full method and the rejected circular evidence are in Section B.
 - [x] **0.5.3 Weather-lag source check.** **Not material** → `results/weather_lag_source_check.json`. Inference-time and training-time lagged weather are bit-identical (same Open-Meteo product), and archive values are never revised. Details in Section B item 5.
-- [x] **0.5.4 Contract files.** `config.py` additions, `feature_groups.json`, `src/contract.py` all written; `python test_contract.py` passes 22/22, including the G0 identity test and train/serve parity.
+- [x] **0.5.4 Contract files.** `config.py` additions, `feature_groups.json`, `src/contract.py` all written; `python tests/test_contract.py` passes 22/22, including the G0 identity test and train/serve parity.
 
 ### Two latent bugs the new tests found
 
@@ -298,7 +298,7 @@ inference runs the *real* `add_lags()`. Verified behaviour-preserving -
 
 Bug 1 was caught by a test. Bugs 3 and 4 were caught **by luck** - someone ran
 `predict_next_day.py` by hand and read a warning line. That is not a control,
-and the next one would ship. So `test_contract.py` gained two sections that
+and the next one would ship. So `tests/test_contract.py` gained two sections that
 assert the property directly:
 
 | Check | What it would have caught |
@@ -360,8 +360,8 @@ upstream cadence drift without anyone running the contract test.
 **Objective:** measure the penalty when moving from retrospective weather (ERA5) to real day-ahead forecasts.
 
 - [x] **5.1 Build the forecast archive (D2):** for five cities, pull hourly `*_previous_day1..3` variables from the Previous Runs API; aggregate with the **same code** that builds ERA5 features (`build_dataset.state_weather`, load weights, `cdd`, `cdd_max`, `thi`, `hours_above_32`, apparent temperature). *Done — and the archive reaches back to **2021-06-01**, not "January 2024 onward" as originally planned, giving 5.4 years rather than ~2.8. Output: `data/weather_forecast_archive.csv`, 29,535 rows, leads 1/2/3, 5 cities. Not yet carrying a `model` column.*
-- [x] **5.2 Validate the archive against the real log** (August 2026 onward): bias, MAE and correlation for `t_max`, `t_mean`, `rh_mean`, `cdd_max`. *Done. Cross-check on the overlap (97 days, lead 1): `t_max` bias +0.15°C, MAE 0.36°C — "consistent" by the pre-agreed rule (MAE under 0.5°C). Lead 2: bias +0.05°C, MAE 0.29°C. The archive is a valid stand-in for the real log. Not yet exported to `results/archive_vs_log_overlap.csv` as its own file — the numbers exist in `forecast_skew.py`'s output, not in that path.* <br><br>**Important finding not anticipated by the plan:** the forecast bias is **not stationary**. Lead-1 `t_mean` bias walked +0.49°C (2021) → +0.53 (2022) → +0.07 (2023) → +0.29 (2024) → −0.26 (2025) → **−0.55 (2026, every month negative)**. Averaged over the whole archive the bias looks nearly zero (+0.08°C); that average would be the wrong number to correct by today. `forecast_skew.py` reports a trailing-90-day estimate specifically because of this. Whoever uses the archive for anything beyond this dry run should read that section before assuming a fixed bias correction is safe.
-- [~] **5.3 Dual-regime test on 2025-01-01 onward** (same frozen model, same weekly refit, only the target-day weather swapped through `swap_weather`): **Regime A:** ERA5 actuals. **Regime B:** archived day-ahead forecasts. *Dry-run complete with the `baseline.py` stand-in (differenced GBM, not weekly-refit, not the shared `swap_weather` contract function — `forecast_skew.py` has a private lead-aware substitution instead). Numbers, rolling-origin CV 2023–2026:*
+- [x] **5.2 Validate the archive against the real log** (August 2026 onward): bias, MAE and correlation for `t_max`, `t_mean`, `rh_mean`, `cdd_max`. *Done. Cross-check on the overlap (97 days, lead 1): `t_max` bias +0.15°C, MAE 0.36°C — "consistent" by the pre-agreed rule (MAE under 0.5°C). Lead 2: bias +0.05°C, MAE 0.29°C. The archive is a valid stand-in for the real log. Not yet exported to `results/archive_vs_log_overlap.csv` as its own file — the numbers exist in `tools/forecast_skew.py`'s output, not in that path.* <br><br>**Important finding not anticipated by the plan:** the forecast bias is **not stationary**. Lead-1 `t_mean` bias walked +0.49°C (2021) → +0.53 (2022) → +0.07 (2023) → +0.29 (2024) → −0.26 (2025) → **−0.55 (2026, every month negative)**. Averaged over the whole archive the bias looks nearly zero (+0.08°C); that average would be the wrong number to correct by today. `tools/forecast_skew.py` reports a trailing-90-day estimate specifically because of this. Whoever uses the archive for anything beyond this dry run should read that section before assuming a fixed bias correction is safe.
+- [~] **5.3 Dual-regime test on 2025-01-01 onward** (same frozen model, same weekly refit, only the target-day weather swapped through `swap_weather`): **Regime A:** ERA5 actuals. **Regime B:** archived day-ahead forecasts. *Dry-run complete with the `tools/baseline.py` stand-in (differenced GBM, not weekly-refit, not the shared `swap_weather` contract function — `tools/forecast_skew.py` has a private lead-aware substitution instead). Numbers, rolling-origin CV 2023–2026:*
 
   | weather at scoring time | mean MAE | 2026 bias |
   |---|---|---|
@@ -370,7 +370,7 @@ upstream cadence drift without anyone running the contract test.
   | forecast, lead 2 | 437 MW | −211 MW |
   | forecast, lead 3 | 445 MW | −217 MW |
 
-  *Not knowing tomorrow's weather costs ~9% MAE at lead 1, degrading gently with horizon. This is a real, reproducible number (`python forecast_skew.py`) but it is not the final Phase 5.3 result — it uses a stand-in model, not weekly refit, and doesn't yet break out March–June or the top-5% days as the roadmap specifies. Re-run once the champion exists (G2).* Optional Regime A′ and Regime C not attempted.
+  *Not knowing tomorrow's weather costs ~9% MAE at lead 1, degrading gently with horizon. This is a real, reproducible number (`python tools/forecast_skew.py`) but it is not the final Phase 5.3 result — it uses a stand-in model, not weekly refit, and doesn't yet break out March–June or the top-5% days as the roadmap specifies. Re-run once the champion exists (G2).* Optional Regime A′ and Regime C not attempted.
 - [x] **5.4 Sensitivity and failure modes.** Numbers in
   `results/operational_gap.json` → `phase_5_4_sensitivity`, per-day predictions
   in `results/phase5_predictions.csv`.
@@ -403,7 +403,7 @@ upstream cadence drift without anyone running the contract test.
   season, no March–June heat — so it validates forecast *fidelity*, not the
   heat-driven gap. Re-run after summer 2027.
 
-**Deliverables — all delivered:** `notebooks/05_operational_forecast_experiment.ipynb` ✅ (reads the committed artefact rather than recomputing, so the notebook and the paper cannot disagree), `data/weather_forecast_archive.csv` ✅, `results/archive_vs_log_overlap.csv` ✅, `results/operational_gap.json` ✅. Runner: `python run_phase5.py` (`--quick` for a fast monthly-refit sanity pass).
+**Deliverables — all delivered:** `notebooks/05_operational_forecast_experiment.ipynb` ✅ (reads the committed artefact rather than recomputing, so the notebook and the paper cannot disagree), `data/weather_forecast_archive.csv` ✅, `results/archive_vs_log_overlap.csv` ✅, `results/operational_gap.json` ✅. Runner: `python experiments/run_phase5.py` (`--quick` for a fast monthly-refit sanity pass).
 
 **Runtime — and a 10x performance bug found along the way.** The full run is
 ~690 weekly refits (down from ~1,200: walks are now memoised, so 5.4 and 5.5
@@ -497,7 +497,7 @@ than at G2.
 
 **Open at G2 — now actionable.** `models/champion_config.json` exists and its
 schema is documented in `SYNC.md`. Implement the loader in
-`predict_next_day.py` and `run_phase5.py`. **Two hazards:** the champion uses
+`predict_next_day.py` and `experiments/run_phase5.py`. **Two hazards:** the champion uses
 the 26-feature A2 list (not `model_features()`'s 46), and it is a
 direct-level model while `predict_next_day.py:243` adds `peak_lag_1` back to
 a differenced prediction — serving it unchanged would roughly double the
@@ -528,7 +528,7 @@ forecast.
    Ph.1 EDA                                 0.5.2 publish-time check, H  ← next
    Ph.2 baselines + engine                  5.1 forecast archive  — DONE
    Ph.3 models, Optuna, D1 table            5.2 archive vs real log — DONE
-     (informal D1 preview: baseline.py)      5.3 dry run with stand-in — DONE (informal)
+     (informal D1 preview: tools/baseline.py)      5.3 dry run with stand-in — DONE (informal)
          │                                        │
          └──────────► G1 dry run ─────────────────┘
                      mechanically proven,
@@ -577,7 +577,7 @@ Three things Track A should read before opening `master.csv`:
 2. **Quote Regime B, not Regime A.** The reanalysis MAE is not reproducible on
    any real evening; it belongs in feature-selection comparisons where both
    sides use it.
-3. **Run `python test_contract.py` after touching feature engineering.** It
+3. **Run `python tests/test_contract.py` after touching feature engineering.** It
    caught two latent bugs that `health_check.py` could not see.
 
 ### Verification — the serving path has now actually run
@@ -612,7 +612,7 @@ Three things Track A should read before opening `master.csv`:
 data moved forward, every `d_*` delta came back NaN on the predicted row: the
 deltas need `observed(target − 1)`, which at an evening issue time is *today*,
 and `fetch_weather.py update` excludes the current day as partial.
-`test_contract.py` failed on it immediately.
+`tests/test_contract.py` failed on it immediately.
 
 `best_known_observed()` fills the tail from the forecast log's **lead-0** row.
 That substitute is measured, not assumed: against the archive over 99 lead-0
@@ -625,7 +625,7 @@ measured 180 MW/°C, against a 525 MW MAE.
 today issued three days earlier is a lead-3 forecast labelled "today's
 analysis", and 0.31 °C would not apply to it. Now each day is filled from its
 lowest available lead, `MAX_FILL_LEAD = 1` bounds it, the lead used is printed,
-and `test_contract.py` asserts it — **22 checks**. Verified by planting a
+and `tests/test_contract.py` asserts it — **22 checks**. Verified by planting a
 lead-3 row with identical values: rejected on provenance alone, and the
 resulting NaN fails the parity check loudly. A stale fill is worse than a
 visible gap. The forecast moved 17,955 → 17,860 MW.

@@ -42,8 +42,8 @@ from src.envinfo import capture_environment
 from src.evaluation import (compute_metrics, diebold_mariano,
                             moving_block_bootstrap, surge_mask)
 from src.models import build_model
-from run_phase6_benchmark import FOLDS
-from run_phase7_festival import load_set, walk_forward
+from experiments.run_phase6_benchmark import FOLDS
+from experiments.run_phase7_festival import load_set, walk_forward
 
 RESULTS = Path("results")
 MODELS = Path("models")

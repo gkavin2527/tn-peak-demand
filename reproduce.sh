@@ -44,10 +44,10 @@ step "environment"
 "$PY" src/envinfo.py | sed 's/^/  /'
 
 step "acceptance suites (these gate everything below)"
-for t in test_contract.py test_phase5_gateway.py test_phase6_benchmark.py \
-         test_serving.py test_phase7_festival.py; do
+for t in test_contract test_phase5_gateway test_phase6_benchmark \
+         test_serving test_phase7_festival; do
   printf '  -> %-28s' "$t"
-  if "$PY" "$t" >/dev/null 2>&1; then echo "PASS"; else echo "FAIL"; exit 1; fi
+  if "$PY" -m "tests.$t" >/dev/null 2>&1; then echo "PASS"; else echo "FAIL"; exit 1; fi
 done
 
 if [ "$MODE" = "--tests" ]; then
@@ -55,57 +55,57 @@ if [ "$MODE" = "--tests" ]; then
 fi
 
 step "Phase 6 - model benchmark"
-run run_phase6_benchmark.py
+run -m experiments.run_phase6_benchmark
 
 step "Phase 7 - festival gate (A2 vs A4)"
-run run_phase7_festival.py
+run -m experiments.run_phase7_festival
 
 step "Phase 7 - surge-day bias sweep"
-run run_phase7_surge.py
+run -m experiments.run_phase7_surge
 
 step "Phase 7 - recency weighting"
-run run_phase7_recency.py
+run -m experiments.run_phase7_recency
 
 step "statistics - Diebold-Mariano alongside the bootstrap"
-run run_dm_tests.py
+run -m experiments.run_dm_tests
 
 step "analysis - segment errors and residual diagnostics"
-run run_error_analysis.py
+run -m experiments.run_error_analysis
 
 step "analysis - champion interpretability"
-run run_interpretability.py
+run -m experiments.run_interpretability
 
 if [ "$MODE" = "--quick" ]; then
   step "figures"
-  run make_figures.py
+  run -m experiments.make_figures
   echo; echo "quick run complete in $(( $(date +%s) - START ))s"
   echo "skipped: tuning, selection audit, interval calibration (slow)"
   exit 0
 fi
 
 step "Phase 6b - hyperparameter tuning"
-run run_phase6_tuning.py
+run -m experiments.run_phase6_tuning
 
 step "Phase 7 - champion re-freeze"
-run run_phase7_refreeze.py
+run -m experiments.run_phase7_refreeze
 
 step "W0-1 - selection optimism audit"
-run run_selection_audit.py
+run -m experiments.run_selection_audit
 
 step "W2-3 - conformal interval calibration"
 run calibrate_intervals.py
 
 step "figures"
-run make_figures.py
+run -m experiments.make_figures
 
 step "paper and deck (numbers read from results/, never typed)"
 run paper/make_paper.py
 run paper/make_deck.py
 
 step "re-verify after regeneration"
-for t in test_serving.py test_phase7_festival.py; do
+for t in test_serving test_phase7_festival; do
   printf '  -> %-28s' "$t"
-  if "$PY" "$t" >/dev/null 2>&1; then echo "PASS"; else echo "FAIL"; exit 1; fi
+  if "$PY" -m "tests.$t" >/dev/null 2>&1; then echo "PASS"; else echo "FAIL"; exit 1; fi
 done
 
 ELAPSED=$(( $(date +%s) - START ))

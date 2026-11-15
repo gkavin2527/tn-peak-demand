@@ -126,7 +126,7 @@ framed with the literature that explains why anyone should care:
 
 | Work | Role |
 |---|---|
-| Cawley & Talbot (2010), *On over-fitting in model selection and subsequent selection bias in performance evaluation*, JMLR 11, 2079–2107 | The canonical reference. Exactly the failure mode `run_selection_audit.py` tests for. |
+| Cawley & Talbot (2010), *On over-fitting in model selection and subsequent selection bias in performance evaluation*, JMLR 11, 2079–2107 | The canonical reference. Exactly the failure mode `experiments/run_selection_audit.py` tests for. |
 | Varma & Simon (2006), *Bias in error estimation when using cross-validation for model selection*, BMC Bioinformatics 7, 91 | Nested cross-validation as the remedy; the structural analogue of the outer-2025 / inner-2023–24 design used here. |
 
 Most applied forecasting papers do not do this. Saying "we quantified our own

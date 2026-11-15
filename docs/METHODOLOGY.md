@@ -16,7 +16,7 @@ Grid-India publishes day *D*'s peak demand on *D+1*, around 09:00–11:00 IST.
 So a forecast issued on the evening of *D* for target *D+1* has demand
 observations only through *D−1*.
 
-**This was measured, not assumed.** `measure_publish_time.py` logged 46
+**This was measured, not assumed.** `tools/measure_publish_time.py` logged 46
 pipeline runs — earliest 06:00, median 07:23, latest 18:07 — and same-day data
 was available on **zero** of them. Recorded in `results/publish_time.json`.
 
@@ -39,7 +39,7 @@ Before this existed, all four `sr_*_lag1` columns were NaN on the predicted
 row. Fixing it was worth 204 MW.
 
 > As of 2026-11, grid data has actually been arriving level with demand (0-day
-> lag). `test_contract.py` reports this but does **not** fail, because arriving
+> lag). `tests/test_contract.py` reports this but does **not** fail, because arriving
 > *earlier* than declared is conservative and leak-free. Only the reverse is
 > dangerous.
 
@@ -66,7 +66,7 @@ demand lag is a day stale and the weekly lags have lost weekday alignment.
 
 `models/champion_config.json` therefore records `"lag_representation":
 "literal"`, `predict_next_day.py` reads it rather than inferring, and
-`test_serving.py` asserts the served feature row is identical to
+`tests/test_serving.py` asserts the served feature row is identical to
 `load_phase5_data` for all 26 features.
 
 ---
@@ -159,7 +159,7 @@ to training volume.
 > An earlier version restricted training to the scoring mask. Because the
 > Regime B frame only spans the forecast archive, that silently cut fold 1
 > from ~2,900 training rows to 364 and moved every number in the table.
-> `test_phase6_benchmark.py` now asserts `n_train > 2500`.
+> `tests/test_phase6_benchmark.py` now asserts `n_train > 2500`.
 
 ### 5.2 One shared scoring sample
 
@@ -243,7 +243,7 @@ non-Gaussian (skew +1.18, excess kurtosis +4.48).
 
 ### 8.1 Selection-optimism replay
 
-`run_selection_audit.py` holds 2025 out and re-runs **every** selection step
+`experiments/run_selection_audit.py` holds 2025 out and re-runs **every** selection step
 on 2023–24 only: feature set → 9-model ranking → 50 TPE trials → champion
 pick. Then scores 2025 once.
 
@@ -262,7 +262,7 @@ quantile head was validated separately on inner folds.
 ### 8.2 The 2026 confirmation
 
 One shot, consumed. Trained ≤2025, scored once on 2026 under Regime B.
-`run_final_evaluation.py` refuses to overwrite its artifact without `--force`.
+`experiments/run_final_evaluation.py` refuses to overwrite its artifact without `--force`.
 
 **It is a confirmation, not a blind test** — 2026 was inspected during Track A
 feature diagnostics.
@@ -271,11 +271,11 @@ feature diagnostics.
 
 | suite | checks | guards |
 |---|---|---|
-| `test_contract.py` | 22 | the Track A↔B contract, source freshness |
-| `test_phase5_gateway.py` | 43 | gateway, anti-leakage, reproduction |
-| `test_phase6_benchmark.py` | 31 | model zoo, train/score separation, shuffle control |
-| `test_serving.py` | 28 | the serving contract |
-| `test_phase7_festival.py` | 23 | festival features, A2 immutability |
+| `tests/test_contract.py` | 22 | the Track A↔B contract, source freshness |
+| `tests/test_phase5_gateway.py` | 43 | gateway, anti-leakage, reproduction |
+| `tests/test_phase6_benchmark.py` | 31 | model zoo, train/score separation, shuffle control |
+| `tests/test_serving.py` | 28 | the serving contract |
+| `tests/test_phase7_festival.py` | 23 | festival features, A2 immutability |
 
 Every check exists because of a specific failure, not hypothetically.
 
@@ -303,7 +303,7 @@ the jobs never imported, losing four days of unrecoverable forecast-log rows.
 ./reproduce.sh --tests    # the 147 checks only, ~36s
 ```
 
-Deliberately **not** run: `run_final_evaluation.py` (consumed one-shot) and
+Deliberately **not** run: `experiments/run_final_evaluation.py` (consumed one-shot) and
 `build_dataset.py` (needs network).
 
 ```bash

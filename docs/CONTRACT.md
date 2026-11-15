@@ -13,12 +13,12 @@ contract change."* Append at the top. Anything that changes a shared file
 ### For Track B: the champion now exists — your `--champion` stub can be built
 
 `models/champion_config.json` is written and frozen. This is the artefact
-`predict_next_day.py` and `run_phase5.py` have been waiting for since G0.
+`predict_next_day.py` and `experiments/run_phase5.py` have been waiting for since G0.
 
 > **Re-frozen at Phase 7 (2026-11-15).** The champion is now
 > **`quantile_hybrid`**, not `ridge_gbm_hybrid`. The previous config is kept
 > at `models/champion_config.phase6b.json`. Both hazards flagged below are
-> now **fixed and regression-tested** — see `test_serving.py`.
+> now **fixed and regression-tested** — see `tests/test_serving.py`.
 
 ```json
 {
@@ -100,13 +100,13 @@ selection rule.
   MAE. Describe Ridge as effectively unregularised least squares.
 - **The hybrid's gain is signal, not leakage** — shuffling the residuals
   collapses it from −105.4 MW to −1.0 MW. Asserted permanently in
-  `test_phase6_benchmark.py`.
+  `tests/test_phase6_benchmark.py`.
 
 ### Shared-file changes
 
 | File | Change |
 |---|---|
-| `src/evaluation.py` | **NEW.** Track A's metrics + moving-block bootstrap, behaviour-identical to the private copies in `run_phase5_regime_ab.py` so Phase 5 and Phase 6 numbers stay comparable. |
+| `src/evaluation.py` | **NEW.** Track A's metrics + moving-block bootstrap, behaviour-identical to the private copies in `experiments/run_phase5_regime_ab.py` so Phase 5 and Phase 6 numbers stay comparable. |
 | `src/models.py` | **NEW.** 9-model zoo, uniform `fit`/`predict`. |
 | `requirements.txt` | added `lightgbm`, `xgboost`, `catboost`, `optuna`. |
 | `src/contract.py` | **unchanged.** Canonical A2 (26) untouched. |
@@ -128,7 +128,7 @@ The first `run_walk_forward` in the benchmark restricted **training** to the
 common scoring mask. Because the Regime B frame spans only the forecast
 archive (2021-06+, 1,920 rows), fold 1 trained on **364 rows instead of
 2,897** and every number moved. Nothing warned. Training and scoring are now
-separated and `test_phase6_benchmark.py` asserts `n_train > 2500`. Same family
+separated and `tests/test_phase6_benchmark.py` asserts `n_train > 2500`. Same family
 as bugs 3, 4 and 6 below: a silent sample-composition change.
 
 ### Still open
@@ -164,11 +164,11 @@ as bugs 3, 4 and 6 below: a silent sample-composition change.
    `verify_no_leakage()` proves the shift instead of trusting the names.
 
    **Consequence for D1:** a differenced target must anchor on `peak_lag_2`
-   at H=2. `baseline.py`'s 392 MW / 2.38% MAPE anchors on `peak_lag_1` and is
+   at H=2. `tools/baseline.py`'s 392 MW / 2.38% MAPE anchors on `peak_lag_1` and is
    therefore an **H=1 number** — fine for comparing feature sets, not
    achievable in production.
 
-2. **Run `python test_contract.py` after any feature-engineering change.**
+2. **Run `python tests/test_contract.py` after any feature-engineering change.**
    22 checks, including the G0 identity test and train/serve parity. It
    caught four latent bugs that `health_check.py` could not see (below), and
    three of them were the same failure: a feature present in training and
@@ -190,7 +190,7 @@ as bugs 3, 4 and 6 below: a silent sample-composition change.
 
 - **Owes nothing blocking.** Phases 0.5, 5 and 7 are complete.
 - **Waiting on Track A for:** `models/champion_config.json`'s schema. Both
-  `predict_next_day.py` and `run_phase5.py` already take `--champion`; only the
+  `predict_next_day.py` and `experiments/run_phase5.py` already take `--champion`; only the
   loader is a stub. That is Gate G2.
 - `run_walk_forward` is **yours** (`src/walkforward.py`). Track B wrote a
   stand-in at `src/operational/walkforward.py` with the identical frozen
@@ -233,7 +233,7 @@ as bugs 3, 4 and 6 below: a silent sample-composition change.
    byte-identical.
 
 **What changed as a result.** Bugs 3 and 4 were found by running inference by
-hand, not by a test — so `test_contract.py` now builds the real inference row
+hand, not by a test — so `tests/test_contract.py` now builds the real inference row
 and requires all 46 features populated, checks each source's observed freshness
 against `H_BY_GROUP`, and verifies the serving path reproduces `build_dataset`
 on a shared date. Reintroducing bug 3 fails 2 checks; bug 4 fails 1.
@@ -244,7 +244,7 @@ cadence drift.
 NaN on the predicted row once the data moved forward: the deltas need
 `observed(target − 1)`, which at an evening issue time is *today*, and
 `fetch_weather.py update` deliberately excludes the current day as partial.
-`test_contract.py` failed immediately. Fourth instance of this failure mode,
+`tests/test_contract.py` failed immediately. Fourth instance of this failure mode,
 first one a test found before a human did.
 
 `predict_next_day.best_known_observed()` fills the tail of the observed series
@@ -267,7 +267,7 @@ logger has been down: a row for today issued three days ago is a lead-3
 *forecast* wearing the label "today's analysis", and the accuracy above would
 not apply to it at all. Each missing day is now filled from its lowest
 available lead, nothing above the cap is used, and the lead used is printed and
-asserted in `test_contract.py`. Verified by planting a lead-3 row with
+asserted in `tests/test_contract.py`. Verified by planting a lead-3 row with
 *identical values* — it is rejected on provenance alone, and the resulting
 visible NaN fails the parity check loudly, which is the correct outcome. A
 stale fill is worse than a visible gap.
@@ -333,7 +333,7 @@ redo this analysis without re-running the experiment.
 
 Lead-1 `t_mean` bias walked **+0.49 °C (2021) → −0.55 °C (2026)** as Open-Meteo
 changed models. A correction fitted on the full archive would be ~1 °C wrong
-today, in the wrong direction. `forecast_skew.py` reports a trailing-90-day
+today, in the wrong direction. `tools/forecast_skew.py` reports a trailing-90-day
 estimate for this reason. None is applied anywhere.
 
 ### Artefacts Track A can read

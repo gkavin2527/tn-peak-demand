@@ -102,10 +102,24 @@ jobs:
       - name: Fetch demand data
         run: .venv/bin/python fetch_demand.py
 
+      # Grid-India's portal geo-restricts, so fetch_peak_demand.py supports an
+      # optional proxy:
+      #     PROXIES = {...} if os.getenv("INDIAN_PROXY") else None
+      # This runner is in AWS Mumbai and does not need one, and no
+      # INDIAN_PROXY secret is defined - so the env binding that used to sit
+      # here passed an empty string on every run while making editors warn
+      # about an unresolvable secret. Removed.
+      #
+      # To run this workflow from outside India: define an INDIAN_PROXY
+      # repository secret and restore
+      #     env:
+      #       INDIAN_PROXY: ${{ secrets.INDIAN_PROXY }}
+      # Nothing in the Python needs changing - it already reads the variable.
+      #
+      # continue-on-error because the portal is intermittently unavailable and
+      # a missed day is recoverable tomorrow, unlike the weather forecast log.
       - name: Fetch peak demand data
         continue-on-error: true
-        env:
-          INDIAN_PROXY: ${{ secrets.INDIAN_PROXY }}
         run: .venv/bin/python update_peak_demand.py
 
       - name: Backfill weather (first run only)

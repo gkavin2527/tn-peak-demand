@@ -137,7 +137,7 @@ the penalty over the **Regime A MAE** rather than over the **gain**.
 
 ## Claim 3 — "Selection optimism is small or negative"
 
-*Where:* `run_selection_audit.py`, `results/selection_audit.json`
+*Where:* `experiments/run_selection_audit.py`, `results/selection_audit.json`
 
 **v1 claimed "no selection optimism". That was too absolute.** Measured value
 is −5.80 MW (Regime B), but under real limitations:

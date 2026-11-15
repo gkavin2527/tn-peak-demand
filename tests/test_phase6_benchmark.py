@@ -39,7 +39,7 @@ from src.contract import PHASE5_FEATURE_SETS, load_phase5_data
 from src.evaluation import compute_metrics, moving_block_bootstrap, surge_mask
 from src.models import (MODEL_ZOO, REFERENCE_MODEL, available_models,
                         build_model)
-from run_phase6_benchmark import (FEATURE_SET, FOLDS, common_mask,
+from experiments.run_phase6_benchmark import (FEATURE_SET, FOLDS, common_mask,
                                   load_regime, run_walk_forward)
 
 PASS, FAIL = "PASS", "FAIL"

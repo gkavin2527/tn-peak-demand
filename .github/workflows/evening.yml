@@ -122,7 +122,7 @@ jobs:
       #
       # The serving path reads target_parameterisation and lag_representation
       # from the config and fails closed if either is wrong (see
-      # test_serving.py), so this cannot silently serve the wrong thing.
+      # tests/test_serving.py), so this cannot silently serve the wrong thing.
       - name: Issue tomorrow's forecast
         run: .venv/bin/python predict_next_day.py --champion models/champion_config.json
 

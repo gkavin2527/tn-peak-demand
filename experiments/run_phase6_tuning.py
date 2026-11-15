@@ -63,7 +63,7 @@ from src.evaluation import compute_metrics, moving_block_bootstrap
 from src.models import REFERENCE_MODEL
 from src.envinfo import capture_environment
 from src.ridge import TrackARidge
-from run_phase6_benchmark import (FEATURE_SET, FOLDS, common_mask, evaluate,
+from experiments.run_phase6_benchmark import (FEATURE_SET, FOLDS, common_mask, evaluate,
                                   load_regime, run_walk_forward)
 
 SEED = RANDOM_SEED or 42

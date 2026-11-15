@@ -84,7 +84,7 @@ The Phase 6 harness reproduces the committed Phase 5 Regime A/B result to the de
 | Ridge Regime B | 611.95 MW | **611.95 MW** ✓ |
 | Degradation | +40.34 MW | **+40.34 MW** ✓ |
 
-Asserted in `test_phase6_benchmark.py`. If a future refactor moves these, Phase 6 stops being comparable with Phase 5 and the test fails loudly.
+Asserted in `tests/test_phase6_benchmark.py`. If a future refactor moves these, Phase 6 stops being comparable with Phase 5 and the test fails loudly.
 
 ---
 
@@ -92,7 +92,7 @@ Asserted in `test_phase6_benchmark.py`. If a future refactor moves these, Phase 
 
 The first version of `run_walk_forward` restricted **training** to the common scoring mask. Because the Regime B frame spans only the forecast archive (2021-06 onward, 1,920 rows), this silently cut fold 1's training set from 2,897 rows to **364** and changed every number in the table. Nothing warned.
 
-Training and scoring are now separated explicitly: both regimes train on the identical full ERA5 history, and the mask constrains only which days are *scored*. `test_phase6_benchmark.py` asserts `n_train > 2500` for Regime B fold 1.
+Training and scoring are now separated explicitly: both regimes train on the identical full ERA5 history, and the mask constrains only which days are *scored*. `tests/test_phase6_benchmark.py` asserts `n_train > 2500` for Regime B fold 1.
 
 ---
 
@@ -116,10 +116,10 @@ Training and scoring are now separated explicitly: both regimes train on the ide
 ## Reproduce
 
 ```bash
-python test_phase5_gateway.py            # Phase 5 pipeline still valid
-python test_phase6_benchmark.py          # 22 Phase 6 acceptance checks
-python run_phase6_benchmark.py                                   # Regime A, all 9
-python run_phase6_benchmark.py --regime-b \
+python tests/test_phase5_gateway.py            # Phase 5 pipeline still valid
+python tests/test_phase6_benchmark.py          # 22 Phase 6 acceptance checks
+python experiments/run_phase6_benchmark.py                                   # Regime A, all 9
+python experiments/run_phase6_benchmark.py --regime-b \
     --models ridge,ridge_gbm_hybrid,lightgbm_linear \
     --out phase6_regime_b_finalists.json                         # finalists, both regimes
 ```
@@ -145,7 +145,7 @@ python run_phase6_benchmark.py --regime-b \
 
 # Phase 6b — Tuning and Champion Selection
 
-**Done.** `python run_phase6_tuning.py --trials 50`
+**Done.** `python experiments/run_phase6_tuning.py --trials 50`
 
 ## Procedure (documented per handover §8.5)
 

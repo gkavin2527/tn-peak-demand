@@ -112,5 +112,14 @@
     "xgboost": "3.4.1",
     "catboost": "1.2.10",
     "optuna": "5.0.0"
+  },
+  "effective_sample_size": {
+    "nominal_n": 314,
+    "residual_lag1_acf": 0.4809699447462368,
+    "n_effective_ar1": 110.04641784111789,
+    "se_of_mae_mw": 45.02358237544809,
+    "diff_vs_validation_mw": 5.5895262259058995,
+    "diff_in_se_units": 0.12414663451911229,
+    "interpretation": "+5.59 MW is 0.12 SE once autocorrelation is accounted for. The 2026 result is NOT CONTRADICTED by validation, but it does not independently CONFIRM generalisation. Added 2026-11-15 after external review flagged the original wording as overstated."
   }
 }

@@ -98,6 +98,34 @@ def main():
     check("quantile objective reaches LightGBM",
           build_model("quantile_hybrid", quantile=0.65).quantile == 0.65)
 
+    # Recency weighting (W1-3). The load-bearing invariant is that the DEFAULT
+    # is uniform: every committed Phase 5/6 number was fitted unweighted, so a
+    # default of anything else would silently invalidate them all.
+    for nm in ("ridge_gbm_hybrid", "quantile_hybrid"):
+        check(f"{nm} defaults to uniform weighting",
+              build_model(nm).half_life_years is None)
+    bad = 0
+    for hl in (0, -1, -0.5):
+        try:
+            build_model("ridge_gbm_hybrid", half_life_years=hl)
+        except ValueError:
+            bad += 1
+    check("non-positive half-life is rejected", bad == 3, f"{bad}/3")
+    # age must come from the index, not row position: 157 missing days exist
+    idx = pd.to_datetime(["2020-01-01", "2020-01-02", "2024-01-01"])
+    probe = pd.DataFrame({"a": [1.0, 2.0, 3.0]}, index=idx)
+    w = build_model("ridge_gbm_hybrid", half_life_years=4)._recency_weights(probe)
+    check("recency weights decay by calendar age, not row order",
+          abs(w[-1] - 1.0) < 1e-12 and abs(w[0] - 0.5) < 0.01,
+          f"oldest {w[0]:.4f} (4yr older -> ~0.5), newest {w[-1]:.4f}")
+    try:
+        build_model("ridge_gbm_hybrid", half_life_years=3)._recency_weights(
+            pd.DataFrame({"a": [1.0, 2.0]}))
+        ok = False
+    except TypeError:
+        ok = True
+    check("weighting refuses a non-DatetimeIndex rather than guessing age", ok)
+
     df_a = load_regime("A", feats)
     small = df_a.head(500)
     iface_ok, bad = True, []

@@ -143,7 +143,10 @@ error, by an amount that is typically neither stated nor measured.
 
 We are not aware of a study that isolates that amount as a separate measured
 quantity for daily peak demand, under a single fixed harness, with a paired
-confidence interval. We put the claim no more strongly than that: the point is
+confidence interval. **That statement is backed by a documented search** whose
+queries, sources and explicit gaps are recorded in the repository; it should be
+withdrawn rather than defended if a reader produces a counterexample. We put
+the claim no more strongly than that: the point is
 not that the penalty is unknown in principle, but that it is rarely
 quantified, and that quantifying it changes how a reported MAE should be read.
 
@@ -311,8 +314,19 @@ gradient-boosted residual learner (τ = 0.5906) on 26 features.
 | mean-residual variant | 455.96 | 520.37 | +64.42 |
 | Ridge | 571.61 | 611.95 | +40.34 |
 
-Paired vs the mean-residual variant: -22.47 MW,
-CI [-34.49, -9.46], DM p = 5.6e-04.
+**Paired comparisons, all on the same 1,066 dates as §5.1 and §5.2.** A
+reviewer noted that chaining two comparisons is not the same as reporting one,
+so the direct comparison against Ridge is given rather than left to inference:
+
+| comparison | regime | ΔMAE | 95% CI | DM p |
+|---|---|---|---|---|
+| final vs **Ridge** | A | **-127.99** | [-150.79, -106.69] | 3.6e-27 |
+| final vs **Ridge** | B | **-114.05** | [-138.28, -90.06] | 1.4e-19 |
+| final vs mean-residual variant | B | -22.47 | [-34.49, -9.46] | 5.6e-04 |
+
+Every model in this paper — the nine of §5.2, the mean-residual variant and
+the final model — trains on the same ERA5 history and is scored on the same
+1,066 dates, so no comparison here reflects sample composition.
 
 The reason is elementary and worth stating: **MAE is minimised by the
 conditional median, not the conditional mean**, so a squared-error residual
@@ -356,7 +370,19 @@ of 2026 under Regime B: MAE **503.49** vs 497.90 in validation
 autocorrelation (lag-1 ACF +0.481) reduces the effective sample size from
 314 to approximately 110 under an AR(1) approximation, giving a
 standard error of 45.0 MW on the 2026 MAE. The observed
-difference is **0.12 standard errors**. The defensible reading is that the
+difference is **0.12 standard errors**.
+
+That conclusion does not rest on the AR(1) approximation. Three further
+estimators agree, including one assuming no autoregressive structure at all:
+
+| standard-error estimator | SE (MW) | difference in SEs |
+|---|---|---|
+| AR(1) using validation ρ = 0.481 *(reported above)* | 45.0 | 0.12 |
+| AR(1) using the evaluation year's own ρ = 0.384 | 39.9 | 0.14 |
+| **moving-block bootstrap (no AR assumption)** | **32.9** | **0.17** |
+| naive i.i.d. (incorrect here; shown for contrast) | 26.7 | 0.21 |
+
+The defensible reading is that the
 held-back year is **not inconsistent** with validation performance — not that
 it independently confirms generalisation. Combined with the fact that 2026 was
 inspected during development, this project contains **no genuinely blind
@@ -418,6 +444,16 @@ Segments with n < 20 are anecdotal and no claim rests on them alone.
    expensive direction. A global quantile shift reduces this in-sample but
    transfers poorly (+7% on untouched data); a conditional
    correction is required and is left to future work.
+
+   > **Is the model usable for reserve planning as it stands?** Not on its
+   > own, and we do not claim it is. On the 56 highest-demand days of the
+   > validation sample the point forecast is systematically low — precisely
+   > when reserve margin is thinnest — and a mean error statistic conceals
+   > this because those days are 5% of the sample. An operator should treat
+   > the **upper conformal bound**, not the point forecast, as the planning
+   > quantity on forecast-hot days, and should expect the published MAE to
+   > understate risk in exactly the conditions that matter most. We regard
+   > this as the most important open problem in the work.
 2. **Festival days are badly over-forecast** (Diwali +1766 MW). Dedicated
    festival features remove roughly two thirds of this but do not reach
    significance on aggregate MAE (-3.37 MW, CI [-14.94, 6.91]) because

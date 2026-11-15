@@ -1,0 +1,19 @@
+{
+  "nominal_n": 314,
+  "validation_lag1_acf": 0.4809699447462368,
+  "evaluation_year_lag1_acf": 0.38353881471787177,
+  "se_estimates_mw": {
+    "ar1_validation_rho": 45.02358237544809,
+    "ar1_evaluation_rho": 39.93061359194887,
+    "moving_block_bootstrap": 32.868473043682336,
+    "naive_iid": 26.654048184010737
+  },
+  "difference_mw": 5.581299999999999,
+  "difference_in_se": {
+    "ar1_validation_rho": 0.12396392524828388,
+    "ar1_evaluation_rho": 0.13977496206382728,
+    "moving_block_bootstrap": 0.16980709729297214,
+    "naive_iid": 0.20939783561088166
+  },
+  "conclusion": "All four estimators, including one making no autoregressive assumption, place the difference well below one standard error. The 'within noise' reading is robust to the AR(1) approximation."
+}

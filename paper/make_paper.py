@@ -38,6 +38,7 @@ def main():
     ea, fi, iv = j("error_analysis.json"), j("feature_importance.json"), j("intervals.json")
     sur, fes, dm = j("phase7_surge.json"), j("phase7_festival.json"), j("dm_tests.json")
     ab = j("phase5_regime_ab_results.json")
+    cvr, nrb = j("champion_vs_ridge.json"), j("noise_robustness.json")
     vp, seg, rd = cfg["validation_performance"], ea["segments"], ea["residual_diagnostics"]
     blk, cov = fi["by_block"], fin["interval_coverage_vs_2026_free_widths"]
     gate = fes["results"][cfg["model_type"]]["gates"]["B"]
@@ -192,7 +193,10 @@ error, by an amount that is typically neither stated nor measured.
 
 We are not aware of a study that isolates that amount as a separate measured
 quantity for daily peak demand, under a single fixed harness, with a paired
-confidence interval. We put the claim no more strongly than that: the point is
+confidence interval. **That statement is backed by a documented search** whose
+queries, sources and explicit gaps are recorded in the repository; it should be
+withdrawn rather than defended if a reader produces a counterexample. We put
+the claim no more strongly than that: the point is
 not that the penalty is unknown in principle, but that it is rarely
 quantified, and that quantifying it changes how a reported MAE should be read.
 
@@ -359,8 +363,19 @@ gradient-boosted residual learner (τ = {cfg['hyperparameters']['quantile']:.4f}
 | mean-residual variant | 455.96 | 520.37 | +64.42 |
 | Ridge | {L['regime_a_mae']:.2f} | {L['regime_b_mae']:.2f} | +{L['forecast_penalty_mw']:.2f} |
 
-Paired vs the mean-residual variant: {cfg['vs_displaced_model_regime_b']['delta_mae_mw']:+.2f} MW,
-CI [{cfg['vs_displaced_model_regime_b']['ci_95_low']:.2f}, {cfg['vs_displaced_model_regime_b']['ci_95_high']:.2f}], DM p = {cfg['vs_displaced_model_regime_b']['dm_p_two_sided']:.1e}.
+**Paired comparisons, all on the same {cvr['n_scored']:,} dates as §5.1 and §5.2.** A
+reviewer noted that chaining two comparisons is not the same as reporting one,
+so the direct comparison against Ridge is given rather than left to inference:
+
+| comparison | regime | ΔMAE | 95% CI | DM p |
+|---|---|---|---|---|
+| final vs **Ridge** | A | **{cvr['results']['A']['delta_mae_mw']:+.2f}** | [{cvr['results']['A']['ci_95_low']:.2f}, {cvr['results']['A']['ci_95_high']:.2f}] | {cvr['results']['A']['dm_p_two_sided']:.1e} |
+| final vs **Ridge** | B | **{cvr['results']['B']['delta_mae_mw']:+.2f}** | [{cvr['results']['B']['ci_95_low']:.2f}, {cvr['results']['B']['ci_95_high']:.2f}] | {cvr['results']['B']['dm_p_two_sided']:.1e} |
+| final vs mean-residual variant | B | {cfg['vs_displaced_model_regime_b']['delta_mae_mw']:+.2f} | [{cfg['vs_displaced_model_regime_b']['ci_95_low']:.2f}, {cfg['vs_displaced_model_regime_b']['ci_95_high']:.2f}] | {cfg['vs_displaced_model_regime_b']['dm_p_two_sided']:.1e} |
+
+Every model in this paper — the nine of §5.2, the mean-residual variant and
+the final model — trains on the same ERA5 history and is scored on the same
+{cvr['n_scored']:,} dates, so no comparison here reflects sample composition.
 
 The reason is elementary and worth stating: **MAE is minimised by the
 conditional median, not the conditional mean**, so a squared-error residual
@@ -404,7 +419,19 @@ of 2026 under Regime B: MAE **{fin['metrics_2026']['mae']:.2f}** vs {fin['valida
 autocorrelation (lag-1 ACF {rd['lag1']:+.3f}) reduces the effective sample size from
 {fin['protocol']['n_scored']} to approximately {fin['effective_sample_size']['n_effective_ar1']:.0f} under an AR(1) approximation, giving a
 standard error of {fin['effective_sample_size']['se_of_mae_mw']:.1f} MW on the 2026 MAE. The observed
-difference is **{fin['effective_sample_size']['diff_in_se_units']:.2f} standard errors**. The defensible reading is that the
+difference is **{fin['effective_sample_size']['diff_in_se_units']:.2f} standard errors**.
+
+That conclusion does not rest on the AR(1) approximation. Three further
+estimators agree, including one assuming no autoregressive structure at all:
+
+| standard-error estimator | SE (MW) | difference in SEs |
+|---|---|---|
+| AR(1) using validation ρ = {nrb['validation_lag1_acf']:.3f} *(reported above)* | {nrb['se_estimates_mw']['ar1_validation_rho']:.1f} | {nrb['difference_in_se']['ar1_validation_rho']:.2f} |
+| AR(1) using the evaluation year's own ρ = {nrb['evaluation_year_lag1_acf']:.3f} | {nrb['se_estimates_mw']['ar1_evaluation_rho']:.1f} | {nrb['difference_in_se']['ar1_evaluation_rho']:.2f} |
+| **moving-block bootstrap (no AR assumption)** | **{nrb['se_estimates_mw']['moving_block_bootstrap']:.1f}** | **{nrb['difference_in_se']['moving_block_bootstrap']:.2f}** |
+| naive i.i.d. (incorrect here; shown for contrast) | {nrb['se_estimates_mw']['naive_iid']:.1f} | {nrb['difference_in_se']['naive_iid']:.2f} |
+
+The defensible reading is that the
 held-back year is **not inconsistent** with validation performance — not that
 it independently confirms generalisation. Combined with the fact that 2026 was
 inspected during development, this project contains **no genuinely blind
@@ -466,6 +493,16 @@ Segments with n < 20 are anecdotal and no claim rests on them alone.
    expensive direction. A global quantile shift reduces this in-sample but
    transfers poorly ({100*sur['honest_validation']['surge_bias_reduction_frac_2025']:+.0f}% on untouched data); a conditional
    correction is required and is left to future work.
+
+   > **Is the model usable for reserve planning as it stands?** Not on its
+   > own, and we do not claim it is. On the {seg['surge_top5pct']['n']} highest-demand days of the
+   > validation sample the point forecast is systematically low — precisely
+   > when reserve margin is thinnest — and a mean error statistic conceals
+   > this because those days are 5% of the sample. An operator should treat
+   > the **upper conformal bound**, not the point forecast, as the planning
+   > quantity on forecast-hot days, and should expect the published MAE to
+   > understate risk in exactly the conditions that matter most. We regard
+   > this as the most important open problem in the work.
 2. **Festival days are badly over-forecast** (Diwali {seg['diwali_window']['bias']:+.0f} MW). Dedicated
    festival features remove roughly two thirds of this but do not reach
    significance on aggregate MAE ({gate['delta_mae']:+.2f} MW, CI [{gate['ci_95_low']:.2f}, {gate['ci_95_high']:.2f}]) because

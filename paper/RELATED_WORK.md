@@ -153,7 +153,7 @@ rather than claiming the theoretical guarantee holds unmodified.
 - Lead §3 with the gap, not with the method. The method is ordinary; the
   measurement is not.
 - Do **not** claim state of the art. Claim the measurement.
-- State the limitations from [`PHASE7_RESULTS.md`](../PHASE7_RESULTS.md) §7 in
+- State the limitations from [`PHASE7_RESULTS.md`](../docs/RESULTS.md) §7 in
   the paper itself. Several — surge under-forecasting, the Diwali failure, the
   unverified issue hour — are the kind a referee finds anyway, and finding
   them already disclosed is worth more than hiding them.

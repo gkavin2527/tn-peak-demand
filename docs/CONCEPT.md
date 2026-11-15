@@ -5,7 +5,7 @@
 > Current champion is **`quantile_hybrid`**, Regime B **497.90 MW**, with a
 > consumed 2026 confirmation at **503.49 MW**. Figures referenced here were
 > regenerated; the five originals depicted the weather-free model and are
-> deleted. See **[`PHASE7_RESULTS.md`](PHASE7_RESULTS.md)**.
+> deleted. See **[`PHASE7_RESULTS.md`](RESULTS.md)**.
 
 ## 1. Project Title
 

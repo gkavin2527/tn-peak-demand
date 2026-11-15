@@ -1,5 +1,5 @@
 """
-Generate presentation/DECK.md from committed artifacts.
+Generate paper/DECK.md from committed artifacts.
 
     python make_deck.py
 
@@ -29,8 +29,9 @@ from pathlib import Path
 
 import pandas as pd
 
-R = Path("results")
-OUT = Path("presentation/DECK.md")
+ROOT = Path(__file__).resolve().parent.parent
+R = ROOT / "results"
+OUT = ROOT / "paper" / "DECK.md"
 
 
 def j(name):
@@ -38,7 +39,7 @@ def j(name):
 
 
 def main():
-    cfg = json.loads(Path("models/champion_config.json").read_text())
+    cfg = json.loads((ROOT / "models" / "champion_config.json").read_text())
     L, fin, aud = j("weather_ladder.json"), j("final_evaluation.json"), j("selection_audit.json")
     ea, fi, iv = j("error_analysis.json"), j("feature_importance.json"), j("intervals.json")
     sur, fes, dm = j("phase7_surge.json"), j("phase7_festival.json"), j("dm_tests.json")
@@ -51,10 +52,10 @@ def main():
     hv = sur["honest_validation"]
     gate = fes["results"][cfg["model_type"]]["gates"]["B"]
 
-    m = pd.read_csv("data/master.csv", parse_dates=["date"])
+    m = pd.read_csv(ROOT / "data" / "master.csv", parse_dates=["date"])
     y = m.dropna(subset=["tn_peak_demand_mw"])
     ann = y.groupby(y["date"].dt.year)["tn_peak_demand_mw"].max()
-    arch = sum(1 for _ in open("data/weather_forecast_archive.csv")) - 1
+    arch = sum(1 for _ in open(ROOT / "data" / "weather_forecast_archive.csv")) - 1
 
     # Derived facts the slides quote - computed, never typed. The rule in this
     # file's docstring applies to the script itself, not only to its output.
@@ -66,7 +67,7 @@ def main():
     # is inconsistent: 2.7% of 14,300 is 387 MW, not the 503 MW we report.
     conf_year = int(fin["protocol"]["date_range"][0][:4])
     mean_peak = float(y.loc[y["date"].dt.year == conf_year, "tn_peak_demand_mw"].mean())
-    fa = pd.read_csv("data/weather_forecast_archive.csv", usecols=["date"],
+    fa = pd.read_csv(ROOT / "data" / "weather_forecast_archive.csv", usecols=["date"],
                      parse_dates=["date"])
     arch_years = (fa["date"].max() - fa["date"].min()).days / 365.25
     prior = cfg["supersedes"]                        # the model this one replaced
@@ -413,7 +414,7 @@ typed in. Thank you — happy to take questions.
 | "Could you run this at 8pm?" | We never verified what time the forecasts were actually issued. Our claim is "lead-1 forecast matched to the target date" — we deliberately don't claim more. |
 | "Where's the data from?" | Grid-India PSP reports and Open-Meteo. **`[DOI]` — Zenodo record for the historical backfill still to be filled in.** |
 """
-    OUT.parent.mkdir(exist_ok=True)
+    OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(D)
     n_slides = D.count("## Slide ")
     print(f"wrote {OUT} ({n_slides} slides, {len(D.splitlines())} lines, ~{len(D.split())} words)")

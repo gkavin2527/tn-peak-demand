@@ -1,6 +1,6 @@
 # Phase 7 — Remediation Results
 
-**Champion frozen:** 2026-11-15T18:32:08 · **Supersedes:** [`PHASE6_MODEL_BENCHMARK.md`](PHASE6_MODEL_BENCHMARK.md)
+**Champion frozen:** 2026-11-15T18:32:08 · **Supersedes:** [`PHASE6_MODEL_BENCHMARK.md`](BENCHMARK.md)
 
 Authoritative record of Phase 7. Every number is regenerated from
 `results/*.json` by the script named beside it; nothing is transcribed by hand.

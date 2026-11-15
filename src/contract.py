@@ -387,6 +387,31 @@ PHASE5_FEATURE_SETS: dict[str, list[str]] = {
         "t_max", "t_mean", "t_min", "cdd_max", "hours_above_32",
         "d_cdd_max", "cdd_max_vs_roll7",
     ],
+
+    # A4: A2 + per-festival Diwali features (28 features). Phase 7 candidate.
+    #
+    # A2 is NOT edited - Phase 5's decision gate selected it and every
+    # committed Phase 5/6 number is measured against that exact list. A4 is a
+    # separate candidate that must clear the same paired-bootstrap bar before
+    # anything adopts it.
+    #
+    # Motivated by the champion's own Regime B residuals (2023-25, n=1,066):
+    # Diwali MAE 1,263 MW with bias +945 (n=21) against a 474 MW no-holiday
+    # baseline - the model over-forecasts the festival shutdown. The three
+    # worst days in the whole validation sample are consecutive Diwalis.
+    # Features are festival-specific rather than a generic days-to-holiday
+    # distance because the large festival effects have opposite signs (Diwali
+    # +945, Pongal -812), and a single column averages them away.
+    "A4_festival": [
+        "dow", "is_weekend", "is_holiday", "day_before_holiday",
+        "day_after_holiday", "pongal_window",
+        "diwali_window", "days_to_diwali",
+        "sin1", "cos1", "sin2", "cos2", "trend",
+        "peak_lag_2", "peak_lag_3", "peak_lag_7", "peak_lag_14", "peak_lag_364",
+        "energy_lag_2", "energy_lag_7", "energy_lag_14",
+        "t_max", "t_mean", "t_min", "cdd_max", "hours_above_32",
+        "d_cdd_max", "cdd_max_vs_roll7",
+    ],
 }
 
 

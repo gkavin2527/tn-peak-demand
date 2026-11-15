@@ -13,6 +13,8 @@ config.LEAKY_SAMEDAY. Weather is the one same-day input that stays, because at
 prediction time you substitute a forecast for it.
 """
 
+from datetime import timedelta
+
 import numpy as np
 import pandas as pd
 
@@ -89,6 +91,29 @@ def weather_derivatives(wx: pd.DataFrame) -> pd.DataFrame:
     return full.rename_axis("date").reset_index()
 
 
+def _signed_days_to(dates: pd.Series, targets: set, clip: int) -> pd.Series:
+    """Signed day offset from the nearest date in `targets`, within +/-clip.
+
+    Sign follows calendar order: (date - event), so **negative is before the
+    event** and positive is after. Days further than `clip` from any target
+    get NaN, not 0 - 0 means "the event is today" and a sentinel that collides
+    with a real value is how holiday_name="None" silently became 4,577 NaNs.
+    Callers fill the NaN only after deriving any window flag from it.
+    """
+    out = np.full(len(dates), np.nan)
+    day = dates.dt.date.to_numpy()
+    for i, x in enumerate(day):
+        best = None
+        for off in range(-clip, clip + 1):
+            # off is (date - event), so the event sits at x - off
+            if (x - timedelta(days=off)) in targets:
+                if best is None or abs(off) < abs(best):
+                    best = off
+        if best is not None:
+            out[i] = best
+    return pd.Series(out, index=dates.index)
+
+
 def calendar_features(dates: pd.Series) -> pd.DataFrame:
     # tn_holidays, not holidays.India directly: the package resolves Maha
     # Shivaratri in only 6 of 15 years, so is_holiday would otherwise mean
@@ -111,6 +136,34 @@ def calendar_features(dates: pd.Series) -> pd.DataFrame:
     cal["day_after_holiday"] = (d - pd.Timedelta(days=1)).dt.date.map(lambda x: int(x in hol))
     cal["holiday_name"] = d.dt.date.map(lambda x: tn.get(x, ""))
     cal["pongal_window"] = ((d.dt.month == 1) & d.dt.day.between(13, 17)).astype(int)
+
+    # Festival windows are deliberately PER-FESTIVAL, not a generic
+    # "days to nearest holiday". Measured on the champion's Regime B residuals
+    # (2023-25, n=1,066), the two largest festival effects point in opposite
+    # directions: Diwali is over-forecast by +945 MW (MAE 1,263 on n=21, 2.7x
+    # the 474 MW no-holiday baseline) while Pongal/Uzhavar Thirunal are
+    # under-forecast by -812/-691 MW. A single signed distance averages those
+    # into a day type that exists on neither - the same mistake is_weekend
+    # makes with Saturday and Sunday.
+    #
+    # Diwali is lunisolar, so it cannot be expressed as a fixed month/day the
+    # way pongal_window can. tn_holidays resolves it for 2013-2030, which
+    # covers the series and every horizon this model will be served over.
+    # Matching the name by substring is required because the calendar emits
+    # compound entries on collisions (e.g. "Milad-un-Nabi; Pongal").
+    diwali = {x for x, n in tn.items() if "diwali" in n.lower() or "deepavali" in n.lower()}
+    if not diwali:
+        raise RuntimeError(
+            "no Diwali dates resolved from tn_holidays - diwali_window would "
+            "be silently all-zero. Check the holiday calendar before building.")
+    dw = _signed_days_to(d, diwali, clip=3)
+    # Derive the flag BEFORE filling, while "no Diwali nearby" is still NaN.
+    cal["diwali_window"] = (dw.notna() & (dw.abs() <= 2)).astype(int)
+    # Signed and clipped: the load collapse is not symmetric around the day
+    # itself (bias is +945 MW overall but concentrated on the day and the day
+    # after), and clipping keeps the column bounded instead of letting a
+    # linear model read "far from Diwali" as a trend.
+    cal["days_to_diwali"] = dw.fillna(0.0)
 
     doy = d.dt.day_of_year
     for k in (1, 2):

@@ -36,7 +36,9 @@
     "calendar": [
       "dow", "is_weekend", "dow_sin", "dow_cos", "is_holiday",
       "day_before_holiday", "day_after_holiday", "holiday_name",
-      "pongal_window", "sin1", "cos1", "sin2", "cos2", "trend"
+      "pongal_window",
+      "diwali_window",
+      "days_to_diwali", "sin1", "cos1", "sin2", "cos2", "trend"
     ],
     "weather_target_day": [
       "t_mean", "t_max", "t_min", "rh_mean", "app_t_mean", "app_t_max",

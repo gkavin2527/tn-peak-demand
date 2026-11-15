@@ -72,7 +72,7 @@ Trained on 3,982 rows ≤2025-12-31 (Regime A), scored on
 > **This is a confirmation set, not a blind test, and must never be described
 > as one.** 2026 was inspected during Track A feature diagnostics
 > (`diagnostic_2026_results` in `experiment_a1/a2/a3_results.json`). The
-> unbiased estimate is §2.1. `run_final_evaluation.py` refuses to overwrite its
+> least-biased estimate is §2.1 — though that replay is not fully nested either: it ranks families on default hyperparameters and reuses feature sets selected with 2025 in view. **No genuinely blind evaluation exists in this project.** `run_final_evaluation.py` refuses to overwrite its
 > own artifact without `--force`.
 
 **Interval coverage is genuinely out-of-sample.** The operational conformal

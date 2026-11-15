@@ -95,7 +95,9 @@ reported errors are not operational errors.
 > **Honesty constraint.** Do not write "no prior work has done this." Write
 > "we are not aware of a study that isolates the penalty as a separate
 > measured quantity under a single harness." The weaker claim is both safer
-> and sufficient.
+> and sufficient — **and it is only honest because a search backs it.** See
+> [`LITERATURE_SEARCH.md`](LITERATURE_SEARCH.md), which records what was
+> searched, what was found, and explicitly what was *not* searched.
 
 A useful adjacent literature: **wind and solar** forecasting has long treated
 NWP forecast error as a first-class component, because the resource *is* the

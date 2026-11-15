@@ -1,0 +1,641 @@
+{
+  "phase": "6_model_benchmark",
+  "generated_at": "2026-11-15T15:23:13",
+  "feature_set": "A2_weather_deltas_anomalies",
+  "feature_count": 26,
+  "features": [
+    "dow",
+    "is_weekend",
+    "is_holiday",
+    "day_before_holiday",
+    "day_after_holiday",
+    "pongal_window",
+    "sin1",
+    "cos1",
+    "sin2",
+    "cos2",
+    "trend",
+    "peak_lag_2",
+    "peak_lag_3",
+    "peak_lag_7",
+    "peak_lag_14",
+    "peak_lag_364",
+    "energy_lag_2",
+    "energy_lag_7",
+    "energy_lag_14",
+    "t_max",
+    "t_mean",
+    "t_min",
+    "cdd_max",
+    "hours_above_32",
+    "d_cdd_max",
+    "cdd_max_vs_roll7"
+  ],
+  "H": 2,
+  "validation_protocol": "expanding walk-forward, val 2023/2024/2025",
+  "primary_metric": "MAE",
+  "reference_model": "ridge",
+  "regimes_evaluated": [
+    "A"
+  ],
+  "scored_dates": {
+    "total": 1085,
+    "per_fold": {
+      "2023": 365,
+      "2024": 364,
+      "2025": 356
+    },
+    "first": "2023-01-01",
+    "last": "2025-12-31",
+    "sha256": "da498da5840a6ab7fffc28a9a438a15ad4381a71d213ba2bdc0f4feb9f802827"
+  },
+  "bootstrap": {
+    "method": "moving_block",
+    "block_days": 7,
+    "n_boot": 2000,
+    "seed": 42,
+    "direction": "d = |e_candidate| - |e_ridge|; negative = candidate better"
+  },
+  "model_notes": {
+    "naive_persistence": "echoes peak_lag_2 (T-2), the newest demand available at H=2",
+    "seasonal_naive": "echoes peak_lag_7 (T-7), same weekday last week",
+    "ols": "unpenalised; isolates the contribution of Ridge's L2 term",
+    "ridge": "incumbent champion and the paired-comparison reference",
+    "lightgbm": "standard GBM; cannot extrapolate beyond training range",
+    "lightgbm_linear": "linear models in leaves; restores within-leaf extrapolation",
+    "xgboost": "independent GBM implementation as a cross-check on LightGBM",
+    "catboost": "ordered boosting; lowest marginal value on this data size",
+    "ridge_gbm_hybrid": "Ridge trend + GBM residual; targets the extrapolation failure"
+  },
+  "results": {
+    "A": {
+      "naive_persistence": {
+        "overall": {
+          "mae": 1043.799078341014,
+          "rmse": 1411.9786345820282,
+          "mape": 6.53941780863345,
+          "bias": -0.8276497695852535,
+          "n_samples": 1085
+        },
+        "folds": {
+          "2023": {
+            "mae": 968.2164383561644,
+            "rmse": 1311.5756110730497,
+            "mape": 6.292429582649753,
+            "bias": -0.8575342465753425,
+            "n_samples": 365
+          },
+          "2024": {
+            "mae": 1031.5467032967033,
+            "rmse": 1383.993281720021,
+            "mape": 6.4184971566146185,
+            "bias": 3.3873626373626373,
+            "n_samples": 364
+          },
+          "2025": {
+            "mae": 1133.8202247191011,
+            "rmse": 1534.2928301872641,
+            "mape": 6.916288089023633,
+            "bias": -5.106741573033708,
+            "n_samples": 356
+          }
+        },
+        "summer_mar_jun": {
+          "mae": 1010.4262295081967,
+          "rmse": 1357.9835561588418,
+          "mape": 5.8872740931052086,
+          "bias": -0.9617486338797814,
+          "n_samples": 366,
+          "label": "summer_mar_jun"
+        },
+        "surge_top5pct_per_year": {
+          "mae": 853.4561403508771,
+          "rmse": 1143.219745265499,
+          "mape": 4.402841200025203,
+          "bias": -735.6315789473684,
+          "n_samples": 57,
+          "label": "surge_top5pct"
+        }
+      },
+      "seasonal_naive": {
+        "overall": {
+          "mae": 997.8820276497696,
+          "rmse": 1329.7390215518938,
+          "mape": 6.188402571001658,
+          "bias": -20.70414746543779,
+          "n_samples": 1085
+        },
+        "folds": {
+          "2023": {
+            "mae": 937.9205479452055,
+            "rmse": 1224.6170516890868,
+            "mape": 6.011674957633627,
+            "bias": -21.268493150684932,
+            "n_samples": 365
+          },
+          "2024": {
+            "mae": 968.9038461538462,
+            "rmse": 1305.6596675942847,
+            "mape": 6.000786138259515,
+            "bias": -0.5082417582417582,
+            "n_samples": 364
+          },
+          "2025": {
+            "mae": 1088.9887640449438,
+            "rmse": 1452.0323494399925,
+            "mape": 6.561430549646244,
+            "bias": -40.7752808988764,
+            "n_samples": 356
+          }
+        },
+        "summer_mar_jun": {
+          "mae": 1057.3743169398906,
+          "rmse": 1387.4076417840845,
+          "mape": 6.130170290290904,
+          "bias": -9.418032786885245,
+          "n_samples": 366,
+          "label": "summer_mar_jun"
+        },
+        "surge_top5pct_per_year": {
+          "mae": 1040.3859649122808,
+          "rmse": 1414.4966620736664,
+          "mape": 5.34575499225625,
+          "bias": -984.2456140350877,
+          "n_samples": 57,
+          "label": "surge_top5pct"
+        }
+      },
+      "ols": {
+        "overall": {
+          "mae": 571.0333289604158,
+          "rmse": 752.581343584167,
+          "mape": 3.5374838936782598,
+          "bias": -71.61966684755714,
+          "n_samples": 1085
+        },
+        "folds": {
+          "2023": {
+            "mae": 571.7457691965826,
+            "rmse": 752.2153619218398,
+            "mape": 3.6449369160603005,
+            "bias": -151.04702584999038,
+            "n_samples": 365
+          },
+          "2024": {
+            "mae": 553.5806971299639,
+            "rmse": 736.7235486040187,
+            "mape": 3.4145344384353966,
+            "bias": -21.352303798019136,
+            "n_samples": 364
+          },
+          "2025": {
+            "mae": 588.1477033988531,
+            "rmse": 768.8245199090235,
+            "mape": 3.553026726652859,
+            "bias": -41.58127952773605,
+            "n_samples": 356
+          }
+        },
+        "summer_mar_jun": {
+          "mae": 617.1708712878506,
+          "rmse": 776.0565066957918,
+          "mape": 3.533830510982445,
+          "bias": -120.86851678377904,
+          "n_samples": 366,
+          "label": "summer_mar_jun"
+        },
+        "surge_top5pct_per_year": {
+          "mae": 763.6758251001486,
+          "rmse": 926.0767625576306,
+          "mape": 3.941291190692052,
+          "bias": -735.2412893490283,
+          "n_samples": 57,
+          "label": "surge_top5pct"
+        }
+      },
+      "ridge": {
+        "overall": {
+          "mae": 571.0336989187867,
+          "rmse": 752.5816628123029,
+          "mape": 3.537485762813824,
+          "bias": -71.62123628750501,
+          "n_samples": 1085
+        },
+        "folds": {
+          "2023": {
+            "mae": 571.7463932246678,
+            "rmse": 752.2158238469124,
+            "mape": 3.644940191047514,
+            "bias": -151.04835990345012,
+            "n_samples": 365
+          },
+          "2024": {
+            "mae": 553.5805532482894,
+            "rmse": 736.7234239126656,
+            "mape": 3.414533436575227,
+            "bias": -21.354085889010022,
+            "n_samples": 364
+          },
+          "2025": {
+            "mae": 588.1483382514116,
+            "rmse": 768.8251310805123,
+            "mape": 3.5530300899080727,
+            "bias": -41.58287287523594,
+            "n_samples": 356
+          }
+        },
+        "summer_mar_jun": {
+          "mae": 617.1715760660396,
+          "rmse": 776.0573548442871,
+          "mape": 3.5338336619119097,
+          "bias": -120.87178668900204,
+          "n_samples": 366,
+          "label": "summer_mar_jun"
+        },
+        "surge_top5pct_per_year": {
+          "mae": 763.6781165576167,
+          "rmse": 926.0783698957968,
+          "mape": 3.9413030794813197,
+          "bias": -735.2448924809545,
+          "n_samples": 57,
+          "label": "surge_top5pct"
+        }
+      },
+      "lightgbm": {
+        "overall": {
+          "mae": 640.1256572935404,
+          "rmse": 818.6333672881851,
+          "mape": 3.84929580069169,
+          "bias": -355.8393127411613,
+          "n_samples": 1085
+        },
+        "folds": {
+          "2023": {
+            "mae": 689.7737346941591,
+            "rmse": 857.153659684419,
+            "mape": 4.252377449243822,
+            "bias": -494.67224712024756,
+            "n_samples": 365
+          },
+          "2024": {
+            "mae": 664.2228711465458,
+            "rmse": 876.2314504842107,
+            "mape": 3.918702525386493,
+            "bias": -379.7225423548874,
+            "n_samples": 364
+          },
+          "2025": {
+            "mae": 564.5837075920803,
+            "rmse": 710.0437745325496,
+            "mape": 3.3650574593702385,
+            "bias": -189.07662558452424,
+            "n_samples": 356
+          }
+        },
+        "summer_mar_jun": {
+          "mae": 797.6620151080692,
+          "rmse": 994.2238003071753,
+          "mape": 4.438290676376517,
+          "bias": -488.07656655660776,
+          "n_samples": 366,
+          "label": "summer_mar_jun"
+        },
+        "surge_top5pct_per_year": {
+          "mae": 1351.5366909190952,
+          "rmse": 1562.3061614597123,
+          "mape": 6.939200433889521,
+          "bias": -1347.5396226168652,
+          "n_samples": 57,
+          "label": "surge_top5pct"
+        }
+      },
+      "lightgbm_linear": {
+        "overall": {
+          "mae": 627.018197408272,
+          "rmse": 797.729861654163,
+          "mape": 3.825307334625995,
+          "bias": -366.6693351942287,
+          "n_samples": 1085
+        },
+        "folds": {
+          "2023": {
+            "mae": 766.5791881144318,
+            "rmse": 920.981103137429,
+            "mape": 4.784148919061909,
+            "bias": -625.4015980725727,
+            "n_samples": 365
+          },
+          "2024": {
+            "mae": 549.1480455128108,
+            "rmse": 728.6307331259852,
+            "mape": 3.304740298720013,
+            "bias": -263.70875659275384,
+            "n_samples": 364
+          },
+          "2025": {
+            "mae": 563.549022358271,
+            "rmse": 725.9646274189546,
+            "mape": 3.3744905445997846,
+            "bias": -206.6703876109178,
+            "n_samples": 356
+          }
+        },
+        "summer_mar_jun": {
+          "mae": 598.1784648390819,
+          "rmse": 767.3768781609816,
+          "mape": 3.3778591827881956,
+          "bias": -255.67947261319236,
+          "n_samples": 366,
+          "label": "summer_mar_jun"
+        },
+        "surge_top5pct_per_year": {
+          "mae": 876.5417811253755,
+          "rmse": 1036.9378371345263,
+          "mape": 4.513749795442918,
+          "bias": -874.4322373051549,
+          "n_samples": 57,
+          "label": "surge_top5pct"
+        }
+      },
+      "xgboost": {
+        "overall": {
+          "mae": 630.2755310339862,
+          "rmse": 808.8034816032502,
+          "mape": 3.785410795744949,
+          "bias": -367.54610995103684,
+          "n_samples": 1085
+        },
+        "folds": {
+          "2023": {
+            "mae": 702.4836793664383,
+            "rmse": 868.7509337690062,
+            "mape": 4.319938215271635,
+            "bias": -522.5849957191781,
+            "n_samples": 365
+          },
+          "2024": {
+            "mae": 628.0514090401786,
+            "rmse": 839.9474528435155,
+            "mape": 3.7068940360678777,
+            "bias": -361.41236692994505,
+            "n_samples": 364
+          },
+          "2025": {
+            "mae": 558.5159980688202,
+            "rmse": 706.0828764094872,
+            "mape": 3.317651223821391,
+            "bias": -214.85928173279495,
+            "n_samples": 356
+          }
+        },
+        "summer_mar_jun": {
+          "mae": 789.3173641350751,
+          "rmse": 975.255796346021,
+          "mape": 4.3947892711232415,
+          "bias": -501.5808545722336,
+          "n_samples": 366,
+          "label": "summer_mar_jun"
+        },
+        "surge_top5pct_per_year": {
+          "mae": 1348.267817982456,
+          "rmse": 1519.5040739463914,
+          "mape": 6.931352905157022,
+          "bias": -1348.267817982456,
+          "n_samples": 57,
+          "label": "surge_top5pct"
+        }
+      },
+      "catboost": {
+        "overall": {
+          "mae": 651.7387321593147,
+          "rmse": 840.1338761779891,
+          "mape": 3.9081262350215544,
+          "bias": -394.46594037539745,
+          "n_samples": 1085
+        },
+        "folds": {
+          "2023": {
+            "mae": 740.9114275550676,
+            "rmse": 904.6936904122376,
+            "mape": 4.545469392699553,
+            "bias": -570.4121081987006,
+            "n_samples": 365
+          },
+          "2024": {
+            "mae": 684.3926700015047,
+            "rmse": 907.085386592481,
+            "mape": 4.003039152402797,
+            "bias": -427.8083538301969,
+            "n_samples": 364
+          },
+          "2025": {
+            "mae": 526.9239366705315,
+            "rmse": 686.0930630338921,
+            "mape": 3.1576246774955954,
+            "bias": -179.9800141027776,
+            "n_samples": 356
+          }
+        },
+        "summer_mar_jun": {
+          "mae": 841.3076619413257,
+          "rmse": 1038.5455538572546,
+          "mape": 4.676839253344248,
+          "bias": -581.2290059683033,
+          "n_samples": 366,
+          "label": "summer_mar_jun"
+        },
+        "surge_top5pct_per_year": {
+          "mae": 1437.9373409909206,
+          "rmse": 1634.5571420432675,
+          "mape": 7.390136705176085,
+          "bias": -1437.9373409909206,
+          "n_samples": 57,
+          "label": "surge_top5pct"
+        }
+      },
+      "ridge_gbm_hybrid": {
+        "overall": {
+          "mae": 465.88164771104766,
+          "rmse": 634.766222150954,
+          "mape": 2.8935912651936677,
+          "bias": -39.064552957394135,
+          "n_samples": 1085
+        },
+        "folds": {
+          "2023": {
+            "mae": 470.5128908594548,
+            "rmse": 639.8738182596219,
+            "mape": 3.017739847988298,
+            "bias": -57.834341297826384,
+            "n_samples": 365
+          },
+          "2024": {
+            "mae": 471.04605003219285,
+            "rmse": 639.6001676789895,
+            "mape": 2.9142468112513122,
+            "bias": -0.4737786323070605,
+            "n_samples": 364
+          },
+          "2025": {
+            "mae": 455.8528662670435,
+            "rmse": 624.4634283060828,
+            "mape": 2.7451843789997845,
+            "bias": -59.27823023288268,
+            "n_samples": 356
+          }
+        },
+        "summer_mar_jun": {
+          "mae": 501.0135750382162,
+          "rmse": 648.383897700954,
+          "mape": 2.8801238067653236,
+          "bias": -2.9432137497562327,
+          "n_samples": 366,
+          "label": "summer_mar_jun"
+        },
+        "surge_top5pct_per_year": {
+          "mae": 527.7343386565681,
+          "rmse": 683.1938839244715,
+          "mape": 2.7147578558557126,
+          "bias": -473.86713387338,
+          "n_samples": 57,
+          "label": "surge_top5pct"
+        }
+      }
+    }
+  },
+  "paired_vs_reference": {
+    "naive_persistence": {
+      "mean": 472.76537942222706,
+      "ci_95_low": 435.92273449821465,
+      "ci_95_high": 509.56476824524043,
+      "p_value_one_sided": 1.0,
+      "std_err": 18.61955634627378,
+      "n": 1085
+    },
+    "seasonal_naive": {
+      "mean": 426.8483287309828,
+      "ci_95_low": 355.2485227372006,
+      "ci_95_high": 499.33234640777675,
+      "p_value_one_sided": 1.0,
+      "std_err": 36.497258219816885,
+      "n": 1085
+    },
+    "ols": {
+      "mean": -0.0003699583709801248,
+      "ci_95_low": -0.0008847987364687415,
+      "ci_95_high": 0.0001155696631897195,
+      "p_value_one_sided": 0.075,
+      "std_err": 0.000253197309993852,
+      "n": 1085
+    },
+    "lightgbm": {
+      "mean": 69.0919583747536,
+      "ci_95_low": 24.732679872626093,
+      "ci_95_high": 118.68058937309432,
+      "p_value_one_sided": 0.998,
+      "std_err": 23.858293421819564,
+      "n": 1085
+    },
+    "lightgbm_linear": {
+      "mean": 55.98449848948527,
+      "ci_95_low": 9.269738663666358,
+      "ci_95_high": 101.83396615686597,
+      "p_value_one_sided": 0.9935,
+      "std_err": 23.17552486715254,
+      "n": 1085
+    },
+    "xgboost": {
+      "mean": 59.2418321151994,
+      "ci_95_low": 14.258165663524768,
+      "ci_95_high": 107.19191485696649,
+      "p_value_one_sided": 0.9945,
+      "std_err": 23.937047120754176,
+      "n": 1085
+    },
+    "catboost": {
+      "mean": 80.70503324052804,
+      "ci_95_low": 32.687840420361205,
+      "ci_95_high": 134.72407423751676,
+      "p_value_one_sided": 0.9995,
+      "std_err": 26.138214277128956,
+      "n": 1085
+    },
+    "ridge_gbm_hybrid": {
+      "mean": -105.15205120773913,
+      "ci_95_low": -120.80062733242613,
+      "ci_95_high": -88.03371124404366,
+      "p_value_one_sided": 0.0,
+      "std_err": 8.36816996873951,
+      "n": 1085
+    }
+  },
+  "ranking_regime_a": [
+    {
+      "model": "ridge_gbm_hybrid",
+      "mae": 465.88164771104766,
+      "family": "hybrid"
+    },
+    {
+      "model": "ols",
+      "mae": 571.0333289604158,
+      "family": "linear"
+    },
+    {
+      "model": "ridge",
+      "mae": 571.0336989187867,
+      "family": "linear"
+    },
+    {
+      "model": "lightgbm_linear",
+      "mae": 627.018197408272,
+      "family": "gbm"
+    },
+    {
+      "model": "xgboost",
+      "mae": 630.2755310339862,
+      "family": "gbm"
+    },
+    {
+      "model": "lightgbm",
+      "mae": 640.1256572935404,
+      "family": "gbm"
+    },
+    {
+      "model": "catboost",
+      "mae": 651.7387321593147,
+      "family": "gbm"
+    },
+    {
+      "model": "seasonal_naive",
+      "mae": 997.8820276497696,
+      "family": "baseline"
+    },
+    {
+      "model": "naive_persistence",
+      "mae": 1043.799078341014,
+      "family": "baseline"
+    }
+  ],
+  "provisional_leader": "ridge_gbm_hybrid",
+  "runner_up": "ols",
+  "fit_seconds": {
+    "A:naive_persistence": 0.0,
+    "A:seasonal_naive": 0.0,
+    "A:ols": 0.0,
+    "A:ridge": 0.0,
+    "A:lightgbm": 1.16,
+    "A:lightgbm_linear": 0.74,
+    "A:xgboost": 0.73,
+    "A:catboost": 1.62,
+    "A:ridge_gbm_hybrid": 0.17
+  },
+  "environment": {
+    "python": "3.14.7",
+    "seed": 42
+  },
+  "caveats": [
+    "Models use untuned conservative defaults; only finalists are tuned (Phase 6b).",
+    "Regime A is a reanalysis benchmark and is not operationally achievable; quote Regime B for deployable accuracy.",
+    "2026 is NOT touched here. It was inspected during Track A diagnostics and is a confirmation set, not a blind test."
+  ]
+}

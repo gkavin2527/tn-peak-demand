@@ -18,19 +18,24 @@ Everything in Section A, B and C.1–C.2 (the locked decisions, the `H` definiti
 |---|---|:---:|:---:|
 | **Phase 0** | Data engineering, scrapers, pipelines, CI/CD | — | **COMPLETE** |
 | **Phase 0.5** | Pre-flight audit and contract freeze | Shared | **COMPLETE** — counts audited, `H=2` measured, contract frozen, **G0 MET** |
-| **Phase 1** | EDA and statistical profiling | A | **Not started** (teammate) |
-| **Phase 2** | Evaluation protocol and baseline models | A | **Not started** (teammate) |
-| **Phase 3** | Tree models, growth-handling comparison, Optuna | A | **Not started** (teammate) |
-| **Phase 4** | Extreme-day, regime-shift and uncertainty analysis | A | **Not started** (teammate) |
-| **Phase 5** | Operational forecast degradation experiment | B | **COMPLETE** with a stand-in model; re-run at G2 with the champion |
-| **Phase 6** | Interpretability (SHAP) | A | **Not started** (teammate) |
+| **Phase 1** | EDA and statistical profiling | A | **COMPLETE** — notebooks 01–05 (`01dfc7e`) |
+| **Phase 2** | Evaluation protocol and baseline models | A | **COMPLETE** — walk-forward + `src/evaluation.py` |
+| **Phase 3** | Tree models, growth-handling comparison, Optuna | A | **COMPLETE** — superseded by the Phase 6 benchmark + 6b tuning |
+| **Phase 4** | Extreme-day, regime-shift and uncertainty analysis | A | **Conditional** — live trigger: champion Regime B surge bias −549 MW |
+| **Phase 5** | Operational forecast degradation experiment | B/A | **COMPLETE** — re-run with the champion at 6b (520.37 MW Regime B) |
+| **Phase 6** | **Model benchmark + tuning** (SHAP deferred) | A | **COMPLETE** — champion `ridge_gbm_hybrid` frozen |
 | **Phase 7** | Evening inference, intervals, dashboard | B | **COMPLETE** |
 | **Phase 8** | Paper, deck, packaging | Shared | Not started |
 
-**The critical path is now entirely Track A.** Every Track B dependency it had
-is satisfied: `load_master(H)` and `swap_weather` exist and are tested,
-`feature_groups.json` is frozen, and the operational experiment runs on a
-`--champion` flag. Track A can start Phase 1 today against a stable contract.
+**The critical path has moved back to Track B.** Track A has delivered the
+champion (`models/champion_config.json`, frozen 2026-11-15), so **Gate G2 is
+unblocked**: `predict_next_day.py`'s `--champion` loader can now be built.
+
+Two integration hazards are recorded in `SYNC.md` and must not be skipped —
+the champion uses the 26-feature A2 list rather than Track B's 46-column
+default, and it is a **direct-level** model whereas `predict_next_day.py`
+currently predicts a difference and adds `peak_lag_1` back (line 243). Serving
+the champion through that path unchanged would roughly double the forecast.
 
 ## What Has Already Been Completed (Phase 0)
 
@@ -193,9 +198,13 @@ Rules: each track edits only what it owns; shared files (`config.py`, `src/contr
   - `model_features(df)` — convenience feature list (advisory).
   - `run_walk_forward(...)` — **Track A's to write.** Re-exported here, preferring `src/walkforward.py` the moment it exists and otherwise falling back to Track B's stand-in at `src/operational/walkforward.py`, which implements the identical frozen signature. Delete the stand-in at G2.
 
-**Track A hands over** *(none of this exists yet — Track A has not started)*
-- `models/champion_config.json`, `models/champion.pkl`, `results/walkforward_test_preds.csv`, `results/leaderboard.json`
-- `results/intervals.json` — **note:** Track B has already written this file for Phase 7.1 serving (`calibrate_intervals.py`, split-conformal per season). Track A's Phase 4.3 study supersedes it; keep the same schema or update `src/operational/intervals.py:load()`.
+**Track A hands over — DELIVERED 2026-11-15**
+- `models/champion_config.json` ✅ — frozen champion `ridge_gbm_hybrid`, hyperparameters, the 26-feature A2 list, H, and validation performance in both regimes. Schema documented in `SYNC.md`.
+- `results/champion_regime_ab.json` ✅ + `_predictions.csv` — tuning trials, both regimes, paired comparison.
+- `results/phase6_benchmark.json` ✅ + `_predictions.csv` — the nine-model leaderboard (this is the `leaderboard.json` the contract asked for, under a clearer name).
+- `models/champion.pkl` — **not produced, deliberately.** The champion is fully specified by `champion_config.json` and rebuilt in one line via `src.models.build_model()`. A pickle would pin scikit-learn/LightGBM versions and silently break on upgrade; re-fitting from the config is both reproducible and version-safe.
+- `results/walkforward_test_preds.csv` — superseded by `results/champion_regime_ab_predictions.csv`, which carries the same row-level predictions for both regimes.
+- `results/intervals.json` — **still Track B's** (`calibrate_intervals.py`, split-conformal per season). Track A did not supersede it; the conditional Phase 4.3 interval study was not triggered. Keep as is.
 
 **Track B hands over — ALL DELIVERED**
 - `data/weather_forecast_archive.csv` — 29,535 rows, 2021-06-01 → latest (5.4y), leads 1–3, state-weighted through the same `state_weather()` the reanalysis features use. Carries `lead`; add a `model` column only if more than one Open-Meteo model is ever mixed in.
@@ -477,9 +486,13 @@ than at G2.
 `calibrate_intervals.py` ✅, `results/intervals.json` ✅,
 `results/live_performance.json` ✅, `.github/workflows/evening.yml` ✅.
 
-**Open at G2:** load Track A's `champion_config.json` in `predict_next_day.py`
-and `run_phase5.py` (both already accept `--champion`; only the loader is a
-stub, because the schema is Track A's to define).
+**Open at G2 — now actionable.** `models/champion_config.json` exists and its
+schema is documented in `SYNC.md`. Implement the loader in
+`predict_next_day.py` and `run_phase5.py`. **Two hazards:** the champion uses
+the 26-feature A2 list (not `model_features()`'s 46), and it is a
+direct-level model while `predict_next_day.py:243` adds `peak_lag_1` back to
+a differenced prediction — serving it unchanged would roughly double the
+forecast.
 
 ---
 
@@ -525,14 +538,14 @@ stub, because the schema is Track A's to define).
 
 - [x] **M0:** data pipeline operational, leakage-free, holiday-calendar-correct
 - [x] **M0.5 / G0:** audit done ✅ · `H` measured (**H=2**) ✅ · contract frozen ✅ · identity test passes (0.000e+00 MW) ✅
-- [ ] **M1:** EDA complete (Track A) — **not started**
-- [ ] **M2:** walk-forward engine and baselines built (Track A) — **not started.** A stand-in engine exists at `src/operational/walkforward.py` with the frozen signature; delete it when Track A's lands.
-- [ ] **M3:** growth-handling comparison finished, champion chosen (Track A) — **not started.** Informal preview suggests the predict-the-change family; note it must anchor on `peak_lag_2` at H=2, not `peak_lag_1`.
+- [x] **M1:** EDA complete (Track A) — notebooks 01–05
+- [x] **M2:** walk-forward engine and baselines built (Track A) — `src/evaluation.py` + the Phase 6 benchmark loop. Track B's stand-in at `src/operational/walkforward.py` is still used by `calibrate_intervals.py`; reconcile at G3 rather than deleting it now.
+- [x] **M3:** champion chosen — **`ridge_gbm_hybrid`**, 520.37 MW Regime B, frozen in `models/champion_config.json`. Target MAPE <3.0% met (3.24% Regime B / 2.82% Regime A). Note the earlier predict-the-change preview was NOT adopted: the champion is a direct-level model.
 - [x] **M4:** forecast archive built and validated against the real log (Track B) — 5.4 years, cross-check 0.36 °C
 - [x] **G1 (Track B half):** full dual-regime experiment runs end to end on the real archive. Formally passes once Track A runs its own baseline through the same path — a one-line model swap.
-- [ ] **M5:** extreme-day, regime and interval analysis (Track A) — **not started.** `results/intervals.json` already exists for serving; Track A's Phase 4.3 study supersedes it.
-- [ ] **G2:** champion handed over — **waiting on Track A only.** Both consumers take `--champion`; only the loader is a stub.
-- [ ] **M6:** SHAP diagnostics (Track A) — **not started**
+- [ ] **M5:** extreme-day, regime and interval analysis (Track A) — **conditional, now triggered.** Champion Regime B surge bias is −549 MW. `results/intervals.json` already exists for serving; a Phase 4.3 study would supersede it.
+- [~] **G2:** champion handed over — **Track A side DONE.** `models/champion_config.json` frozen and its schema documented in `SYNC.md`. Closes when Track B implements the `--champion` loader; see the two integration hazards in `SYNC.md` (feature list, and direct-level vs differenced target).
+- [ ] **M6:** SHAP diagnostics (Track A) — **not started.** Deferred: the champion is Ridge + GBM residual, so TreeSHAP covers only the residual component; attribution must combine linear coefficients with tree SHAP.
 - [x] **M7:** evening inference and dashboard live (Track B)
 - [ ] **G3 / M8:** paper, deck and reproducible repository (Shared) — not started
 

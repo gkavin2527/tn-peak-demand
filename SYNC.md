@@ -6,6 +6,114 @@ contract change."* Append at the top. Anything that changes a shared file
 
 ---
 
+## 2026-11-15 — Phase 6 complete. **Gate G2 is UNBLOCKED.**
+
+**Owner:** Track A (modelling), on `phase-6-modeling`.
+
+### For Track B: the champion now exists — your `--champion` stub can be built
+
+`models/champion_config.json` is written and frozen. This is the artefact
+`predict_next_day.py` and `run_phase5.py` have been waiting for since G0. The
+schema:
+
+```json
+{
+  "champion": "ridge_gbm_hybrid",
+  "model_type": "ridge_gbm_hybrid",
+  "hyperparameters": {"alpha": 1.08e-05, "n_estimators": 700,
+                      "learning_rate": 0.0258, "num_leaves": 10},
+  "feature_set": "A2_weather_deltas_anomalies",
+  "feature_count": 26,
+  "features": [...],
+  "H": 2,
+  "selected_on": "Regime B ... mean validation MAE",
+  "validation_performance": {"regime_a_mae": 455.96, "regime_b_mae": 520.37,
+                             "degradation_mw": 64.42, "degradation_pct": 14.13},
+  "frozen": true
+}
+```
+
+Build it with `src.models.build_model(cfg["model_type"])` and apply
+`cfg["hyperparameters"]`; `src/models.py` exposes the same `fit`/`predict`
+interface as `TrackARidge`, so the serving path does not need to branch.
+
+**Two things that will bite if missed.**
+
+1. **The champion uses the 26-feature A2 set, not Track B's 46-column
+   `model_features()` default.** Serving must read `cfg["features"]`.
+2. **The champion anchors nothing** — it is a direct-level model, not a
+   differenced one. `predict_next_day.py` currently adds `peak_lag_1` back
+   after predicting a difference. That must be conditional on the champion's
+   target parameterisation, or the forecast will be roughly double.
+
+### Champion
+
+**`ridge_gbm_hybrid`** — Ridge for the trend, LightGBM on the residual.
+Selected on **Regime B**, the deployable regime.
+
+| | Regime A | Regime B | degradation |
+|---|---|---|---|
+| **ridge_gbm_hybrid** | 455.96 | **520.37** | +64.42 (14.13%) |
+| ridge (tuned) | 571.61 | 611.95 | +40.34 (7.06%) |
+
+Paired vs Ridge in Regime B: **−91.58 MW, CI [−115.99, −68.30], p=0.0000.**
+
+**Why Regime B decided it:** A→B degradation is model-dependent (14.13% vs
+7.06%). A Regime-A-only ranking would have overstated the margin. Track B's
+standing rule — *quote Regime B for anything operational* — is now also the
+selection rule.
+
+### Findings that affect shared assumptions
+
+- **All four pure GBMs lost to plain Ridge**, CIs excluding zero, with bias
+  −356…−395 MW and surge bias to −1,438 MW. That is the extrapolation failure
+  on a trending target. The hybrid resolves it; a pure tree model should not be
+  adopted anywhere in this project without re-checking that bias column.
+- **Ridge's L2 penalty is inert.** Optuna searched α over nine orders of
+  magnitude and chose 1.02e-06; the 41 trials below α=0.01 span 0.01 MW of
+  MAE. Describe Ridge as effectively unregularised least squares.
+- **The hybrid's gain is signal, not leakage** — shuffling the residuals
+  collapses it from −105.4 MW to −1.0 MW. Asserted permanently in
+  `test_phase6_benchmark.py`.
+
+### Shared-file changes
+
+| File | Change |
+|---|---|
+| `src/evaluation.py` | **NEW.** Track A's metrics + moving-block bootstrap, behaviour-identical to the private copies in `run_phase5_regime_ab.py` so Phase 5 and Phase 6 numbers stay comparable. |
+| `src/models.py` | **NEW.** 9-model zoo, uniform `fit`/`predict`. |
+| `requirements.txt` | added `lightgbm`, `xgboost`, `catboost`, `optuna`. |
+| `src/contract.py` | **unchanged.** Canonical A2 (26) untouched. |
+
+`run_walk_forward` remains Track B's stand-in at
+`src/operational/walkforward.py`. Phase 6 did **not** replace it — the
+benchmark has its own loop because it needs a train/score split the frozen
+signature does not express. Reconcile at G3 if a single engine is wanted.
+
+### Correction to the 2026-11-11 entry below
+
+That entry says **"Track A has not started."** That was wrong when written:
+Track A's notebooks 01–05 were already merged (`01dfc7e`, 2026-11-11). Track A
+has since completed Phase 5 and Phase 6. The rest of that entry stands.
+
+### Bug found and fixed in Phase 6
+
+The first `run_walk_forward` in the benchmark restricted **training** to the
+common scoring mask. Because the Regime B frame spans only the forecast
+archive (2021-06+, 1,920 rows), fold 1 trained on **364 rows instead of
+2,897** and every number moved. Nothing warned. Training and scoring are now
+separated and `test_phase6_benchmark.py` asserts `n_train > 2500`. Same family
+as bugs 3, 4 and 6 below: a silent sample-composition change.
+
+### Still open
+
+- Conditional: festival / extreme-day / heat-persistence features. There **is**
+  a live trigger — the champion's Regime B surge bias is still **−549 MW**.
+- Final: one 2026 **confirmation** run with the frozen champion. Never
+  describe 2026 as a blind test; it was inspected in Track A diagnostics.
+
+---
+
 ## 2026-11-11 — Track B complete, contract frozen, G0 met
 
 **Owner:** Track B (operations/data). **Track A has not started.**

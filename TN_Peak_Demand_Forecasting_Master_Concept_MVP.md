@@ -321,7 +321,7 @@ Unchanged — expanding-window walk-forward, tuning on three expanding folds (va
 1. **Production-Ready Modelling Table:** verified **64-column** `data/master.csv` covering 2013–present with zero temporal leakage — **now actually leak-free, following the §7/§10 fixes**, and with a regression test (`test_contract.py`) plus a CI guard (`health_check.py`) so it stays that way.
 2. **Automated CI/CD ETL Service:** unchanged, plus the leak guard, holiday-drift and provenance checks in §9.
 3. **Operational Weather Forecast Repository:** `weather_forecast_log.csv` (98 days, growing) **plus** `weather_forecast_archive.csv` (NEW — 5.4 years of real historical day-ahead forecasts, enabling the operational backtest that objective 5 and Phase 5 need without waiting years for the log to grow).
-4. **Comprehensive Model Comparison Suite:** not yet started (Track A).
+4. **Comprehensive Model Comparison Suite:** **COMPLETE (Phase 6).** Nine models benchmarked on the frozen 26-feature A2 specification under one shared evaluation sample — naive persistence, seasonal naive, OLS, Ridge, LightGBM, LightGBM linear-tree, XGBoost, CatBoost and a Ridge + GBM residual hybrid. Top two tuned with Optuna (50 trials each). Champion: **`ridge_gbm_hybrid`**, frozen in `models/champion_config.json`. See `PHASE6_MODEL_BENCHMARK.md`.
 5. **Research Paper / Technical Report:** not yet started.
 6. **NEW (v4) — Modelling contract:** `src/contract.py` (`load_master(H)`, `swap_weather`, `verify_no_leakage`), `feature_groups.json`, and `test_contract.py` as Gate G0's acceptance check. Lets Track A and Track B work independently against a frozen, tested interface.
 7. **NEW (v4) — Operational forecast experiment:** `run_phase5.py` plus `results/operational_gap.json`, `results/archive_vs_log_overlap.csv`, and `notebooks/05_operational_forecast_experiment.ipynb`. Regime A vs B across both $H$ values, leads 1–3, on overall / March–June / three surge subsets, with moving-block bootstrap CIs.
@@ -393,9 +393,36 @@ Unchanged — expanding-window walk-forward, tuning on three expanding folds (va
 - **Production CI/CD active:** daily GitHub Actions workflow, now with a reconcile step and three new health checks.
 - **Count audit resolved:** see §8 — no more disagreement between documents on rows/columns.
 
+### Phase 6 — Model Benchmark and Champion (COMPLETE, 2026-11-15)
+
+Nine models, frozen A2 (26 features), H=2, expanding folds 2023/24/25, one shared
+scored-date mask, MAE primary, paired moving-block bootstrap against Ridge.
+
+| model | Regime A MAE | vs Ridge (95% CI) |
+|---|---|---|
+| **ridge_gbm_hybrid** | **465.88** | **−105.15 [−120.80, −88.03]** ✅ |
+| ols / ridge | 571.03 | reference |
+| lightgbm_linear | 627.02 | +55.98 ❌ |
+| xgboost | 630.28 | +59.24 ❌ |
+| lightgbm | 640.13 | +69.09 ❌ |
+| catboost | 651.74 | +80.71 ❌ |
+
+**Champion after tuning: `ridge_gbm_hybrid` — 455.96 MW Regime A, 520.37 MW Regime B**, selected on the operational regime. Paired vs tuned Ridge in Regime B: −91.58 MW, CI [−115.99, −68.30], p=0.0000.
+
+Three findings that bear on §13 (research directions):
+
+1. **All four pure gradient-boosting models lose to plain Ridge**, CIs excluding zero, with bias −356…−395 MW and surge-day bias reaching −1,438 MW. This is the extrapolation failure predicted in §7: a tree outputs a leaf average and cannot exceed its training maximum on a target growing ~3.5%/yr. The hypothesis is now tested rather than asserted.
+2. **The Ridge + GBM residual hybrid resolves it** — Ridge extrapolates the trend, the GBM learns the non-linear residual. Surge bias improves from −735 to −474 MW. The gain is verified as signal, not leakage: shuffling the residuals collapses it from −105.4 MW to −1.0 MW.
+3. **Ridge's L2 penalty is inert.** OLS and Ridge are identical to two decimals, and Optuna searching α across nine orders of magnitude chose 1.02e-06, with the 41 trials below α=0.01 spanning 0.01 MW of MAE. Report Ridge as effectively unregularised least squares.
+
+**Deep learning remains out of scope (§19).** The benchmark strengthens that call: with ~4,900 rows, even gradient boosting underperforms a linear model on this trending target.
+
 ### Immediate Priority
 - **`H` (data-latency horizon) is unmeasured** and is now the single largest open item — Phase 0.5.2 in the roadmap. It blocks the evening-inference work (Phase 7) and the final version of the Phase 5 operational-gap experiment.
-- **Track A has not started.** Phases 1–4 and 6 (EDA, baselines, tree models, extreme-day analysis, SHAP) are all open. The informal previews above (D1, operational gap) are Track B side effects of building the Phase 5 pipeline and should not be mistaken for Track A's formal results — they used a plain stand-in model, not Optuna, weekly refit, or recency weighting.
+- **Track A is complete through Phase 6.** EDA (notebooks 01–05), the weather feature selection (Phase 5), the Regime A/B experiment, the model benchmark and tuning are all done. The champion is frozen.
+- **Gate G2 is unblocked and the critical path is Track B's**: implement the `--champion` loader in `predict_next_day.py`. Two hazards are documented in `SYNC.md` — the champion uses the 26-feature A2 list rather than the 46-column default, and it is a direct-level model while the serving path currently adds `peak_lag_1` back to a differenced prediction.
+- **Conditional work now has a trigger:** the champion's Regime B surge bias is −549 MW, so the extreme-day analysis (§13.3) is justified if the team chooses to pursue it. Festival and heat-persistence features remain conditional on their own diagnostics.
+- **Final step:** one 2026 *confirmation* run with the frozen champion. 2026 was inspected during Track A diagnostics and must never be described as a blind test.
 - **Contract files (`config.py` additions, `feature_groups.json`, `src/contract.py`) do not exist yet.** Gate G0 (contract freeze) has not been reached.
 
 ---

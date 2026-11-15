@@ -499,16 +499,22 @@ attribution** — which resolves the ambiguity noted in the table above for the
 majority of the series. Rows fetched directly from Grid-India remain subject
 to whatever terms the PSP portal implies.
 
-> ⚠️ **Unresolved: 269 rows dated 2013 are attributed to a dataset whose
-> stated coverage begins in 2014.**
->
-> `data/peak_demand.csv` marks 269 rows (2013-01-01 → 2013-12-30, all with
-> non-null peak values) as `source=zenodo`, but the Zenodo record is titled
-> *"…(2014–2024)"*. Either the deposit includes 2013 despite its title, or
-> those rows entered the file by another route and are mislabelled. This was
-> **not** resolved before submission and should be, because it affects both
-> the provenance claim and ~5.5% of the target series. Checking the deposit's
-> actual file contents settles it.
+> ✅ **Resolved 2026-11-15 by downloading the deposit.** The Zenodo files
+> cover **2013-01-01 → 2024-04-28**, exactly matching our backfill range — the
+> title's "(2014–2024)" understates the actual coverage. All 269 of our 2013
+> rows are present in the source and match it exactly. The attribution was
+> correct.
+
+**Which file, and a data-quality note.** Our backfill matches
+`corrected_peak_met_MW.csv` (not `peak_met_MW.csv`): 3,852 of 3,852 rows agree
+exactly once source duplicates are accounted for.
+
+> ⚠️ **The upstream file contains 55 duplicated dates, 7 of which carry
+> conflicting values** (e.g. 2016-05-26 appears as both 14,431 and 11,981 MW).
+> `data/peak_demand.csv` is de-duplicated and holds one of the two source
+> copies for each. This is a property of the published dataset, not of our
+> pipeline, but it means **anyone re-deriving our series from the deposit must
+> apply the same de-duplication or they will not reproduce it.**
 
 ### Citing this work
 

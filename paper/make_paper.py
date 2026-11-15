@@ -56,7 +56,7 @@ each submission. Convert to the venue template last.
 > **Author checklist before submission**
 > - [x] ~~Zenodo DOI~~ — resolved: Hunt & Bloomfield (2025), DOI 10.5281/zenodo.14983362, CC-BY-4.0. **Must be cited; the licence requires attribution.**
 > - [x] ~~`[FILL]` citations~~ — all resolved and Crossref-verified
-> - [ ] **Open:** 269 rows dated 2013 are attributed to a dataset whose stated coverage starts 2014 (see README). Resolve before claiming provenance.
+> - [x] ~~269 rows dated 2013~~ — resolved: the deposit covers 2013-01-01 onward despite its title; all 269 verified against the source. Note the source has 7 conflicting duplicate dates (see README).
 > - [ ] Verify volumes and page numbers against publisher records
 > - [ ] Author list, affiliations, funding, conflicts
 > - [ ] **Independent review by someone who did not build this**

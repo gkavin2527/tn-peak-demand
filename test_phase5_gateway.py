@@ -18,6 +18,7 @@ from src.contract import (
     PHASE5_FEATURE_SETS,
     load_phase5_data,
     verify_phase5_integrity,
+    swap_weather,
 )
 from src.ridge import TrackARidge
 
@@ -147,8 +148,40 @@ def main():
     check("A0 on full 314 test dates reproduces to 730.59 MW (+/- 0.01 MW)",
           abs(mae_full - 730.5892) < 0.01, f"observed {mae_full:.2f} MW")
 
+    # ----------------------------------------------------------------------
+    # 7. Missing-Forecast Anti-Leakage Assertions (Regime B Protection)
+    # ----------------------------------------------------------------------
+    print("\n7. Missing-forecast anti-leakage assertions (Regime B protection)")
+    deliberate_missing_date = pd.Timestamp("2024-05-15")
+    df_fc_sample = df_regime_b.loc[df_regime_b.index.isin(pd.date_range("2024-05-10", "2024-05-20"))].copy()
+    df_fc_missing = df_fc_sample.drop(index=[deliberate_missing_date])
+
+    # Test A: swap_weather with required_dates must raise ValueError if required date is missing from forecast
+    swap_error_raised = False
+    try:
+        swap_weather(df_regime_a.loc[df_fc_sample.index], df_fc_missing,
+                     required_dates=[deliberate_missing_date])
+    except ValueError as e:
+        swap_error_raised = True
+    check("swap_weather with missing required date triggers ValueError", swap_error_raised)
+
+    # Test B: swap_weather with mask_unswapped=True sets missing date weather to NaN rather than retaining ERA5
+    swapped_masked = swap_weather(df_regime_a.loc[df_fc_sample.index], df_fc_missing,
+                                  mask_unswapped=True)
+    is_nan_masked = np.isnan(swapped_masked.loc[deliberate_missing_date, "t_max"])
+    check("Missing forecast date has weather masked to NaN (no silent ERA5 retention)", is_nan_masked)
+
+    # Test C: load_phase5_data with missing required date raises ValueError
+    gateway_error_raised = False
+    try:
+        load_phase5_data(feature_set="A1_weather_levels", weather_source="forecast",
+                         required_dates=[pd.Timestamp("2023-12-31")])  # 2023-12-31 is missing in archive
+    except ValueError as e:
+        gateway_error_raised = True
+    check("load_phase5_data with missing required date triggers ValueError", gateway_error_raised)
+
     print("\n" + "=" * 72)
-    print("ALL 25 CANONICAL GATEWAY ACCEPTANCE CHECKS PASSED  ✓")
+    print("ALL CANONICAL GATEWAY & ANTI-LEAKAGE ACCEPTANCE CHECKS PASSED  ✓")
     print("=" * 72)
 
 

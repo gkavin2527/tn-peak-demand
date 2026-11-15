@@ -171,7 +171,9 @@ def load_master(H: int | None = None, path=None) -> pd.DataFrame:
 
 
 def swap_weather(df: pd.DataFrame, weather_df: pd.DataFrame,
-                 observed: pd.DataFrame | None = None) -> pd.DataFrame:
+                 observed: pd.DataFrame | None = None,
+                 required_dates: pd.DatetimeIndex | list | None = None,
+                 mask_unswapped: bool = False) -> pd.DataFrame:
     """Replace ONLY the target-day weather columns, leaving all else untouched.
 
     This is what turns a Regime A (reanalysis) frame into a Regime B
@@ -179,13 +181,18 @@ def swap_weather(df: pd.DataFrame, weather_df: pd.DataFrame,
     calendar, lagged weather -- is passed through byte-identical, which is what
     the G0 identity test checks.
 
-    df          output of load_master(), indexed by target date
-    weather_df  state-weighted weather for the target day, indexed by date.
-                Needs the level columns; deltas/anomalies are derived.
-    observed    state-weighted OBSERVED weather, indexed by date, used for the
-                yesterday-side of deltas and anomalies. Defaults to
-                weather_df, which is only correct if you are passing
-                reanalysis (i.e. the identity case).
+    df              output of load_master(), indexed by target date
+    weather_df      state-weighted weather for the target day, indexed by date.
+                    Needs the level columns; deltas/anomalies are derived.
+    observed        state-weighted OBSERVED weather, indexed by date, used for the
+                    yesterday-side of deltas and anomalies. Defaults to
+                    weather_df, which is only correct if you are passing
+                    reanalysis (i.e. the identity case).
+    required_dates  Optional iterable of target dates required to be in weather_df.
+                    Raises ValueError if any required target date lacks forecast coverage,
+                    preventing silent fallback to ERA5 reanalysis in Regime B.
+    mask_unswapped  If True, target-day weather columns are set to NaN for any dates in df
+                    that do not exist in weather_df, preventing silent retention of ERA5.
 
     Lead-awareness is the subtle part. Predicting day T, the forecast supplies
     T, but T-1 has already happened and is observed. So
@@ -201,9 +208,37 @@ def swap_weather(df: pd.DataFrame, weather_df: pd.DataFrame,
     obs = weather_df if observed is None else observed
 
     out = df.copy()
+
+    # Validate 100% coverage for required scored target dates
+    if required_dates is not None:
+        req_idx = pd.DatetimeIndex(required_dates)
+        missing_req = list(req_idx.difference(weather_df.index))
+        # Also check for NaN values on required dates present in weather_df
+        present_req = req_idx.intersection(weather_df.index)
+        check_cols = [c for c in ("t_max", "t_mean", "t_min") if c in weather_df.columns]
+        nan_req = []
+        if check_cols and len(present_req) > 0:
+            sub = weather_df.loc[present_req, check_cols]
+            nan_req = list(sub[sub.isna().any(axis=1)].index)
+        all_missing = sorted(set(missing_req + nan_req))
+        if len(all_missing) > 0:
+            missing_sample = [str(pd.Timestamp(d).date()) for d in all_missing[:5]]
+            raise ValueError(
+                f"Missing forecast weather coverage for {len(all_missing)} required target date(s): "
+                f"{missing_sample}... Silent fallback to ERA5 reanalysis in Regime B is strictly forbidden."
+            )
+
     idx = out.index.intersection(weather_df.index)
     if len(idx) == 0:
         raise ValueError("swap_weather: no overlapping dates")
+
+    # If mask_unswapped is enabled, set target-day weather columns to NaN for dates
+    # missing from weather_df so that ERA5 values cannot silently persist into Regime B
+    if mask_unswapped:
+        missing_dates = out.index.difference(weather_df.index)
+        if len(missing_dates) > 0:
+            target_cols = [c for c in groups["weather_target_day"] if c in out.columns]
+            out.loc[missing_dates, target_cols] = np.nan
 
     for col in rules["levels"]["columns"]:
         if col in out.columns and col in weather_df.columns:
@@ -360,7 +395,8 @@ def load_phase5_data(feature_set: str | list[str] = "A0_weather_free",
                      forecast_lead: int = 1,
                      path: str | Path | None = None,
                      clean_na: bool = True,
-                     date_range: tuple[str, str] | None = None) -> tuple[pd.DataFrame, list[str]]:
+                     date_range: tuple[str, str] | None = None,
+                     required_dates: pd.DatetimeIndex | list | None = None) -> tuple[pd.DataFrame, list[str]]:
     """Canonical Phase 5 dataset preparation gateway.
 
     Implements the agreed architectural decision for Phase 5 research:
@@ -381,6 +417,8 @@ def load_phase5_data(feature_set: str | list[str] = "A0_weather_free",
         path: Optional override path for master.csv.
         clean_na: Whether to drop rows where any requested feature or target is NaN (default True).
         date_range: Optional (start_date, end_date) tuple to filter dates.
+        required_dates: Optional list of target dates required to have forecast coverage.
+                        If provided, raises ValueError if any target date lacks forecast.
 
     Returns:
         (df, features): DataFrame indexed by date with target in both 'tn_peak_demand_mw'
@@ -415,7 +453,30 @@ def load_phase5_data(feature_set: str | list[str] = "A0_weather_free",
         obs_wx = state_weather(obs_raw).set_index("date").sort_index()
         obs_wx.attrs["source"] = "era5_reanalysis"
 
-        raw = swap_weather(raw, fc_wx, observed=obs_wx)
+        # Enforce 100% forecast coverage for required evaluation dates
+        req = required_dates
+        if req is None and date_range is not None:
+            start_d, end_d = pd.Timestamp(date_range[0]), pd.Timestamp(date_range[1])
+            req = raw[(raw.index >= start_d) & (raw.index <= end_d)].index
+
+        if req is not None:
+            req_idx = pd.DatetimeIndex(req)
+            missing_idx = list(req_idx.difference(fc_wx.index))
+            present_idx = req_idx.intersection(fc_wx.index)
+            check_cols = [c for c in ("t_max", "t_mean", "t_min") if c in fc_wx.columns]
+            nan_idx = []
+            if check_cols and len(present_idx) > 0:
+                sub = fc_wx.loc[present_idx, check_cols]
+                nan_idx = list(sub[sub.isna().any(axis=1)].index)
+            missing_fc = sorted(set(missing_idx + nan_idx))
+            if len(missing_fc) > 0:
+                sample = [str(pd.Timestamp(d).date()) for d in missing_fc[:5]]
+                raise ValueError(
+                    f"Missing forecast weather coverage for {len(missing_fc)} required target date(s): "
+                    f"{sample}... Silent fallback to ERA5 reanalysis in Regime B is strictly forbidden."
+                )
+
+        raw = swap_weather(raw, fc_wx, observed=obs_wx, required_dates=req, mask_unswapped=True)
     elif weather_source in ("none", "reanalysis"):
         pass
     else:

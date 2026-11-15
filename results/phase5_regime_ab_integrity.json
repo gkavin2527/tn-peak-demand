@@ -1,0 +1,95 @@
+{
+  "status": "PASS",
+  "pre_execution_checks": {
+    "verify_phase5_integrity_regime_a": {
+      "ok": true,
+      "H": 2,
+      "features_count": 26,
+      "resolved_offsets": {
+        "peak_lag_2": 2,
+        "peak_lag_3": 3,
+        "peak_lag_7": 7,
+        "peak_lag_14": 14,
+        "peak_lag_364": 364,
+        "energy_lag_2": 2,
+        "energy_lag_7": 7,
+        "energy_lag_14": 14
+      },
+      "weekday_alignments": {
+        "peak_lag_7": "Preserved (Exact Weekday Match: target - 7d)",
+        "peak_lag_14": "Preserved (Exact Weekday Match: target - 14d)",
+        "peak_lag_364": "Preserved (Exact Weekday Match: target - 364d)",
+        "energy_lag_7": "Preserved (Exact Weekday Match: target - 7d)",
+        "energy_lag_14": "Preserved (Exact Weekday Match: target - 14d)"
+      }
+    },
+    "verify_phase5_integrity_regime_b": {
+      "ok": true,
+      "H": 2,
+      "features_count": 26,
+      "resolved_offsets": {
+        "peak_lag_2": 2,
+        "peak_lag_3": 3,
+        "peak_lag_7": 7,
+        "peak_lag_14": 14,
+        "peak_lag_364": 364,
+        "energy_lag_2": 2,
+        "energy_lag_7": 7,
+        "energy_lag_14": 14
+      },
+      "weekday_alignments": {
+        "peak_lag_7": "Preserved (Exact Weekday Match: target - 7d)",
+        "peak_lag_14": "Preserved (Exact Weekday Match: target - 14d)",
+        "peak_lag_364": "Preserved (Exact Weekday Match: target - 364d)",
+        "energy_lag_7": "Preserved (Exact Weekday Match: target - 7d)",
+        "energy_lag_14": "Preserved (Exact Weekday Match: target - 14d)"
+      }
+    },
+    "feature_set_identity": true,
+    "feature_count": 26,
+    "non_weather_features_byte_identical": true,
+    "non_weather_max_diff": 0.0,
+    "target_day_weather_swap_verified": true,
+    "mean_t_max_swap_diff_c": 0.6937129455909944,
+    "max_t_max_swap_diff_c": 6.568000000000001,
+    "regime_b_matches_lead1_archive": true,
+    "regime_b_lead1_archive_diff": 0.0,
+    "zero_era5_fallback_in_regime_b": true
+  },
+  "missing_forecast_defect_verification": {
+    "defect_description": "Uncorrected swap_weather bypassed missing forecast target dates, silently leaving ERA5 reanalysis in place without error.",
+    "test_date_simulated": "2024-05-15",
+    "uncorrected_behavior": "Silent ERA5 fallback (t_max = 34.45 C retained instead of forecast 33.98 C)",
+    "permanent_fix": "swap_weather enforces required_dates validation and mask_unswapped=True; missing dates raise ValueError and cannot retain ERA5.",
+    "automated_test": "test_phase5_gateway.py Test 7 (3 assertions, all PASS)"
+  },
+  "common_date_accounting": {
+    "total_scored_days": 1066,
+    "fold_1_2023_days": 364,
+    "fold_2_2024_days": 346,
+    "fold_3_2025_days": 356,
+    "excluded_dates_count": 19,
+    "excluded_dates": [
+      "2023-12-31",
+      "2024-01-01",
+      "2024-01-02",
+      "2024-01-03",
+      "2024-01-04",
+      "2024-01-05",
+      "2024-01-06",
+      "2024-01-07",
+      "2024-01-08",
+      "2024-01-09",
+      "2024-01-10",
+      "2024-01-11",
+      "2024-01-12",
+      "2024-01-13",
+      "2024-01-14",
+      "2024-01-15",
+      "2024-01-16",
+      "2024-01-17",
+      "2024-01-18"
+    ],
+    "reason_for_exclusion": "Missing day-ahead forecast data in weather_forecast_archive.csv for lead 1."
+  }
+}

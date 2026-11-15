@@ -1,0 +1,340 @@
+{
+  "metadata": {
+    "experiment": "Phase 5 \u2014 Regime A vs Regime B",
+    "model": "TrackARidge",
+    "alpha": 0.001,
+    "H": 2,
+    "feature_set": "A2_weather_deltas_anomalies",
+    "feature_count": 26,
+    "features": [
+      "dow",
+      "is_weekend",
+      "is_holiday",
+      "day_before_holiday",
+      "day_after_holiday",
+      "pongal_window",
+      "sin1",
+      "cos1",
+      "sin2",
+      "cos2",
+      "trend",
+      "peak_lag_2",
+      "peak_lag_3",
+      "peak_lag_7",
+      "peak_lag_14",
+      "peak_lag_364",
+      "energy_lag_2",
+      "energy_lag_7",
+      "energy_lag_14",
+      "t_max",
+      "t_mean",
+      "t_min",
+      "cdd_max",
+      "hours_above_32",
+      "d_t_max",
+      "t_max_vs_roll7"
+    ],
+    "validation_protocol": "Expanding walk-forward (2023, 2024, 2025)",
+    "common_scored_days_total": 1066,
+    "forecast_lead": 1,
+    "forecast_archive": "C:\\Users\\Dharshini\\Desktop\\TN_PEAK_DEMAND\\tn-peak-demand\\data\\weather_forecast_archive.csv",
+    "forecast_framing": "Archived day-ahead lead-1 forecasts aligned to target/valid date. Exact forecast initialization hour unverified.",
+    "random_seed": 42,
+    "bootstrap_block_days": 7,
+    "bootstrap_n_draws": 2000
+  },
+  "coverage_accounting": {
+    "Fold 1 (Val 2023)": {
+      "year": 2023,
+      "master_rows": 365,
+      "forecast_valid_rows": 364,
+      "common_scored_days": 364,
+      "excluded_missing_forecast_dates": [
+        "2023-12-31"
+      ]
+    },
+    "Fold 2 (Val 2024)": {
+      "year": 2024,
+      "master_rows": 364,
+      "forecast_valid_rows": 346,
+      "common_scored_days": 346,
+      "excluded_missing_forecast_dates": [
+        "2024-01-01",
+        "2024-01-02",
+        "2024-01-03",
+        "2024-01-04",
+        "2024-01-05",
+        "2024-01-06",
+        "2024-01-07",
+        "2024-01-08",
+        "2024-01-09",
+        "2024-01-10",
+        "2024-01-11",
+        "2024-01-12",
+        "2024-01-13",
+        "2024-01-14",
+        "2024-01-15",
+        "2024-01-16",
+        "2024-01-17",
+        "2024-01-18"
+      ]
+    },
+    "Fold 3 (Val 2025)": {
+      "year": 2025,
+      "master_rows": 356,
+      "forecast_valid_rows": 356,
+      "common_scored_days": 356,
+      "excluded_missing_forecast_dates": []
+    }
+  },
+  "overall": {
+    "regime_a_mae_mw": 571.6334814344192,
+    "regime_b_mae_mw": 612.0139190520765,
+    "delta_mae_mw": 40.38043761765732,
+    "delta_mae_pct": 7.064043470009722,
+    "regime_a_rmse_mw": 753.8498554489443,
+    "regime_b_rmse_mw": 790.6831735795154,
+    "delta_rmse_mw": 36.833318130571115,
+    "regime_a_mape": 3.532213532939256,
+    "regime_b_mape": 3.7645367107446552,
+    "regime_a_bias_mw": -76.09427105823502,
+    "regime_b_bias_mw": -109.41292813320369,
+    "bootstrap_ci_95": {
+      "ci_low": 25.941265577436674,
+      "ci_high": 54.168294965290485,
+      "std_err": 7.15929048016843,
+      "p_value_one_sided": 0.0
+    }
+  },
+  "folds": {
+    "Fold 1 (Val 2023)": {
+      "year": 2023,
+      "train_end": 2022,
+      "n_train": 2897,
+      "n_val": 364,
+      "regime_a": {
+        "mae": 573.2926012735911,
+        "rmse": 753.2724827932441,
+        "mape": 3.6547278193441812,
+        "bias": -151.66279472531477,
+        "n_samples": 364
+      },
+      "regime_b": {
+        "mae": 612.8331733993635,
+        "rmse": 785.8197540243426,
+        "mape": 3.898999658628143,
+        "bias": -182.54672510349513,
+        "n_samples": 364
+      },
+      "delta_mae_mw": 39.54057212577243,
+      "delta_mae_pct": 6.897101416960825,
+      "delta_rmse_mw": 32.547271231098534
+    },
+    "Fold 2 (Val 2024)": {
+      "year": 2024,
+      "train_end": 2023,
+      "n_train": 3262,
+      "n_val": 346,
+      "regime_a": {
+        "mae": 552.876732246705,
+        "rmse": 738.7232410709947,
+        "mape": 3.3817719879834027,
+        "bias": -32.16830001101339,
+        "n_samples": 346
+      },
+      "regime_b": {
+        "mae": 589.7432866707834,
+        "rmse": 772.1665299672736,
+        "mape": 3.5998669654594155,
+        "bias": 6.114088689966225,
+        "n_samples": 346
+      },
+      "delta_mae_mw": 36.866554424078345,
+      "delta_mae_pct": 6.668132745298408,
+      "delta_rmse_mw": 33.44328889627889
+    },
+    "Fold 3 (Val 2025)": {
+      "year": 2025,
+      "train_end": 2024,
+      "n_train": 3626,
+      "n_val": 356,
+      "regime_a": {
+        "mae": 588.1669522138869,
+        "rmse": 768.8450469627317,
+        "mape": 3.5531617753643463,
+        "bias": -41.519673775992494,
+        "n_samples": 356
+      },
+      "regime_b": {
+        "mae": 632.821307314759,
+        "rmse": 813.108367899175,
+        "mape": 3.7870963142252823,
+        "bias": -146.91755095239108,
+        "n_samples": 356
+      },
+      "delta_mae_mw": 44.65435510087207,
+      "delta_mae_pct": 7.59212242931893,
+      "delta_rmse_mw": 44.26332093644339
+    }
+  },
+  "seasonal": {
+    "summer_mar_jun": {
+      "n_days": 366,
+      "regime_a_mae_mw": 617.1519905767577,
+      "regime_b_mae_mw": 660.5461674960075,
+      "delta_mae_mw": 43.39417691924973,
+      "delta_mae_pct": 7.03135979172583,
+      "regime_a_bias_mw": -120.76056460622506,
+      "regime_b_bias_mw": -150.22876886068985,
+      "bootstrap_ci_95": {
+        "ci_low": 17.969802348787862,
+        "ci_high": 67.43785516292932,
+        "std_err": 12.410848016831283,
+        "p_value_one_sided": 0.0
+      }
+    },
+    "nonsummer": {
+      "n_days": 700,
+      "regime_a_mae_mw": 547.8338037971394,
+      "regime_b_mae_mw": 586.6384862942498,
+      "delta_mae_mw": 38.804682497110434,
+      "delta_mae_pct": 7.083294646688076,
+      "regime_a_bias_mw": -52.740180431714535,
+      "regime_b_bias_mw": -88.0720742671181
+    },
+    "monthly": {
+      "Month_01": {
+        "month": 1,
+        "n_days": 68,
+        "mae_regime_a": 617.8320729821178,
+        "mae_regime_b": 721.3855154802167,
+        "delta_mae": 103.55344249809889,
+        "delta_pct": 16.760774816735047,
+        "bias_regime_a": -322.3597483138944,
+        "bias_regime_b": -489.09347970179675,
+        "t_max_mae_forecast": 0.5270588235294114
+      },
+      "Month_02": {
+        "month": 2,
+        "n_days": 85,
+        "mae_regime_a": 434.22694589684903,
+        "mae_regime_b": 457.7759458253784,
+        "delta_mae": 23.548999928529383,
+        "delta_pct": 5.423200966925592,
+        "bias_regime_a": -32.02797092706421,
+        "bias_regime_b": -138.52568774455898,
+        "t_max_mae_forecast": 0.4200941176470584
+      },
+      "Month_03": {
+        "month": 3,
+        "n_days": 93,
+        "mae_regime_a": 538.6783683473253,
+        "mae_regime_b": 581.1459173950539,
+        "delta_mae": 42.46754904772854,
+        "delta_pct": 7.883655914756653,
+        "bias_regime_a": -102.87430043359534,
+        "bias_regime_b": -206.91528596824747,
+        "t_max_mae_forecast": 0.5430537634408601
+      },
+      "Month_04": {
+        "month": 4,
+        "n_days": 90,
+        "mae_regime_a": 610.1308311188561,
+        "mae_regime_b": 673.2969190157115,
+        "delta_mae": 63.1660878968554,
+        "delta_pct": 10.352875920238553,
+        "bias_regime_a": -303.5060744997306,
+        "bias_regime_b": -399.2146073534409,
+        "t_max_mae_forecast": 0.5062666666666671
+      },
+      "Month_05": {
+        "month": 5,
+        "n_days": 93,
+        "mae_regime_a": 788.3296783898378,
+        "mae_regime_b": 795.003838885722,
+        "delta_mae": 6.674160495884166,
+        "delta_pct": 0.8466204785688304,
+        "bias_regime_a": 63.570787172471235,
+        "bias_regime_b": 114.22036278268546,
+        "t_max_mae_forecast": 0.9266236559139781
+      },
+      "Month_06": {
+        "month": 6,
+        "n_days": 90,
+        "mae_regime_a": 528.3789489315566,
+        "mae_regime_b": 590.9027473112509,
+        "delta_mae": 62.52379837969431,
+        "delta_pct": 11.833135764799993,
+        "bias_regime_a": -146.97325786242305,
+        "bias_regime_b": -115.93096538828375,
+        "t_max_mae_forecast": 0.9057777777777783
+      },
+      "Month_07": {
+        "month": 7,
+        "n_days": 93,
+        "mae_regime_a": 441.7563186895404,
+        "mae_regime_b": 493.7898800481857,
+        "delta_mae": 52.03356135864527,
+        "delta_pct": 11.778792777203865,
+        "bias_regime_a": -47.015190981375824,
+        "bias_regime_b": -12.863077198025842,
+        "t_max_mae_forecast": 0.9702795698924738
+      },
+      "Month_08": {
+        "month": 8,
+        "n_days": 93,
+        "mae_regime_a": 554.7908790351805,
+        "mae_regime_b": 590.8066136053496,
+        "delta_mae": 36.015734570169116,
+        "delta_pct": 6.491767606706684,
+        "bias_regime_a": -60.673403771303775,
+        "bias_regime_b": -29.148715102385733,
+        "t_max_mae_forecast": 0.752451612903226
+      },
+      "Month_09": {
+        "month": 9,
+        "n_days": 90,
+        "mae_regime_a": 540.6551280954553,
+        "mae_regime_b": 568.8918126739259,
+        "delta_mae": 28.236684578470545,
+        "delta_pct": 5.222679506978656,
+        "bias_regime_a": -91.42733311605775,
+        "bias_regime_b": -47.498730362552955,
+        "t_max_mae_forecast": 0.7021333333333337
+      },
+      "Month_10": {
+        "month": 10,
+        "n_days": 93,
+        "mae_regime_a": 705.2237166607727,
+        "mae_regime_b": 741.3730515447133,
+        "delta_mae": 36.149334883940696,
+        "delta_pct": 5.125938624853322,
+        "bias_regime_a": -2.421904641485956,
+        "bias_regime_b": 7.6204936723802,
+        "t_max_mae_forecast": 0.6752473118279562
+      },
+      "Month_11": {
+        "month": 11,
+        "n_days": 90,
+        "mae_regime_a": 599.298489918445,
+        "mae_regime_b": 614.5782512269799,
+        "delta_mae": 15.279761308534944,
+        "delta_pct": 2.5496078441002377,
+        "bias_regime_a": 27.78366575382592,
+        "bias_regime_b": -9.86166880446983,
+        "t_max_mae_forecast": 0.6883111111111117
+      },
+      "Month_12": {
+        "month": 12,
+        "n_days": 88,
+        "mae_regime_a": 496.60534812363016,
+        "mae_regime_b": 526.7533693595941,
+        "delta_mae": 30.148021235963938,
+        "delta_pct": 6.070820894272482,
+        "bias_regime_a": 41.9650070250383,
+        "bias_regime_b": -93.82483194925008,
+        "t_max_mae_forecast": 0.6367499999999997
+      }
+    }
+  }
+}

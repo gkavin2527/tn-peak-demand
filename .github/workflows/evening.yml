@@ -114,8 +114,17 @@ jobs:
         continue-on-error: true
         run: .venv/bin/python track_predictions.py
 
+      # --champion is load-bearing. Without it predict_next_day.py serves the
+      # differenced HistGradientBoosting STAND-IN, not the frozen Phase 7
+      # champion - which means every logged forecast would be evidence for a
+      # model the paper does not describe. The stand-in was the right default
+      # before a champion existed; it is not now.
+      #
+      # The serving path reads target_parameterisation and lag_representation
+      # from the config and fails closed if either is wrong (see
+      # test_serving.py), so this cannot silently serve the wrong thing.
       - name: Issue tomorrow's forecast
-        run: .venv/bin/python predict_next_day.py
+        run: .venv/bin/python predict_next_day.py --champion models/champion_config.json
 
       - name: Commit forecast and scores
         run: |

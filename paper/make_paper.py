@@ -54,10 +54,12 @@ number below is read from committed artifacts at build time. Re-run before
 each submission. Convert to the venue template last.
 
 > **Author checklist before submission**
-> - [ ] Zenodo DOI for the historical backfill (3,852 of 4,905 target rows) — **not recorded anywhere in the repository**
-> - [ ] Resolve the seven `[FILL]` citations in `RELATED_WORK.md`, especially India/TN-specific STLF
-> - [ ] Verify every citation against the publisher record
+> - [x] ~~Zenodo DOI~~ — resolved: Hunt & Bloomfield (2025), DOI 10.5281/zenodo.14983362, CC-BY-4.0. **Must be cited; the licence requires attribution.**
+> - [x] ~~`[FILL]` citations~~ — all resolved and Crossref-verified
+> - [ ] **Open:** 269 rows dated 2013 are attributed to a dataset whose stated coverage starts 2014 (see README). Resolve before claiming provenance.
+> - [ ] Verify volumes and page numbers against publisher records
 > - [ ] Author list, affiliations, funding, conflicts
+> - [ ] **Independent review by someone who did not build this**
 
 ---
 
@@ -168,12 +170,18 @@ probabilistic forecasting as a standard target. Gradient boosting has been
 applied successfully in this setting [Taieb & Hyndman 2014], though our own
 results below qualify when that holds.
 
-*[FILL — India and Tamil Nadu. An ICAIEA audience will expect the regional
-literature: state-level demand forecasting, CEA demand projection
-methodology, and POSOCO/Grid-India report-based studies. Three to five
-references, with an explicit statement of how this work differs: daily peak
-rather than hourly load, H = 2 rather than an assumed horizon, and a
-forecast-weather ladder.]*
+**India and Tamil Nadu.** The nearest prior work is Hunt & Bloomfield [2025],
+who build XGBoost demand models for all 32 Indian states from the same
+Grid-India source we backfill from, and whose dataset we use. Their study
+differs from ours on four axes: they model daily *total energy* rather than
+*peak*; their task is explanatory nowcasting with weather **contemporaneous**
+with demand, not forecasting at a horizon; they use **ERA5 reanalysis only**,
+with no comparison against operational forecasts; and they report r² (median
+0.78 across states) rather than paired error differences. Their design is
+well-suited to its question and simply does not address the operational one —
+which is precisely the gap this paper measures. At the state level, Usha &
+Balamurugan [2014] established regional precedent for data-mining approaches
+to Tamil Nadu Electricity Board load.
 
 **Weather information available at forecast time.** This is where our
 contribution sits. Reanalysis products such as ERA5 [Hersbach et al. 2020]
@@ -188,11 +196,14 @@ confidence interval. We put the claim no more strongly than that: the point is
 not that the penalty is unknown in principle, but that it is rarely
 quantified, and that quantifying it changes how a reported MAE should be read.
 
-*[FILL — any STLF work that does evaluate on archived NWP forecasts, and one
-or two references from wind and solar forecasting, where NWP error has long
-been treated as a first-class component because the resource is the weather.
-The contrast is useful: load forecasting has been slower to adopt the same
-discipline despite a real weather dependence.]*
+The closest methodological precedent is Zhao et al. [2018], who analyse how
+weather-forecast uncertainty propagates into cooling-load forecasts. Their
+approach is to **simulate** that uncertainty by Monte Carlo; ours is to
+**measure** it against a 5.4-year archive of forecasts actually issued. In the
+adjacent problem of power-system outage prediction, Yang et al. [2021] treat
+lead-time forecast uncertainty as a first-class component — evidence that the
+discipline exists in neighbouring literatures and that load forecasting has
+been slower to adopt it.
 
 **Evaluation methodology.** We follow rolling-origin evaluation [Tashman 2000]
 and the arguments against random cross-validation for temporally dependent
@@ -217,9 +228,9 @@ and combining them into one ranking would mislead. Prediction intervals use
 split conformal prediction [Vovk et al. 2005; Lei et al. 2018], chosen for its
 distribution-free guarantee given clearly non-Gaussian residuals.
 
-*[FILL — permutation importance under correlated predictors. This matters
-because our strongest interpretability result is precisely a disagreement
-between attribution and permutation for collinear demand lags.]*
+Our strongest interpretability result turns on a disagreement between
+attribution and permutation importance for collinear predictors, a behaviour
+characterised by Strobl et al. [2008].
 
 ---
 

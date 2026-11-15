@@ -477,14 +477,38 @@ Two consequences worth stating plainly:
 
 ### Historical backfill provenance
 
-Rows before 2024-05 come from a published Zenodo archive of Grid-India PSP
-data (3,852 rows), combined with 1,052 rows fetched directly from Grid-India.
+3,852 of the target rows (2013-01-01 → 2024-04-28) come from a published
+Zenodo dataset; the remaining 1,057 (2015-01-27 → present) are fetched
+directly from Grid-India PSP reports. The split is recorded per row in
+`data/peak_demand.csv` under `source`.
 
-> ⚠️ **The Zenodo record's DOI is not yet recorded in this repository.** It is
-> referenced in prose only. Before submission, add the DOI and the depositor's
-> preferred citation here and in the BibTeX block below — a paper that cites
-> 79% of its target series as "a Zenodo archive" will be asked for the
-> identifier.
+> **Zenodo dataset — CC-BY-4.0, attribution required**
+>
+> Hunt, K. & Bloomfield, H. (2025). *Daily electricity demand data for Indian
+> states (2014–2024)*, v1.0. Zenodo.
+> DOI: [10.5281/zenodo.14983362](https://doi.org/10.5281/zenodo.14983362)
+>
+> Funded by NERC (MITRE project NE/W007924/1). Derived in turn from
+> Grid-India (POSOCO) reports. The companion paper is Hunt & Bloomfield
+> (2025), *Building and explaining data-driven energy demand models for Indian
+> states*, Environmental Research: Energy,
+> DOI [10.1088/2753-3751/adc7bc](https://doi.org/10.1088/2753-3751/adc7bc).
+
+**Because this source is CC-BY-4.0, those rows are redistributable with
+attribution** — which resolves the ambiguity noted in the table above for the
+majority of the series. Rows fetched directly from Grid-India remain subject
+to whatever terms the PSP portal implies.
+
+> ⚠️ **Unresolved: 269 rows dated 2013 are attributed to a dataset whose
+> stated coverage begins in 2014.**
+>
+> `data/peak_demand.csv` marks 269 rows (2013-01-01 → 2013-12-30, all with
+> non-null peak values) as `source=zenodo`, but the Zenodo record is titled
+> *"…(2014–2024)"*. Either the deposit includes 2013 despite its title, or
+> those rows entered the file by another route and are mislabelled. This was
+> **not** resolved before submission and should be, because it affects both
+> the provenance claim and ~5.5% of the target series. Checking the deposit's
+> actual file contents settles it.
 
 ### Citing this work
 
@@ -501,7 +525,25 @@ data (3,852 rows), combined with 1,052 rows fetched directly from Grid-India.
 ```
 
 Replace the author field with the full author list and add the venue once the
-ICAIEA 2026 submission has an identifier.
+ICAIEA 2026 submission has an identifier. **Cite the backfill dataset
+alongside this work** — CC-BY-4.0 requires it:
+
+```bibtex
+@dataset{hunt_bloomfield_2025_data,
+  author    = {Hunt, Kieran and Bloomfield, Hannah},
+  title     = {Daily electricity demand data for Indian states (2014--2024)},
+  year      = {2025}, version = {1.0}, publisher = {Zenodo},
+  doi       = {10.5281/zenodo.14983362}
+}
+
+@article{hunt_bloomfield_2025_paper,
+  author  = {Hunt, Kieran and Bloomfield, Hannah},
+  title   = {Building and explaining data-driven energy demand models for
+             Indian states},
+  journal = {Environmental Research: Energy}, year = {2025},
+  doi     = {10.1088/2753-3751/adc7bc}
+}
+```
 
 ---
 

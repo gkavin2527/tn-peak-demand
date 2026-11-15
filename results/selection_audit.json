@@ -1,0 +1,160 @@
+{
+  "rounds": {
+    "1_feature_set": {
+      "decided_on": "Regime A, mean inner-fold MAE, ridge probe",
+      "candidates": {
+        "A0_weather_free": 680.5369906631838,
+        "A1_weather_levels": 568.865414641645,
+        "A2_weather_deltas_anomalies": 563.0632934496987,
+        "A4_festival": 551.751647420724
+      },
+      "selected": "A4_festival"
+    },
+    "2_model": {
+      "decided_on": "Regime A, mean inner-fold MAE, default hyperparameters",
+      "candidates": {
+        "naive_persistence": 999.4728371339643,
+        "seasonal_naive": 957.1990487835864,
+        "ols": 551.7515063628025,
+        "ridge": 551.751647420724,
+        "lightgbm": 659.8054675686722,
+        "lightgbm_linear": 606.5717484405603,
+        "xgboost": 662.0328601758893,
+        "catboost": 674.3943232324425,
+        "ridge_gbm_hybrid": 459.0096513692547
+      },
+      "finalists": [
+        "ridge_gbm_hybrid",
+        "ols"
+      ]
+    },
+    "3_tuning": {
+      "decided_on": "Regime A inner-fold objective, 50 TPE trials, seed 42",
+      "results": {
+        "ridge_gbm_hybrid": {
+          "best_params": {
+            "alpha": 0.3377532398565404,
+            "n_estimators": 700,
+            "learning_rate": 0.02479835416290051,
+            "num_leaves": 14
+          },
+          "best_value": 448.0419772010471
+        },
+        "ols": {
+          "best_params": {
+            "alpha": 1.019750394762836e-06
+          },
+          "best_value": 551.7515065024762
+        }
+      }
+    },
+    "4_champion": {
+      "decided_on": "Regime B, mean inner-fold MAE",
+      "candidates": {
+        "ridge_gbm_hybrid": 499.0773082823674,
+        "ols": 591.3130901373756
+      },
+      "selected": "ridge_gbm_hybrid",
+      "hyperparameters": {
+        "alpha": 0.3377532398565404,
+        "n_estimators": 700,
+        "learning_rate": 0.02479835416290051,
+        "num_leaves": 14
+      }
+    }
+  },
+  "phase": "w0_1_selection_audit",
+  "generated_at": "2026-11-15T17:52:38",
+  "protocol": {
+    "outer_holdout": 2025,
+    "inner_folds": [
+      {
+        "train_end": 2022,
+        "val_year": 2023
+      },
+      {
+        "train_end": 2023,
+        "val_year": 2024
+      }
+    ],
+    "n_scored_outer": 356,
+    "trials_per_finalist": 50,
+    "scoring_sample": "Phase 6 common mask (A2 finite in both regimes), restricted to the holdout year"
+  },
+  "selected_by_honest_pipeline": {
+    "feature_set": "A4_festival",
+    "model": "ridge_gbm_hybrid",
+    "hyperparameters": {
+      "alpha": 0.3377532398565404,
+      "n_estimators": 700,
+      "learning_rate": 0.02479835416290051,
+      "num_leaves": 14
+    },
+    "matches_committed_champion": false
+  },
+  "committed_champion": {
+    "feature_set": "A2_weather_deltas_anomalies",
+    "model": "ridge_gbm_hybrid",
+    "hyperparameters": {
+      "alpha": 1.0829403003940016e-05,
+      "n_estimators": 700,
+      "learning_rate": 0.025787043483521396,
+      "num_leaves": 10
+    }
+  },
+  "optimism": {
+    "A": {
+      "reported_2025_fold_mae": 438.1916307337259,
+      "honest_2025_mae": 421.4979886832064,
+      "optimism_mw": -16.693642050519486,
+      "optimism_sign_note": "positive => reported is optimistic; negative => reported is conservative and selection bought no unearned skill",
+      "reported_overall_val_mae": 455.9557196849469
+    },
+    "B": {
+      "reported_2025_fold_mae": 520.5457827779996,
+      "honest_2025_mae": 514.7491566114312,
+      "optimism_mw": -5.796626166568444,
+      "optimism_sign_note": "positive => reported is optimistic; negative => reported is conservative and selection bought no unearned skill",
+      "reported_overall_val_mae": 520.3716911351204
+    }
+  },
+  "honest_metrics_2025": {
+    "A": {
+      "mae": 421.4979886832064,
+      "rmse": 566.1450147033501,
+      "mape": 2.513289090330488,
+      "bias": -92.19597176927442,
+      "n_samples": 356
+    },
+    "B": {
+      "mae": 514.7491566114312,
+      "rmse": 640.8159041638773,
+      "mape": 3.0446100522937556,
+      "bias": -206.4723897954207,
+      "n_samples": 356
+    }
+  },
+  "paired_vs_reported_champion_regime_b": {
+    "delta_mae_mw": -5.796626166568443,
+    "ci_95_low": -28.232382581736644,
+    "ci_95_high": 11.373541337134426,
+    "n": 356
+  },
+  "caveats": [
+    "2026 is untouched here and remains a confirmation set, not a blind test - it was inspected during Track A diagnostics.",
+    "This is a LOWER BOUND on total optimism: it replays the selection rounds reproducible from committed code, not the informal inspection that shaped the search spaces.",
+    "The A2->A3.4 gate is not replayed because the A3 variants were never registered in PHASE5_FEATURE_SETS."
+  ],
+  "environment": {
+    "python": "3.14.7",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "xgboost": "3.4.1",
+    "catboost": "1.2.10",
+    "optuna": "5.0.0"
+  }
+}

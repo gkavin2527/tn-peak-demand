@@ -61,6 +61,7 @@ from config import MODELS, RANDOM_SEED, RESULTS
 from src.contract import PHASE5_FEATURE_SETS
 from src.evaluation import compute_metrics, moving_block_bootstrap
 from src.models import REFERENCE_MODEL
+from src.envinfo import capture_environment
 from src.ridge import TrackARidge
 from run_phase6_benchmark import (FEATURE_SET, FOLDS, common_mask, evaluate,
                                   load_regime, run_walk_forward)
@@ -249,6 +250,23 @@ def main():
         "hyperparameters": tuned[champ]["best_params"],
         "feature_set": FEATURE_SET,
         "feature_count": len(feats),
+        # Serving contract. predict_next_day.py reads both rather than
+        # inferring them; getting either wrong is silent. See test_serving.py.
+        "target_parameterisation": "level",
+        "lag_representation": "literal",
+        "serving_notes": {
+            "target_parameterisation": (
+                "Model predicts tn_peak_demand_mw directly. Do NOT add an "
+                "anchor. Adding peak_lag_1 would roughly double the forecast."),
+            "lag_representation": (
+                "peak_lag_N / energy_lag_N are LITERAL calendar offsets (T-N), "
+                "as produced by load_phase5_data and build_dataset.add_lags. "
+                "Do NOT apply config.H_BY_GROUP shifts when serving: "
+                "load_master(H=2) shifts the demand block one further day, so "
+                "its 'peak_lag_2' holds T-3 and its 'peak_lag_7' lands on the "
+                "wrong weekday. H=2 is honoured by EXCLUDING peak_lag_1 and "
+                "energy_lag_1, not by shifting."),
+        },
         "features": feats,
         "H": 2,
         "validation_protocol": "expanding walk-forward, val 2023/2024/2025",
@@ -262,6 +280,9 @@ def main():
             "degradation_mw": final[champ]["degradation_mw"],
             "degradation_pct": final[champ]["degradation_pct"],
         },
+        # Versions that produced these numbers. The champion is re-fitted
+        # rather than unpickled, so the config alone does not pin the result.
+        "environment": capture_environment(),
         "frozen": True,
         "note_2026": ("2026 has NOT been used in tuning or selection. It was "
                       "inspected during Track A diagnostics, so it is a "

@@ -13,6 +13,12 @@
   },
   "feature_set": "A2_weather_deltas_anomalies",
   "feature_count": 26,
+  "target_parameterisation": "level",
+  "lag_representation": "literal",
+  "serving_notes": {
+    "target_parameterisation": "Model predicts tn_peak_demand_mw directly. Do NOT add an anchor. Adding peak_lag_1 would roughly double the forecast.",
+    "lag_representation": "peak_lag_N / energy_lag_N are LITERAL calendar offsets (T-N), as produced by load_phase5_data and build_dataset.add_lags. Do NOT apply config.H_BY_GROUP shifts when serving: load_master(H=2) shifts the demand block one further day, so its 'peak_lag_2' holds T-3 and its 'peak_lag_7' lands on the wrong weekday. H=2 is honoured by EXCLUDING peak_lag_1 and energy_lag_1, not by shifting."
+  },
   "features": [
     "dow",
     "is_weekend",
@@ -56,6 +62,18 @@
     "regime_b_mae": 520.3716911351204,
     "degradation_mw": 64.41597145017346,
     "degradation_pct": 14.127681410528892
+  },
+  "environment": {
+    "python": "3.14.7",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "xgboost": "3.4.1",
+    "catboost": "1.2.10",
+    "optuna": "5.0.0"
   },
   "frozen": true,
   "note_2026": "2026 has NOT been used in tuning or selection. It was inspected during Track A diagnostics, so it is a confirmation set, not a blind test."

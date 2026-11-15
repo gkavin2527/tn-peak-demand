@@ -1,0 +1,297 @@
+{
+  "phase": "w1_4_diebold_mariano",
+  "generated_at": "2026-11-15T17:55:45",
+  "method": {
+    "statistic": "Diebold-Mariano, absolute-error loss",
+    "variance": "Newey-West (Bartlett), lag floor(4*(n/100)^(2/9))",
+    "small_sample": "Harvey-Leybourne-Newbold correction, t(n-1)",
+    "sign": "negative favours the candidate",
+    "reported_with": "moving-block bootstrap, 7-day blocks, n=2000, seed 42 - DM supplements it, never replaces it"
+  },
+  "results": {
+    "phase6_vs_ridge_regime_a": [
+      {
+        "comparison": "catboost vs ridge",
+        "note": "",
+        "n": 1085,
+        "delta_mae_mw": 80.70503324052804,
+        "dm_stat": 3.0983399422021636,
+        "dm_p_two_sided": 0.0019961757955700094,
+        "dm_p_one_sided": 0.999001912102215,
+        "dm_nw_lag": 6,
+        "dm_favours": "reference",
+        "bootstrap_mean": 80.70503324052804,
+        "bootstrap_ci_95": [
+          32.687840420361205,
+          134.72407423751676
+        ],
+        "significant_dm": true,
+        "significant_bootstrap": true,
+        "methods_agree": true
+      },
+      {
+        "comparison": "lightgbm vs ridge",
+        "note": "",
+        "n": 1085,
+        "delta_mae_mw": 69.0919583747536,
+        "dm_stat": 2.901761809463942,
+        "dm_p_two_sided": 0.0037857560069185594,
+        "dm_p_one_sided": 0.9981071219965407,
+        "dm_nw_lag": 6,
+        "dm_favours": "reference",
+        "bootstrap_mean": 69.0919583747536,
+        "bootstrap_ci_95": [
+          24.732679872626093,
+          118.68058937309432
+        ],
+        "significant_dm": true,
+        "significant_bootstrap": true,
+        "methods_agree": true
+      },
+      {
+        "comparison": "lightgbm_linear vs ridge",
+        "note": "",
+        "n": 1085,
+        "delta_mae_mw": 55.98449848948527,
+        "dm_stat": 2.406391111107059,
+        "dm_p_two_sided": 0.016277526821292448,
+        "dm_p_one_sided": 0.9918612365893538,
+        "dm_nw_lag": 6,
+        "dm_favours": "reference",
+        "bootstrap_mean": 55.98449848948527,
+        "bootstrap_ci_95": [
+          9.269738663666358,
+          101.83396615686597
+        ],
+        "significant_dm": true,
+        "significant_bootstrap": true,
+        "methods_agree": true
+      },
+      {
+        "comparison": "naive_persistence vs ridge",
+        "note": "",
+        "n": 1085,
+        "delta_mae_mw": 472.76537942222706,
+        "dm_stat": 25.722690314114846,
+        "dm_p_two_sided": 2.7447474044323708e-114,
+        "dm_p_one_sided": 1.0,
+        "dm_nw_lag": 6,
+        "dm_favours": "reference",
+        "bootstrap_mean": 472.76537942222706,
+        "bootstrap_ci_95": [
+          435.92273449821465,
+          509.56476824524043
+        ],
+        "significant_dm": true,
+        "significant_bootstrap": true,
+        "methods_agree": true
+      },
+      {
+        "comparison": "ols vs ridge",
+        "note": "",
+        "n": 1085,
+        "delta_mae_mw": -0.0003699583709801248,
+        "dm_stat": -1.4830623304322803,
+        "dm_p_two_sided": 0.1383485182177138,
+        "dm_p_one_sided": 0.0691742591088569,
+        "dm_nw_lag": 6,
+        "dm_favours": "candidate",
+        "bootstrap_mean": -0.0003699583709801248,
+        "bootstrap_ci_95": [
+          -0.0008847987364687415,
+          0.0001155696631897195
+        ],
+        "significant_dm": false,
+        "significant_bootstrap": false,
+        "methods_agree": true
+      },
+      {
+        "comparison": "ridge_gbm_hybrid vs ridge",
+        "note": "",
+        "n": 1085,
+        "delta_mae_mw": -105.15205120773913,
+        "dm_stat": -12.425557627603705,
+        "dm_p_two_sided": 3.0900357108814776e-33,
+        "dm_p_one_sided": 1.5450178554407388e-33,
+        "dm_nw_lag": 6,
+        "dm_favours": "candidate",
+        "bootstrap_mean": -105.15205120773913,
+        "bootstrap_ci_95": [
+          -120.80062733242613,
+          -88.03371124404366
+        ],
+        "significant_dm": true,
+        "significant_bootstrap": true,
+        "methods_agree": true
+      },
+      {
+        "comparison": "seasonal_naive vs ridge",
+        "note": "",
+        "n": 1085,
+        "delta_mae_mw": 426.8483287309828,
+        "dm_stat": 11.929752494907433,
+        "dm_p_two_sided": 6.483349274633215e-31,
+        "dm_p_one_sided": 1.0,
+        "dm_nw_lag": 6,
+        "dm_favours": "reference",
+        "bootstrap_mean": 426.8483287309828,
+        "bootstrap_ci_95": [
+          355.2485227372006,
+          499.33234640777675
+        ],
+        "significant_dm": true,
+        "significant_bootstrap": true,
+        "methods_agree": true
+      },
+      {
+        "comparison": "xgboost vs ridge",
+        "note": "",
+        "n": 1085,
+        "delta_mae_mw": 59.2418321151994,
+        "dm_stat": 2.4835696804708887,
+        "dm_p_two_sided": 0.013157561055179883,
+        "dm_p_one_sided": 0.99342121947241,
+        "dm_nw_lag": 6,
+        "dm_favours": "reference",
+        "bootstrap_mean": 59.2418321151994,
+        "bootstrap_ci_95": [
+          14.258165663524768,
+          107.19191485696649
+        ],
+        "significant_dm": true,
+        "significant_bootstrap": true,
+        "methods_agree": true
+      }
+    ],
+    "regime_b_vs_a": [
+      {
+        "comparison": "ridge: Regime B vs Regime A",
+        "note": "positive delta = forecast weather costs accuracy",
+        "n": 1066,
+        "delta_mae_mw": 40.34173130939658,
+        "dm_stat": 5.71241249105226,
+        "dm_p_two_sided": 1.4444060066160932e-08,
+        "dm_p_one_sided": 0.9999999927779699,
+        "dm_nw_lag": 6,
+        "dm_favours": "reference",
+        "bootstrap_mean": 40.34173130939658,
+        "bootstrap_ci_95": [
+          25.90922920173437,
+          54.13666601523371
+        ],
+        "significant_dm": true,
+        "significant_bootstrap": true,
+        "methods_agree": true
+      },
+      {
+        "comparison": "ridge_gbm_hybrid: Regime B vs Regime A",
+        "note": "positive delta = forecast weather costs accuracy",
+        "n": 1066,
+        "delta_mae_mw": 64.4159714501734,
+        "dm_stat": 7.311217461027103,
+        "dm_p_two_sided": 5.191038380438873e-13,
+        "dm_p_one_sided": 0.9999999999997404,
+        "dm_nw_lag": 6,
+        "dm_favours": "reference",
+        "bootstrap_mean": 64.4159714501734,
+        "bootstrap_ci_95": [
+          46.390134292956944,
+          81.66084031977344
+        ],
+        "significant_dm": true,
+        "significant_bootstrap": true,
+        "methods_agree": true
+      }
+    ],
+    "phase7_a4_vs_a2": [
+      {
+        "comparison": "ridge_gbm_hybrid, Regime A: A4 vs A2",
+        "note": "",
+        "n": 1066,
+        "delta_mae_mw": -13.341808761571345,
+        "dm_stat": -2.170678821257984,
+        "dm_p_two_sided": 0.030175817352769876,
+        "dm_p_one_sided": 0.015087908676384938,
+        "dm_nw_lag": 6,
+        "dm_favours": "candidate",
+        "bootstrap_mean": -13.341808761571345,
+        "bootstrap_ci_95": [
+          -27.470176367932595,
+          -2.2373471361977533
+        ],
+        "significant_dm": true,
+        "significant_bootstrap": true,
+        "methods_agree": true
+      },
+      {
+        "comparison": "ridge_gbm_hybrid, Regime B: A4 vs A2",
+        "note": "",
+        "n": 1066,
+        "delta_mae_mw": -9.239935982819047,
+        "dm_stat": -1.6479323590691282,
+        "dm_p_two_sided": 0.09966151578727525,
+        "dm_p_one_sided": 0.049830757893637626,
+        "dm_nw_lag": 6,
+        "dm_favours": "candidate",
+        "bootstrap_mean": -9.239935982819047,
+        "bootstrap_ci_95": [
+          -21.564708828762665,
+          1.2059625557552685
+        ],
+        "significant_dm": false,
+        "significant_bootstrap": false,
+        "methods_agree": true
+      },
+      {
+        "comparison": "ridge, Regime A: A4 vs A2",
+        "note": "",
+        "n": 1066,
+        "delta_mae_mw": -10.76817672667269,
+        "dm_stat": -1.9630186987781748,
+        "dm_p_two_sided": 0.04990395677685078,
+        "dm_p_one_sided": 0.02495197838842539,
+        "dm_nw_lag": 6,
+        "dm_favours": "candidate",
+        "bootstrap_mean": -10.76817672667269,
+        "bootstrap_ci_95": [
+          -21.785819892555715,
+          -1.0973251322056983
+        ],
+        "significant_dm": true,
+        "significant_bootstrap": true,
+        "methods_agree": true
+      },
+      {
+        "comparison": "ridge, Regime B: A4 vs A2",
+        "note": "",
+        "n": 1066,
+        "delta_mae_mw": -10.237870955650328,
+        "dm_stat": -2.1375430003139573,
+        "dm_p_two_sided": 0.032781053834220544,
+        "dm_p_one_sided": 0.016390526917110272,
+        "dm_nw_lag": 6,
+        "dm_favours": "candidate",
+        "bootstrap_mean": -10.237870955650328,
+        "bootstrap_ci_95": [
+          -20.05816222454062,
+          -1.4764807812369123
+        ],
+        "significant_dm": true,
+        "significant_bootstrap": true,
+        "methods_agree": true
+      }
+    ]
+  },
+  "environment": {
+    "python": "3.14.7",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "xgboost": "3.4.1",
+    "catboost": "1.2.10",
+    "optuna": "5.0.0"
+  }
+}

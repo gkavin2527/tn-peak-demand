@@ -1,0 +1,32 @@
+# Daily data pipeline ONLY (.github/workflows/daily.yml).
+#
+# Scope is measured, not assumed: fetch_weather.py, fetch_demand.py,
+# update_peak_demand.py, build_dataset.py and health_check.py transitively
+# import exactly pandas, numpy, requests, holidays and pdfplumber.
+#
+# This file exists because daily.yml used to install the FULL requirements.txt
+# every night - scikit-learn, LightGBM, XGBoost, CatBoost, Optuna, matplotlib
+# and Streamlit included - on a self-hosted runner that recreated its venv
+# from scratch each run. On 2026-11-12 that filled the disk
+# ([Errno 28] No space left on device, 0 MB free) and the pipeline stopped for
+# four days, losing forecast-log rows that cannot be backfilled. The data
+# pipeline needs none of those packages.
+#
+# Versions must match requirements.txt exactly - they are the same artifacts.
+
+pandas==3.1.1
+numpy==2.5.4
+requests==2.34.2
+
+# The India/TN calendar changes between releases - some lunisolar festivals
+# gain or lose year coverage - and is_holiday must not change meaning because
+# a dependency floated. tn_holidays.py cross-checks its curated overrides
+# against whatever version is installed and fails loudly on a contradiction.
+holidays==0.108
+
+# Source ingestion. pdfplumber is imported directly; xlrd and openpyxl are
+# NOT - pandas.read_excel loads them dynamically by engine name, so static
+# import analysis does not see them and they must still be installed.
+pdfplumber==0.11.7
+xlrd==2.0.2
+openpyxl==3.1.5

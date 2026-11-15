@@ -438,6 +438,63 @@ step forward. No shuffling — that would leak the future.
 
 ---
 
+## Licence, data terms and citation
+
+**Code** is MIT — see [`LICENSE`](LICENSE). **Data is not.** The two are
+separate, and the MIT grant does not extend to anything in `data/`.
+
+### Per-source terms
+
+| Source | Covers | Terms | Attribution required |
+|---|---|---|---|
+| Grid-India (formerly POSOCO) Daily PSP Reports | `tn_peak_demand_mw`, grid columns | Published by the Grid Controller of India for public information. **Redistribution terms are not explicitly stated** on the PSP portal — confirm before republishing the derived files | Yes — cite Grid-India as the source |
+| Robbie Andrew / CICERO daily compilation | `tn_energy_mu` and the historical PSP compilation | Research compilation of Grid-India reports; credit the compiler as well as the primary source | Yes |
+| Open-Meteo (Historical Weather, Previous Runs) | all weather columns, `data/weather_forecast_archive.csv` | API data offered under **CC-BY-4.0** | Yes — "Weather data by Open-Meteo.com" |
+| Copernicus / ECMWF **ERA5** | upstream of Open-Meteo's reanalysis | Copernicus Climate Change Service licence; contains modified Copernicus Climate Change Service information | Yes |
+| Python `holidays` | `is_holiday` and the calendar derivatives | MIT | No |
+
+Two consequences worth stating plainly:
+
+- **The weather archive is redistributable, the demand series needs a check.**
+  Open-Meteo's CC-BY-4.0 covers the 29,535-row forecast archive. Grid-India's
+  PSP terms are not published in a form that clearly permits republishing a
+  derived daily series, so `data/peak_demand.csv` and `data/master.csv` should
+  be treated as *reproducible from source* rather than as freely
+  redistributable. [`backfill_peak_demand.py`](backfill_peak_demand.py) and
+  [`fetch_weather.py`](fetch_weather.py) rebuild both from the primaries.
+- **Neither source endorses this work.** Any error in the derived dataset is
+  this repository's, not theirs.
+
+### Historical backfill provenance
+
+Rows before 2024-05 come from a published Zenodo archive of Grid-India PSP
+data (3,852 rows), combined with 1,052 rows fetched directly from Grid-India.
+
+> ⚠️ **The Zenodo record's DOI is not yet recorded in this repository.** It is
+> referenced in prose only. Before submission, add the DOI and the depositor's
+> preferred citation here and in the BibTeX block below — a paper that cites
+> 79% of its target series as "a Zenodo archive" will be asked for the
+> identifier.
+
+### Citing this work
+
+```bibtex
+@misc{tn_peak_demand_2026,
+  author       = {gkavin2527},
+  title        = {Next-Day Peak Electricity Demand Forecasting for
+                  Tamil Nadu Using Machine Learning},
+  year         = {2026},
+  howpublished = {\url{https://github.com/gkavin2527/tn-peak-demand}},
+  note         = {Dataset: 4,905 daily observations, 2013-01-01 onward,
+                  derived from Grid-India PSP reports and Open-Meteo}
+}
+```
+
+Replace the author field with the full author list and add the venue once the
+ICAIEA 2026 submission has an identifier.
+
+---
+
 ## Forecasting in production
 
 The dataset is indexed by the day demand was **measured**. A forecaster is
@@ -463,6 +520,32 @@ python measure_publish_time.py --probe   # re-measure H from pipeline evidence
 Measured, not assumed — `results/publish_time.json`. Note the lag names: under
 `load_master(H)`, **lag numbers are relative to the newest available demand
 day** (`target − H`), not to the target.
+
+#### Two lag conventions exist. They are not interchangeable.
+
+This is the single easiest way to break a forecast silently, so it is worth
+being explicit about.
+
+| | `load_master(H=2)` | `load_phase5_data` |
+|---|---|---|
+| How `H` is enforced | **shifts** the demand block by `H−1` | **excludes** `peak_lag_1`, `energy_lag_1` |
+| `peak_lag_2` holds | T−3 | **T−2** (literal) |
+| `peak_lag_7` lands on | the wrong weekday | the **same** weekday |
+| Used by | `predict_next_day.py`'s differenced stand-in, whose anchor *is* the shifted `peak_lag_1` | every Phase 5 / Phase 6 model, **including the champion** |
+
+Both are correct for their own consumer. The failure mode is mixing them:
+serving a literal-lag model from a shifted frame raises no error and returns
+an entirely plausible number, while every demand lag is a day stale and the
+weekly lags have lost weekday alignment. Backtested on 2025 (n = 352), that
+mistake moves the champion's MAE from **438.2 → 683.7 MW (+56%)** — roughly
+2.3× the champion's entire measured gain over Ridge.
+
+`predict_next_day.py` therefore takes the representation from
+`models/champion_config.json` (`"lag_representation": "literal"`) rather than
+inferring it, and refuses to serve a champion from the wrong frame.
+[`test_serving.py`](test_serving.py) asserts the served feature row is
+identical to `load_phase5_data` for all 26 features and that `peak_lag_N`
+resolves against the **raw series** at T−N rather than being trusted by name.
 
 ### The contract (Track A ↔ Track B)
 
@@ -651,6 +734,50 @@ updates stop, check that first.
 
 ---
 
+
+### Dependency tiers, and why the runner ran out of disk
+
+The CI runner is **self-hosted** and persistent, so disk is a finite shared
+resource rather than a fresh allocation per run. Both jobs used to recreate
+`.venv` from scratch nightly and install the **entire** `requirements.txt`.
+
+On **2026-11-12** that filled the disk — `[Errno 28] No space left on device`,
+0 MB free — and the pipeline stayed down for four days. The morning job's
+weather-forecast log is the one artifact that **cannot be backfilled**, so
+those rows are permanently lost.
+
+The daily pipeline never imported most of what it was installing. Measured by
+tracing transitive imports from each job's entry points:
+
+| Tier | File | Packages | Installed size | Used by |
+|---|---|---|---|---|
+| data | `requirements-data.txt` | 7 direct / 21 total | **195 MB** | `daily.yml` |
+| model | `requirements-model.txt` | +3 (scipy, scikit-learn, lightgbm) | **355 MB** | `evening.yml` |
+| full | `requirements.txt` | +5 (xgboost, catboost, optuna, matplotlib, streamlit) | **855 MB** | benchmark, tuning, figures, dashboard |
+
+So the morning job was installing 855 MB nightly to do 195 MB of work, and the
+evening job 855 MB to do 355 MB. Three changes, all in the workflows:
+
+1. **Install the narrowest tier the job actually imports.** `daily.yml` →
+   data, `evening.yml` → model. The evening job can skip XGBoost, CatBoost and
+   Optuna because `src/models.py` imports those *inside* their factory
+   functions, so serving `ridge_gbm_hybrid` never touches them.
+2. **Reuse the venv** unless its tier file's SHA-256 changes, instead of
+   rebuilding nightly. A missing `.venv/bin/python` also forces a rebuild, so
+   a half-finished install self-heals.
+3. **`--no-cache-dir`, plus `pip cache purge` on exit even when the run
+   fails** — a failed pip is exactly the state that leaves a cache behind and
+   the next run needing the space.
+
+A preflight step now refuses to start below `MIN_FREE_MB` (2,000) with an
+actionable message, rather than dying half way through pip and leaving a
+corrupt venv behind.
+
+> Two caveats worth keeping in mind. `xlrd` and `openpyxl` stay in the data
+> tier even though nothing imports them by name: `pandas.read_excel` loads
+> them dynamically by engine, so static import analysis does not see them.
+> And if a job ever gains an import, the narrow tier will fail loudly at
+> import time rather than silently — which is the intended trade.
 ## Known quirks
 
 ### Gaps

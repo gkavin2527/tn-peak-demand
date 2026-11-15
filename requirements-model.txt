@@ -1,0 +1,18 @@
+# Evening forecast / serving tier (.github/workflows/evening.yml).
+#
+# Everything the data pipeline needs, plus what is required to REFIT AND SERVE
+# the frozen champion (predict_next_day.py --champion, calibrate_intervals.py,
+# track_predictions.py).
+#
+# LightGBM is here because the champion is ridge_gbm_hybrid: Ridge for the
+# trend plus a LightGBM residual. XGBoost, CatBoost and Optuna are
+# deliberately ABSENT - they are imported inside their own factory functions
+# in src/models.py, so serving the hybrid never touches them, and they are
+# among the largest wheels in the project. Benchmarking and tuning use the
+# full requirements.txt.
+
+-r requirements-data.txt
+
+scipy==1.18.1
+scikit-learn==1.9.1
+lightgbm==4.7.0

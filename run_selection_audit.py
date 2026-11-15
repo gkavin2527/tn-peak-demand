@@ -195,6 +195,16 @@ def main():
                     "num_leaves": trial.suggest_int("num_leaves", 3, 31)}
         if name in ("ridge", "ols"):
             return {"alpha": trial.suggest_float("alpha", 1e-6, 1e3, log=True)}
+        if name == "quantile_hybrid":
+            # tau is searched, not fixed: W1-2 swept 7 values on the full
+            # 2023-25 sample, so the honest pipeline must be allowed to pick
+            # its own level from inner folds only, or the comparison inherits
+            # exactly the selection the audit is trying to measure.
+            return {"alpha": trial.suggest_float("alpha", 1e-6, 1e3, log=True),
+                    "n_estimators": trial.suggest_int("n_estimators", 100, 800, step=50),
+                    "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.15, log=True),
+                    "num_leaves": trial.suggest_int("num_leaves", 3, 31),
+                    "quantile": trial.suggest_float("quantile", 0.50, 0.90)}
         if name in ("lightgbm", "lightgbm_linear"):
             return {"n_estimators": trial.suggest_int("n_estimators", 100, 800, step=50),
                     "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.15, log=True),

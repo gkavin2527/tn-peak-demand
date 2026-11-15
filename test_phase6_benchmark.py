@@ -76,6 +76,56 @@ def main():
           f"{len(avail)}/{len(MODEL_ZOO)}")
     check("reference model is in the zoo", REFERENCE_MODEL in MODEL_ZOO)
 
+    # quantile_hybrid (W1-2): same model as ridge_gbm_hybrid except the
+    # residual GBM's objective. Checked explicitly because its DEFAULT tau is
+    # deliberately NOT the value W1-2 found useful - rank-then-tune screens it
+    # out at the default, and the honest validation tunes tau from inner folds
+    # only. A default silently "corrected" to 0.65 would smuggle a selection
+    # made on 2023-25 into what looks like an untuned baseline.
+    from src.models import QuantileHybrid, RidgeGBMHybrid
+    qh = build_model("quantile_hybrid")
+    check("quantile_hybrid subclasses the plain hybrid",
+          isinstance(qh, RidgeGBMHybrid), type(qh).__name__)
+    check("quantile_hybrid default tau is left at 0.9, not tuned in",
+          abs(qh.quantile - 0.9) < 1e-12, f"tau={qh.quantile}")
+    bad = 0
+    for t in (0.0, 1.0, -0.1, 1.5):
+        try:
+            QuantileHybrid(quantile=t)
+        except ValueError:
+            bad += 1
+    check("quantile_hybrid rejects tau outside (0,1)", bad == 4, f"{bad}/4")
+    check("quantile objective reaches LightGBM",
+          build_model("quantile_hybrid", quantile=0.65).quantile == 0.65)
+
+    # Recency weighting (W1-3). The load-bearing invariant is that the DEFAULT
+    # is uniform: every committed Phase 5/6 number was fitted unweighted, so a
+    # default of anything else would silently invalidate them all.
+    for nm in ("ridge_gbm_hybrid", "quantile_hybrid"):
+        check(f"{nm} defaults to uniform weighting",
+              build_model(nm).half_life_years is None)
+    bad = 0
+    for hl in (0, -1, -0.5):
+        try:
+            build_model("ridge_gbm_hybrid", half_life_years=hl)
+        except ValueError:
+            bad += 1
+    check("non-positive half-life is rejected", bad == 3, f"{bad}/3")
+    # age must come from the index, not row position: 157 missing days exist
+    idx = pd.to_datetime(["2020-01-01", "2020-01-02", "2024-01-01"])
+    probe = pd.DataFrame({"a": [1.0, 2.0, 3.0]}, index=idx)
+    w = build_model("ridge_gbm_hybrid", half_life_years=4)._recency_weights(probe)
+    check("recency weights decay by calendar age, not row order",
+          abs(w[-1] - 1.0) < 1e-12 and abs(w[0] - 0.5) < 0.01,
+          f"oldest {w[0]:.4f} (4yr older -> ~0.5), newest {w[-1]:.4f}")
+    try:
+        build_model("ridge_gbm_hybrid", half_life_years=3)._recency_weights(
+            pd.DataFrame({"a": [1.0, 2.0]}))
+        ok = False
+    except TypeError:
+        ok = True
+    check("weighting refuses a non-DatetimeIndex rather than guessing age", ok)
+
     df_a = load_regime("A", feats)
     small = df_a.head(500)
     iface_ok, bad = True, []

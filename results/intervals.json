@@ -1,9 +1,9 @@
 {
-  "calibrated_at": "2026-11-11T12:11:27",
+  "calibrated_at": "2026-11-15T18:38:47",
   "window_days": 365,
   "window": [
-    "2025-11-10",
-    "2026-11-09"
+    "2025-11-11",
+    "2026-11-10"
   ],
   "method": "rolling split-conformal on relative residuals",
   "seasons": {
@@ -11,40 +11,129 @@
       "n": 122,
       "note": "122 days",
       "relative_halfwidth": {
-        "0.90": 0.06382021362557937,
-        "0.95": 0.07464592891169011
+        "0.90": 0.05521674559506242,
+        "0.95": 0.06864344031478913
       }
     },
     "rest": {
-      "n": 243,
-      "note": "243 days",
+      "n": 241,
+      "note": "241 days",
       "relative_halfwidth": {
-        "0.90": 0.06625133741167906,
-        "0.95": 0.09608301595437864
+        "0.90": 0.05067496967631817,
+        "0.95": 0.07381869811187282
       }
     }
+  },
+  "model": {
+    "champion": "quantile_hybrid",
+    "feature_set": "A2_weather_deltas_anomalies",
+    "hyperparameters": {
+      "alpha": 7.248645036748854e-05,
+      "n_estimators": 700,
+      "learning_rate": 0.054974829550241175,
+      "num_leaves": 13,
+      "quantile": 0.59055755470205
+    },
+    "target_parameterisation": "level",
+    "lag_representation": "literal",
+    "config_generated_at": "2026-11-15T18:32:08"
+  },
+  "walk_forward": {
+    "train_regime": "A (ERA5)",
+    "score_regime": "B (lead-1 forecast)",
+    "start": "2024-01-01",
+    "end": "2026-11-10",
+    "refit_days": 7,
+    "n_predictions": 1016,
+    "n_refits": 147,
+    "mae_mw": 479.66314871245334,
+    "bias_mw": 34.03929242886165,
+    "note": "training uses ERA5 throughout; only the scored row's weather is a forecast, matching how the model is served"
   },
   "coverage": {
     "0.90": {
       "nominal": 0.9,
-      "realised_coverage": 0.9144,
-      "mean_width_mw": 2293.4,
-      "interval_score": 3278.2,
+      "realised_coverage": 0.876,
+      "mean_width_mw": 1850.6,
+      "interval_score": 3123.5,
       "by_season": {
-        "summer": 0.9126,
-        "rest": 0.9154
+        "summer": 0.8634,
+        "rest": 0.8831
       }
     },
     "0.95": {
       "nominal": 0.95,
-      "realised_coverage": 0.9548,
-      "mean_width_mw": 3093.9,
-      "interval_score": 4176.0,
+      "realised_coverage": 0.9429,
+      "mean_width_mw": 2538.9,
+      "interval_score": 3954.9,
       "by_season": {
-        "summer": 0.9508,
-        "rest": 0.957
+        "summer": 0.9344,
+        "rest": 0.9477
       }
     }
+  },
+  "coverage_within_3pts": true,
+  "paper_calibration_2026_free": {
+    "why": "operational widths use a trailing window that now includes 2026, the one-shot confirmation set; these widths are fitted on residuals up to 2025-12-31 so that W0-5 can report 2026 coverage out-of-sample",
+    "cutoff": "2025-12-31",
+    "n_predictions": 702,
+    "window": [
+      "2025-01-04",
+      "2025-12-31"
+    ],
+    "seasons": {
+      "summer": {
+        "n": 122,
+        "note": "122 days",
+        "relative_halfwidth": {
+          "0.90": 0.0658850485919761,
+          "0.95": 0.07427280387871821
+        }
+      },
+      "rest": {
+        "n": 234,
+        "note": "234 days",
+        "relative_halfwidth": {
+          "0.90": 0.05227379535907829,
+          "0.95": 0.0725980163836048
+        }
+      }
+    },
+    "in_window_coverage": {
+      "0.90": {
+        "nominal": 0.9,
+        "realised_coverage": 0.896,
+        "mean_width_mw": 1959.4,
+        "interval_score": 3027.0,
+        "by_season": {
+          "summer": 0.9098,
+          "rest": 0.8886
+        }
+      },
+      "0.95": {
+        "nominal": 0.95,
+        "realised_coverage": 0.9473,
+        "mean_width_mw": 2504.8,
+        "interval_score": 3857.0,
+        "by_season": {
+          "summer": 0.9426,
+          "rest": 0.9498
+        }
+      }
+    },
+    "use_for": "W0-5 2026 coverage reporting"
+  },
+  "environment": {
+    "python": "3.14.7",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "xgboost": "3.4.1",
+    "catboost": "1.2.10",
+    "optuna": "5.0.0"
   },
   "caveat": "Time series are not exchangeable, so conformal coverage is approximate. Realised coverage is reported rather than assumed."
 }

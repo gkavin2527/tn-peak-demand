@@ -210,25 +210,57 @@ class RidgeGBMHybrid:
     """
 
     def __init__(self, alpha: float = 0.001, n_estimators: int = 300,
-                 learning_rate: float = 0.03, num_leaves: int = 7):
+                 learning_rate: float = 0.03, num_leaves: int = 7,
+                 half_life_years: float | None = None):
         self.alpha = alpha
         self.ridge = TrackARidge(alpha=alpha)
         self._gbm_kw = dict(n_estimators=n_estimators,
                             learning_rate=learning_rate, num_leaves=num_leaves)
         self.gbm = None
         self.features_: list[str] | None = None
+        if half_life_years is not None and half_life_years <= 0:
+            raise ValueError(
+                f"half_life_years must be positive or None, got {half_life_years}")
+        self.half_life_years = half_life_years
+
+    def _recency_weights(self, X: pd.DataFrame, sample_weight=None):
+        """Exponential decay by age, half-life `half_life_years`.
+
+        Tamil Nadu's peak is not stationary - 2026 runs ~10% above 2025 - so
+        the oldest rows describe a different system than the one being
+        forecast. Weighting by recency lets the fit prefer recent structure
+        without discarding history outright, which a hard training-window cut
+        would do.
+
+        Weights come from the frame's own DatetimeIndex rather than a
+        row-order proxy: master.csv has 157 missing days, so position is not
+        age. `None` means uniform, and must stay the default - every committed
+        Phase 5/6 number was fitted unweighted.
+        """
+        if self.half_life_years is None:
+            return sample_weight
+        if not isinstance(X.index, pd.DatetimeIndex):
+            raise TypeError(
+                "half_life_years needs a DatetimeIndex to measure age from; "
+                f"got {type(X.index).__name__}")
+        age_days = (X.index.max() - X.index).days.to_numpy(dtype=float)
+        w = 0.5 ** (age_days / (365.25 * self.half_life_years))
+        if sample_weight is not None:
+            w = w * np.asarray(sample_weight, dtype=float).ravel()
+        return w
 
     def fit(self, X: pd.DataFrame, y, sample_weight=None):
         import lightgbm as lgb
         self.features_ = list(X.columns)
         y_arr = np.asarray(y, dtype=float).ravel()
-        self.ridge.fit(X, y_arr)
+        sample_weight = self._recency_weights(X, sample_weight)
+        self.ridge.fit(X, y_arr, sample_weight=sample_weight)
         resid = y_arr - self.ridge.predict(X)
         self.gbm = lgb.LGBMRegressor(
             min_child_samples=30, subsample=0.8, subsample_freq=1,
             colsample_bytree=0.8, reg_lambda=1.0, random_state=SEED,
             n_jobs=1, verbose=-1, **self._gbm_kw)
-        self.gbm.fit(X, resid)
+        self.gbm.fit(X, resid, sample_weight=sample_weight)
         return self
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
@@ -238,6 +270,56 @@ class RidgeGBMHybrid:
 # --------------------------------------------------------------------------
 # Registry
 # --------------------------------------------------------------------------
+
+class QuantileHybrid(RidgeGBMHybrid):
+    """Ridge trend + a QUANTILE-regression GBM on the residual.
+
+    Motivation, measured on the champion's Regime B residuals (2023-25):
+    the top-5% surge days carry a bias of -549.0 MW on n=56, with 48 of 56
+    under-forecast. The model is systematically low exactly when the reserve
+    margin is thinnest, which is the operationally expensive direction to be
+    wrong in.
+
+    RidgeGBMHybrid fits the residual GBM to squared error, so it targets the
+    conditional MEAN of the residual. This subclass changes only the residual
+    objective to LightGBM's `quantile` at level `quantile`, so the head
+    targets an upper conditional quantile instead.
+
+    The trade-off is not free and should be stated before looking at the
+    numbers: shifting the residual head upward reduces under-forecast bias
+    everywhere, not only on surge days, so overall MAE must be expected to
+    rise. `quantile=0.5` is the median control - it isolates "mean vs median"
+    from "median vs upper quantile". Whether any level is worth adopting is a
+    question about the cost asymmetry of over- versus under-forecasting, which
+    the MAE gate alone cannot answer; run_phase7_surge.py reports the whole
+    curve rather than a single point.
+    """
+
+    def __init__(self, alpha: float = 0.001, n_estimators: int = 300,
+                 learning_rate: float = 0.03, num_leaves: int = 7,
+                 quantile: float = 0.9, half_life_years: float | None = None):
+        super().__init__(alpha=alpha, n_estimators=n_estimators,
+                         learning_rate=learning_rate, num_leaves=num_leaves,
+                         half_life_years=half_life_years)
+        if not 0.0 < quantile < 1.0:
+            raise ValueError(f"quantile must be in (0,1), got {quantile}")
+        self.quantile = float(quantile)
+
+    def fit(self, X: pd.DataFrame, y, sample_weight=None):
+        import lightgbm as lgb
+        self.features_ = list(X.columns)
+        y_arr = np.asarray(y, dtype=float).ravel()
+        sample_weight = self._recency_weights(X, sample_weight)
+        self.ridge.fit(X, y_arr, sample_weight=sample_weight)
+        resid = y_arr - self.ridge.predict(X)
+        self.gbm = lgb.LGBMRegressor(
+            objective="quantile", alpha=self.quantile,
+            min_child_samples=30, subsample=0.8, subsample_freq=1,
+            colsample_bytree=0.8, reg_lambda=1.0, random_state=SEED,
+            n_jobs=1, verbose=-1, **self._gbm_kw)
+        self.gbm.fit(X, resid, sample_weight=sample_weight)
+        return self
+
 
 MODEL_ZOO: dict[str, dict] = {
     "naive_persistence": {
@@ -284,6 +366,12 @@ MODEL_ZOO: dict[str, dict] = {
         "factory": lambda **kw: RidgeGBMHybrid(**kw),
         "family": "hybrid",
         "note": "Ridge trend + GBM residual; targets the extrapolation failure",
+    },
+    "quantile_hybrid": {
+        "factory": lambda **kw: QuantileHybrid(**kw),
+        "family": "hybrid",
+        "note": ("Ridge trend + quantile-regression GBM residual; targets the "
+                 "-549 MW surge-day under-forecast, at a cost in overall MAE"),
     },
 }
 

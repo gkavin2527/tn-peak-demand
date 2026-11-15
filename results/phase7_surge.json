@@ -1,0 +1,382 @@
+{
+  "phase": "w1_2_surge_bias",
+  "generated_at": "2026-11-15T18:22:06",
+  "feature_set": "A2_weather_deltas_anomalies",
+  "base_champion": {
+    "model": "ridge_gbm_hybrid",
+    "hyperparameters": {
+      "alpha": 1.0829403003940016e-05,
+      "n_estimators": 700,
+      "learning_rate": 0.025787043483521396,
+      "num_leaves": 10
+    }
+  },
+  "protocol": {
+    "validation": "expanding walk-forward, val 2023/2024/2025",
+    "training_regime": "A (ERA5); scored under both",
+    "surge_definition": "top 5% of observed peak within each year",
+    "n_scored": 1066
+  },
+  "acceptance_criterion": {
+    "surge_bias_reduction": 0.3,
+    "max_mae_increase_mw": 10.0,
+    "regime": "B",
+    "fixed_in_advance": true
+  },
+  "baseline": {
+    "A": {
+      "n": 1066,
+      "mae": 455.9557196849469,
+      "bias": -47.20328249826022,
+      "rmse": 618.368665944491,
+      "surge_n": 56,
+      "surge_mae": 495.0969778598915,
+      "surge_bias": -424.7035041127843,
+      "surge_under_forecast": 49,
+      "nonsurge_mae": 453.7855113108906,
+      "nonsurge_bias": -26.27257714141531
+    },
+    "B": {
+      "n": 1066,
+      "mae": 520.3716911351204,
+      "bias": -69.61106026289808,
+      "rmse": 680.0380964734255,
+      "surge_n": 56,
+      "surge_mae": 592.4699601792121,
+      "surge_bias": -549.0169651019725,
+      "surge_under_forecast": 48,
+      "nonsurge_mae": 516.374163346537,
+      "nonsurge_bias": -43.03013880647416
+    }
+  },
+  "sweep": [
+    {
+      "tau": 0.5,
+      "regime_a": {
+        "n": 1066,
+        "mae": 455.48426633173773,
+        "bias": -50.44241892355751,
+        "rmse": 630.0581090978256,
+        "surge_n": 56,
+        "surge_mae": 532.3384882100418,
+        "surge_bias": -476.6531111283254,
+        "surge_under_forecast": 50,
+        "nonsurge_mae": 451.22304214838624,
+        "nonsurge_bias": -26.810934999332748
+      },
+      "regime_b": {
+        "n": 1066,
+        "mae": 515.7297884331321,
+        "bias": -76.33115568927558,
+        "rmse": 684.0965219930449,
+        "surge_n": 56,
+        "surge_mae": 630.2886793873315,
+        "surge_bias": -597.8423478045045,
+        "surge_under_forecast": 50,
+        "nonsurge_mae": 509.378008340622,
+        "nonsurge_bias": -47.41568365120347
+      },
+      "delta_mae_vs_champion_mw": -4.641902701988329,
+      "surge_bias_reduction_frac": -0.08893237514702923,
+      "meets_bias_target": false,
+      "meets_mae_tolerance": true,
+      "accepted": false,
+      "paired_vs_champion_regime_b": {
+        "delta_mae_mw": -4.641902701988264,
+        "ci_95_low": -14.847449049785679,
+        "ci_95_high": 6.579258900720832,
+        "dm_stat": -0.8355852438707079,
+        "dm_p_two_sided": 0.40357568997552334
+      }
+    },
+    {
+      "tau": 0.55,
+      "regime_a": {
+        "n": 1066,
+        "mae": 451.85767707749386,
+        "bias": 7.493941075529934,
+        "rmse": 631.1533718847348,
+        "surge_n": 56,
+        "surge_mae": 502.87332744345065,
+        "surge_bias": -431.0804463259562,
+        "surge_under_forecast": 48,
+        "nonsurge_mae": 449.0290865621536,
+        "nonsurge_bias": 31.810936812642034
+      },
+      "regime_b": {
+        "n": 1066,
+        "mae": 506.52772961379515,
+        "bias": -12.008827586697313,
+        "rmse": 680.5401691572898,
+        "surge_n": 56,
+        "surge_mae": 579.2649831941542,
+        "surge_bias": -534.7481275441507,
+        "surge_under_forecast": 50,
+        "nonsurge_mae": 502.4947729796366,
+        "nonsurge_bias": 16.974737559458514
+      },
+      "delta_mae_vs_champion_mw": -13.843961521325241,
+      "surge_bias_reduction_frac": 0.025989793512430803,
+      "meets_bias_target": false,
+      "meets_mae_tolerance": true,
+      "accepted": false,
+      "paired_vs_champion_regime_b": {
+        "delta_mae_mw": -13.843961521325209,
+        "ci_95_low": -25.04269729094811,
+        "ci_95_high": -1.6553829394362765,
+        "dm_stat": -2.2290755827827913,
+        "dm_p_two_sided": 0.02601687423650193
+      }
+    },
+    {
+      "tau": 0.6,
+      "regime_a": {
+        "n": 1066,
+        "mae": 448.95917007658755,
+        "bias": 67.06209267861628,
+        "rmse": 635.6527224798402,
+        "surge_n": 56,
+        "surge_mae": 460.07601244437245,
+        "surge_bias": -369.4615167012908,
+        "surge_under_forecast": 47,
+        "nonsurge_mae": 448.34279069777966,
+        "nonsurge_bias": 91.2653819115616
+      },
+      "regime_b": {
+        "n": 1066,
+        "mae": 502.53672768533323,
+        "bias": 46.781593212899715,
+        "rmse": 685.3092659341279,
+        "surge_n": 56,
+        "surge_mae": 535.2208531922586,
+        "surge_bias": -477.87841169247446,
+        "surge_under_forecast": 49,
+        "nonsurge_mae": 500.7245385483156,
+        "nonsurge_bias": 75.87165289082144
+      },
+      "delta_mae_vs_champion_mw": -17.834963449787153,
+      "surge_bias_reduction_frac": 0.12957441742494236,
+      "meets_bias_target": false,
+      "meets_mae_tolerance": true,
+      "accepted": false,
+      "paired_vs_champion_regime_b": {
+        "delta_mae_mw": -17.83496344978716,
+        "ci_95_low": -31.906867322890808,
+        "ci_95_high": -3.2007515446335155,
+        "dm_stat": -2.364955945384128,
+        "dm_p_two_sided": 0.018210714857366504
+      }
+    },
+    {
+      "tau": 0.65,
+      "regime_a": {
+        "n": 1066,
+        "mae": 456.1989011900553,
+        "bias": 139.71724352415228,
+        "rmse": 648.9120281525815,
+        "surge_n": 56,
+        "surge_mae": 420.219993008358,
+        "surge_bias": -318.4605351977101,
+        "surge_under_forecast": 45,
+        "nonsurge_mae": 458.1937713466643,
+        "nonsurge_bias": 165.12115996813674
+      },
+      "regime_b": {
+        "n": 1066,
+        "mae": 503.66926916549244,
+        "bias": 121.736657815754,
+        "rmse": 696.316054858731,
+        "surge_n": 56,
+        "surge_mae": 488.3535386868004,
+        "surge_bias": -422.61050419863426,
+        "surge_under_forecast": 47,
+        "nonsurge_mae": 504.51845818213286,
+        "nonsurge_bias": 151.91828264031415
+      },
+      "delta_mae_vs_champion_mw": -16.70242196962795,
+      "surge_bias_reduction_frac": 0.23024144778451416,
+      "meets_bias_target": false,
+      "meets_mae_tolerance": true,
+      "accepted": false,
+      "paired_vs_champion_regime_b": {
+        "delta_mae_mw": -16.702421969627846,
+        "ci_95_low": -36.78479025840291,
+        "ci_95_high": 3.6417094877672116,
+        "dm_stat": -1.6147074346404386,
+        "dm_p_two_sided": 0.10667027091566851
+      }
+    },
+    {
+      "tau": 0.7,
+      "regime_a": {
+        "n": 1066,
+        "mae": 467.72048515289805,
+        "bias": 191.79272841407806,
+        "rmse": 668.214797169656,
+        "surge_n": 56,
+        "surge_mae": 393.16074586035216,
+        "surge_bias": -271.463885730169,
+        "surge_under_forecast": 45,
+        "nonsurge_mae": 471.85449049981145,
+        "nonsurge_bias": 217.47824365375908
+      },
+      "regime_b": {
+        "n": 1066,
+        "mae": 509.162145771081,
+        "bias": 172.91213168350566,
+        "rmse": 710.6494187598925,
+        "surge_n": 56,
+        "surge_mae": 457.39445682913816,
+        "surge_bias": -378.37106002163983,
+        "surge_under_forecast": 45,
+        "nonsurge_mae": 512.0324334747926,
+        "nonsurge_bias": 203.4783284513157
+      },
+      "delta_mae_vs_champion_mw": -11.2095453640394,
+      "surge_bias_reduction_frac": 0.3108208232666134,
+      "meets_bias_target": true,
+      "meets_mae_tolerance": true,
+      "accepted": true,
+      "paired_vs_champion_regime_b": {
+        "delta_mae_mw": -11.209545364039457,
+        "ci_95_low": -35.01964038830132,
+        "ci_95_high": 12.800696049785548,
+        "dm_stat": -0.926527683580631,
+        "dm_p_two_sided": 0.35438172722163763
+      }
+    },
+    {
+      "tau": 0.8,
+      "regime_a": {
+        "n": 1066,
+        "mae": 511.6603345444055,
+        "bias": 319.00969704197684,
+        "rmse": 724.8239320646185,
+        "surge_n": 56,
+        "surge_mae": 326.420576683693,
+        "surge_bias": -158.3513256970862,
+        "surge_under_forecast": 41,
+        "nonsurge_mae": 521.9310537921281,
+        "nonsurge_bias": 345.4772388968159
+      },
+      "regime_b": {
+        "n": 1066,
+        "mae": 541.882244610919,
+        "bias": 299.14248155182304,
+        "rmse": 758.4495914232733,
+        "surge_n": 56,
+        "surge_mae": 384.0027844209061,
+        "surge_bias": -264.875408359616,
+        "surge_under_forecast": 44,
+        "nonsurge_mae": 550.6359572551178,
+        "nonsurge_bias": 330.4147605964177
+      },
+      "delta_mae_vs_champion_mw": 21.510553475798588,
+      "surge_bias_reduction_frac": 0.5175460410218489,
+      "meets_bias_target": true,
+      "meets_mae_tolerance": false,
+      "accepted": false,
+      "paired_vs_champion_regime_b": {
+        "delta_mae_mw": 21.510553475798645,
+        "ci_95_low": -11.05163365000449,
+        "ci_95_high": 54.14245638846669,
+        "dm_stat": 1.2975287948721765,
+        "dm_p_two_sided": 0.19473028057031536
+      }
+    },
+    {
+      "tau": 0.9,
+      "regime_a": {
+        "n": 1066,
+        "mae": 640.1792534258816,
+        "bias": 529.3592145784584,
+        "rmse": 855.0928538359844,
+        "surge_n": 56,
+        "surge_mae": 360.319788594087,
+        "surge_bias": 49.57199226960016,
+        "surge_under_forecast": 18,
+        "nonsurge_mae": 655.6962138521989,
+        "nonsurge_bias": 555.9612783896425
+      },
+      "regime_b": {
+        "n": 1066,
+        "mae": 650.8590795052437,
+        "bias": 510.610734325928,
+        "rmse": 879.3333890853353,
+        "surge_n": 56,
+        "surge_mae": 327.90993924639906,
+        "surge_bias": -41.527764823877796,
+        "surge_under_forecast": 29,
+        "nonsurge_mae": 668.7651704502886,
+        "nonsurge_bias": 541.2243540807688
+      },
+      "delta_mae_vs_champion_mw": 130.4873883701233,
+      "surge_bias_reduction_frac": 0.9243597785431557,
+      "meets_bias_target": true,
+      "meets_mae_tolerance": false,
+      "accepted": false,
+      "paired_vs_champion_regime_b": {
+        "delta_mae_mw": 130.48738837012337,
+        "ci_95_low": 84.7426989711313,
+        "ci_95_high": 177.13964011646115,
+        "dm_stat": 5.532601791591226,
+        "dm_p_two_sided": 3.970275851556722e-08
+      }
+    }
+  ],
+  "accepted_tau": 0.7,
+  "conclusion": "adopted",
+  "honest_validation": {
+    "method": "every hyperparameter including tau tuned on inner folds 2023/2024 only (50 TPE trials, Regime A objective), then 2025 scored once under Regime B",
+    "why": "the sweep above selected tau on the full 2023-2025 sample. run_selection_audit.py cannot check it because that replay ranks families on default hyperparameters, and quantile_hybrid's default tau=0.9 scores 669 MW - screened out before tuning. A badly chosen default hides a family under rank-then-tune.",
+    "inner_selected_tau": 0.6452330243316149,
+    "inner_selected_params": {
+      "alpha": 0.00023101287250891004,
+      "n_estimators": 700,
+      "learning_rate": 0.05678023971784884,
+      "num_leaves": 20,
+      "quantile": 0.6452330243316149
+    },
+    "inner_mae": 450.5784184965225,
+    "scored_2025": {
+      "champion": {
+        "mae": 520.5457827779996,
+        "bias": -179.0836950389676,
+        "surge_mae": 591.5254455682201,
+        "surge_bias": -558.79155818138,
+        "surge_n": 18,
+        "n": 356
+      },
+      "quantile_head": {
+        "mae": 491.0954366828133,
+        "bias": -57.04141052802728,
+        "surge_mae": 547.5543199661479,
+        "surge_bias": -519.1357999374785,
+        "surge_n": 18,
+        "n": 356
+      }
+    },
+    "paired_vs_champion_2025": {
+      "delta_mae_mw": -29.45034609518635,
+      "ci_95_low": -55.113198890315125,
+      "ci_95_high": -3.086808122528493,
+      "dm_stat": -2.2564715890389793,
+      "dm_p_two_sided": 0.024648854681631777,
+      "n": 356
+    },
+    "survives_on_untouched_2025": true,
+    "surge_bias_reduction_frac_2025": 0.07096699594561429
+  },
+  "environment": {
+    "python": "3.14.7",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "xgboost": "3.4.1",
+    "catboost": "1.2.10",
+    "optuna": "5.0.0"
+  }
+}

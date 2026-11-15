@@ -1,0 +1,116 @@
+{
+  "phase": "w0_5_final_confirmation",
+  "evaluation_type": "confirmation_not_blind_test",
+  "generated_at": "2026-11-15T18:48:53",
+  "why_not_blind": "2026 was inspected during Track A feature diagnostics - experiment_a1/a2/a3_results.json each contain a diagnostic_2026_results block. The unbiased estimate comes from run_selection_audit.py, which held 2025 out of every selection round.",
+  "champion": {
+    "model": "quantile_hybrid",
+    "feature_set": "A2_weather_deltas_anomalies",
+    "hyperparameters": {
+      "alpha": 7.248645036748854e-05,
+      "n_estimators": 700,
+      "learning_rate": 0.054974829550241175,
+      "num_leaves": 13,
+      "quantile": 0.59055755470205
+    },
+    "frozen_at": "2026-11-15T18:32:08",
+    "target_parameterisation": "level",
+    "lag_representation": "literal"
+  },
+  "protocol": {
+    "train": "<= 2025-12-31, Regime A (ERA5)",
+    "score": "2026, Regime B (archived lead-1 forecast)",
+    "n_train": 3982,
+    "n_scored": 314,
+    "date_range": [
+      "2026-01-01",
+      "2026-11-10"
+    ],
+    "runs_allowed": 1
+  },
+  "metrics_2026": {
+    "mae": 503.4939264057469,
+    "rmse": 689.8357174037076,
+    "mape": 2.737088715731793,
+    "bias": -135.1207270196334,
+    "n_samples": 314
+  },
+  "mae_ci_95": [
+    433.78476200849457,
+    562.6291763397294
+  ],
+  "validation_2023_25_regime_b_mae": 497.904400179841,
+  "delta_vs_validation_mw": 5.5895262259058995,
+  "segments": {
+    "overall": {
+      "n": 314,
+      "mae": 503.4939264057469,
+      "bias": -135.1207270196334,
+      "anecdotal_n_lt_20": false
+    },
+    "working_day": {
+      "n": 206,
+      "mae": 436.2553074587314,
+      "bias": -184.70407434084075,
+      "anecdotal_n_lt_20": false
+    },
+    "weekend": {
+      "n": 90,
+      "mae": 515.21375428777,
+      "bias": -115.67261812032892,
+      "anecdotal_n_lt_20": false
+    },
+    "holiday": {
+      "n": 22,
+      "mae": 1152.6636016852863,
+      "bias": 363.53724840611994,
+      "anecdotal_n_lt_20": false
+    },
+    "summer_mar_jun": {
+      "n": 122,
+      "mae": 494.02290660672315,
+      "bias": -103.83635437191332,
+      "anecdotal_n_lt_20": false
+    },
+    "surge_top5pct": {
+      "n": 16,
+      "mae": 563.967831665748,
+      "bias": -442.724030234486,
+      "anecdotal_n_lt_20": true
+    },
+    "diwali_window": {
+      "n": 5,
+      "mae": 1526.5991854041433,
+      "bias": 1526.5991854041433,
+      "anecdotal_n_lt_20": true
+    }
+  },
+  "interval_coverage_vs_2026_free_widths": {
+    "0.90": {
+      "nominal": 0.9,
+      "realised": 0.910828025477707,
+      "gap_pts": 1.0828025477707004,
+      "mean_width_mw": 2173.61151755205,
+      "within_3pts": true
+    },
+    "0.95": {
+      "nominal": 0.95,
+      "realised": 0.9394904458598726,
+      "gap_pts": -1.050955414012733,
+      "mean_width_mw": 2761.196995595625,
+      "within_3pts": true
+    }
+  },
+  "environment": {
+    "python": "3.14.7",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "xgboost": "3.4.1",
+    "catboost": "1.2.10",
+    "optuna": "5.0.0"
+  }
+}

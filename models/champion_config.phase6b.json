@@ -1,0 +1,80 @@
+{
+  "phase": "6b_tuning",
+  "generated_at": "2026-11-15T15:38:38",
+  "champion": "ridge_gbm_hybrid",
+  "selected_on": "Regime B (archived lead-1 forecast weather) mean validation MAE",
+  "selection_rationale": "Regime A is a reanalysis benchmark and is not reproducible on any real forecast evening. The benchmark showed A->B degradation is model-dependent, so the operational regime decides.",
+  "model_type": "ridge_gbm_hybrid",
+  "hyperparameters": {
+    "alpha": 1.0829403003940016e-05,
+    "n_estimators": 700,
+    "learning_rate": 0.025787043483521396,
+    "num_leaves": 10
+  },
+  "feature_set": "A2_weather_deltas_anomalies",
+  "feature_count": 26,
+  "target_parameterisation": "level",
+  "lag_representation": "literal",
+  "serving_notes": {
+    "target_parameterisation": "Model predicts tn_peak_demand_mw directly. Do NOT add an anchor. Adding peak_lag_1 would roughly double the forecast.",
+    "lag_representation": "peak_lag_N / energy_lag_N are LITERAL calendar offsets (T-N), as produced by load_phase5_data and build_dataset.add_lags. Do NOT apply config.H_BY_GROUP shifts when serving: load_master(H=2) shifts the demand block one further day, so its 'peak_lag_2' holds T-3 and its 'peak_lag_7' lands on the wrong weekday. H=2 is honoured by EXCLUDING peak_lag_1 and energy_lag_1, not by shifting."
+  },
+  "features": [
+    "dow",
+    "is_weekend",
+    "is_holiday",
+    "day_before_holiday",
+    "day_after_holiday",
+    "pongal_window",
+    "sin1",
+    "cos1",
+    "sin2",
+    "cos2",
+    "trend",
+    "peak_lag_2",
+    "peak_lag_3",
+    "peak_lag_7",
+    "peak_lag_14",
+    "peak_lag_364",
+    "energy_lag_2",
+    "energy_lag_7",
+    "energy_lag_14",
+    "t_max",
+    "t_mean",
+    "t_min",
+    "cdd_max",
+    "hours_above_32",
+    "d_cdd_max",
+    "cdd_max_vs_roll7"
+  ],
+  "H": 2,
+  "validation_protocol": "expanding walk-forward, val 2023/2024/2025",
+  "primary_metric": "MAE",
+  "tuning": {
+    "sampler": "TPE",
+    "n_trials": 50,
+    "objective": "mean validation MAE across 3 folds",
+    "regime": "A",
+    "seed": 42
+  },
+  "validation_performance": {
+    "regime_a_mae": 455.9557196849469,
+    "regime_b_mae": 520.3716911351204,
+    "degradation_mw": 64.41597145017346,
+    "degradation_pct": 14.127681410528892
+  },
+  "environment": {
+    "python": "3.14.7",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "xgboost": "3.4.1",
+    "catboost": "1.2.10",
+    "optuna": "5.0.0"
+  },
+  "frozen": true,
+  "note_2026": "2026 has NOT been used in tuning or selection. It was inspected during Track A diagnostics, so it is a confirmation set, not a blind test."
+}

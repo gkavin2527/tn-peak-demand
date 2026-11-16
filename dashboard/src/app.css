@@ -230,3 +230,8 @@
 .stats dt { font-size: var(--t-14); color: var(--ink-2); margin: 0; }
 .stats dd { font-size: var(--t-16); color: var(--ink); margin: 0; font-weight: 500; }
 @media (max-width: 1023px) { .grid-agree { grid-template-columns: 1fr; } }
+
+.stages { margin: var(--s-2) 0; padding-left: 20px; }
+.stages li { margin-bottom: 8px; }
+.acc-body code { font-family: var(--mono); font-size: .8125em;
+                 background: var(--bg); padding: 1px 5px; border-radius: 3px; }

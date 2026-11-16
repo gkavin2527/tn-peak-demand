@@ -300,9 +300,16 @@ def main():
         "feature_count": champ.get("feature_count"),
         "frozen_at": champ.get("generated_at"),
         "is_champion_role": True,
-        "plain": ("Ridge regression for the trend, with a gradient-boosted "
-                  "quantile model correcting its residuals"),
+        # quantile_hybrid is this project's internal key, not an algorithm.
+        # Carry what the model actually IS, so the page never presents a
+        # codename as though it were a published method.
+        "algorithm": "Ridge Regression + LightGBM Quantile Regression",
+        "stage1": "Ridge Regression (L2-penalised linear, closed form)",
+        "stage2": ("LightGBM gradient-boosted trees, quantile objective, "
+                   "fitted on the Ridge residual"),
+        "family": "residual hybrid (boosted-residual ensemble)",
         "quantile": hp.get("quantile"),
+        "n_estimators": hp.get("n_estimators"),
     }
 
     OUT.parent.mkdir(parents=True, exist_ok=True)

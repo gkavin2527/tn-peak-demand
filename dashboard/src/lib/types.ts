@@ -52,8 +52,9 @@ export interface Data {
   publish?: { H: number; n_run_days: number; latest_run_clock: string }
   model?: {
     name: string; feature_set: string; feature_count: number
-    frozen_at: string; is_champion_role: boolean; plain: string
-    quantile?: number
+    frozen_at: string; is_champion_role: boolean
+    algorithm: string; stage1: string; stage2: string; family: string
+    quantile?: number; n_estimators?: number
   }
   experiment_notes?: string[]
 }

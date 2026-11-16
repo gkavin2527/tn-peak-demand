@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-16T23:29:38",
+  "generated_at": "2026-11-16T23:51:34",
   "history": [
     {
       "date": "2025-10-12",
@@ -5965,7 +5965,11 @@
     "feature_count": 26,
     "frozen_at": "2026-11-15T18:32:08",
     "is_champion_role": true,
-    "plain": "Ridge regression for the trend, with a gradient-boosted quantile model correcting its residuals",
-    "quantile": 0.59055755470205
+    "algorithm": "Ridge Regression + LightGBM Quantile Regression",
+    "stage1": "Ridge Regression (L2-penalised linear, closed form)",
+    "stage2": "LightGBM gradient-boosted trees, quantile objective, fitted on the Ridge residual",
+    "family": "residual hybrid (boosted-residual ensemble)",
+    "quantile": 0.59055755470205,
+    "n_estimators": 700
   }
 }

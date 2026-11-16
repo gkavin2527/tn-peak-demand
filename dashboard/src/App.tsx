@@ -67,10 +67,6 @@ export default function App() {
             <a href="#record">Track record</a>
             <a href="#method">Method</a>
           </nav>
-          <span className={`fresh${isStale ? ' warn' : ''}`}>
-            <i className="dot" aria-hidden="true" />
-            {a ? `Data to ${shortDate(a.date)}` : 'No data'}
-          </span>
         </div>
       </header>
 
@@ -116,7 +112,8 @@ export default function App() {
                 Issued {stamp(f.issued_at)} IST · data to {a ? shortDate(a.date) : '—'} ·
                 weather: {f.weather_source?.includes('forecast') || f.weather_source?.includes('lead')
                   ? 'day-ahead forecast' : f.weather_source ?? '—'} ·
-                model: {f.is_champion ? 'champion' : 'interim'}
+                model: {d.model?.name ?? (f.is_champion ? 'champion' : 'interim')}
+                {f.is_champion ? '' : ' (interim stand-in)'}
               </p>
               {isStale && (
                 <p className="warnline">
@@ -383,10 +380,43 @@ export default function App() {
                   (lag-1 {d.residual_acf1.toFixed(2)}), so some structure
                   remains uncaptured.</li>
               )}
-              <li>Single region, single target. Generality is not demonstrated.</li>
-              {d.caveats?.map((c, i) => <li key={i}>{c}</li>)}
+              <li>Single region, single target. Generality is not
+                demonstrated — nothing here shows the approach transfers to
+                another state.</li>
             </ul>
           </Acc>
+
+          <Acc title="Which model produces these numbers">
+            {d.model && (
+              <>
+                <p>The forecast comes from a model this project calls{' '}
+                  <b>{d.model.name}</b> — {d.model.plain}. It reads{' '}
+                  {d.model.feature_count} inputs: recent demand and energy
+                  levels, the day of the week and season, and temperature.</p>
+                <p>"Champion" is the <i>role</i> it holds, not its name. It won
+                  a benchmark against nine alternatives — including four
+                  gradient-boosting variants that all lost to plain linear
+                  regression, because tree models cannot extrapolate a demand
+                  level higher than any they were trained on.</p>
+                {d.model.quantile != null && (
+                  <p>Its second stage targets the{' '}
+                    {(d.model.quantile * 100).toFixed(0)}th percentile of its own
+                    residual rather than the average, because the error measure
+                    reported here is minimised by the median, not the mean.</p>
+                )}
+                <p className="ax">Frozen {d.model.frozen_at.slice(0, 10)} ·
+                  feature set {d.model.feature_set}</p>
+              </>
+            )}
+          </Acc>
+
+          {d.experiment_notes?.length ? (
+            <Acc title="Notes on the historical weather comparison">
+              <p className="ax">These describe the backtest that measured the
+                cost of forecast weather, not the forecast above.</p>
+              <ul>{d.experiment_notes.map((c, i) => <li key={i}>{c}</li>)}</ul>
+            </Acc>
+          ) : null}
 
           <p className="dl-row">
             <a href={`${BASE}data/dashboard.json`} download>Download dashboard data (JSON)</a>

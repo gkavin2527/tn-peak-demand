@@ -14,12 +14,6 @@
 .bar nav a { font-size: var(--t-14); color: var(--ink-2); text-decoration: none;
              padding: 4px 0; }
 .bar nav a:hover { color: var(--ink); box-shadow: inset 0 -1px 0 var(--ink); }
-.fresh { margin-left: auto; display: inline-flex; align-items: center;
-         gap: 7px; font-size: var(--t-12); font-family: var(--mono);
-         color: var(--ink-2); white-space: nowrap; }
-.fresh .dot { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 6px;
-              background: var(--ok); }
-.fresh.warn { color: var(--warn); } .fresh.warn .dot { background: var(--warn); }
 
 /* ---- sections ---- */
 .sec { padding: var(--s-8) 0 0; }

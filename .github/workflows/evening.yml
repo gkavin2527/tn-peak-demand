@@ -18,7 +18,24 @@ name: evening forecast
 
 on:
   schedule:
-    - cron: "30 14 * * *"   # 20:00 IST
+    # TWO slots, because GitHub dispatches these crons 5-7 hours late, every
+    # time (measured: +4.9h, +5.4h, +6.4h, +7.0h over four runs). A single
+    # 14:30 UTC entry therefore lands between 00:51 and 03:01 IST - after
+    # midnight, on the target day itself. Useful, but not when anyone looks.
+    #
+    #   02:17 UTC  -> lands ~07:20-09:20 UTC = 12:50-14:50 IST (afternoon)
+    #   14:30 UTC  -> lands ~19:30-21:30 UTC = 01:00-03:00 IST (overnight)
+    #
+    # Both target the same day (runner clock is UTC; predict_next_day uses
+    # today+1), and append_log dedupes on (target_date, issue_day) keeping the
+    # LAST write. So the afternoon run publishes a forecast early and the
+    # evening run silently refines it with a fresher lead-1 weather forecast -
+    # which is the whole reason the evening slot existed.
+    #
+    # :17 rather than :00/:30 on purpose - the round slots are the most
+    # congested on GitHub's scheduler and draw the longest delays.
+    - cron: "17 2 * * *"    # afternoon publication
+    - cron: "30 14 * * *"   # evening refresh, fresher weather
   workflow_dispatch:
 
 concurrency:
@@ -191,7 +208,10 @@ jobs:
   # on their own cadence rather than nightly.
   recalibrate:
     runs-on: self-hosted
-    if: github.event_name == 'schedule'
+    # Only on the evening cron. With two scheduled slots an unqualified
+    # event_name check would fit the calibration twice a day for no benefit,
+    # on a runner that is already disk-constrained.
+    if: github.event.schedule == '30 14 * * *'
     permissions:
       contents: write
     steps:

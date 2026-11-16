@@ -13,14 +13,18 @@ env:
   # Refuse to start below this much free disk rather than dying half way
   # through pip with a corrupt venv.
   #
-  # Matches evening.yml. All jobs on this runner install the SAME tier file so
-  # the venv is actually reused - see the note in requirements-model.txt.
+  # Matches evening.yml. All jobs install the SAME tier file so the venv is
+  # actually reused - see the note in requirements-model.txt.
   #
-  # An earlier value of 2000 was carried over from when BOTH jobs installed
-  # the full 855 MB requirements.txt. After the tier split that threshold
-  # blocked runs which would have succeeded: run 43719572988 reclaimed disk
-  # to 942 MB free and was then refused by its own preflight.
-  MIN_FREE_MB: "800"
+  # Calibrated against what the job needs AND what this runner has. The model
+  # tier installs to 355 MB; pip peaks near 420 MB. 550 leaves margin.
+  #
+  # Twice now a threshold set from the install size alone has blocked runs the
+  # box could have served: 2000 (run 43719572988, 942 MB free) and 800 (run
+  # 43829787390, 662 MB free). The runner's free space is trending DOWN from
+  # something outside this pipeline - the diagnostic below exists to identify
+  # it the next time this fails.
+  MIN_FREE_MB: "550"
 
 jobs:
   update:
@@ -63,6 +67,12 @@ jobs:
           rm -rf "${PIP_CACHE_DIR:-$HOME/.cache/pip}"
           after=$(df -Pm . | awk 'NR==2 {print $4}')
           echo "free: ${before} MB -> ${after} MB"
+          # Our own reclaim recovered nothing on 2026-11-16 while free space
+          # fell 942 -> 662 MB, so the consumer is outside this pipeline.
+          # Print it rather than guess next time.
+          echo "--- top consumers under the runner work root ---"
+          du -xhd1 "${GITHUB_WORKSPACE%/*/*}" 2>/dev/null | sort -rh | head -8 || true
+          df -h . || true
 
       - name: Preflight - disk space
         run: |

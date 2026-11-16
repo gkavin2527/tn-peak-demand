@@ -26,10 +26,16 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Tier-calibrated, same reasoning as daily.yml. The model tier installs to
-  # 355 MB measured (it adds scipy, scikit-learn and lightgbm on top of the
-  # data tier), so this gate sits higher than the morning job's 500 MB.
-  MIN_FREE_MB: "800"
+  # Calibrated against what the job needs AND what this runner actually has.
+  # The model tier installs to 355 MB measured; pip --no-cache-dir peaks at
+  # roughly 420 MB (installed + largest wheel extracted). 550 leaves real
+  # margin above that.
+  #
+  # It was 800, derived from tier-size x2.3 without checking it against the
+  # runner. On 2026-11-16 the box had 662 MB free with no venv present - the
+  # job could have run, and the gate refused it. A threshold the hardware
+  # cannot satisfy is an outage, not a safeguard.
+  MIN_FREE_MB: "550"
 
 jobs:
   forecast:
@@ -70,6 +76,12 @@ jobs:
           rm -rf "${PIP_CACHE_DIR:-$HOME/.cache/pip}"
           after=$(df -Pm . | awk 'NR==2 {print $4}')
           echo "free: ${before} MB -> ${after} MB"
+          # Our own reclaim recovered nothing on 2026-11-16 while free space
+          # fell 942 -> 662 MB, so the consumer is outside this pipeline.
+          # Print it rather than guess next time.
+          echo "--- top consumers under the runner work root ---"
+          du -xhd1 "${GITHUB_WORKSPACE%/*/*}" 2>/dev/null | sort -rh | head -8 || true
+          df -h . || true
 
       - name: Preflight - disk space
         run: |

@@ -25,17 +25,10 @@ concurrency:
   group: evening-forecast
   cancel-in-progress: false
 
-env:
-  # Calibrated against what the job needs AND what this runner actually has.
-  # The model tier installs to 355 MB measured; pip --no-cache-dir peaks at
-  # roughly 420 MB (installed + largest wheel extracted). 550 leaves real
-  # margin above that.
-  #
-  # It was 800, derived from tier-size x2.3 without checking it against the
-  # runner. On 2026-11-16 the box had 662 MB free with no venv present - the
-  # job could have run, and the gate refused it. A threshold the hardware
-  # cannot satisfy is an outage, not a safeguard.
-  MIN_FREE_MB: "550"
+# No MIN_FREE_MB here on purpose. The disk requirement is computed at
+# run time from the venv's own measured size - see the Preflight step.
+# A fixed threshold went stale twice and caused two outages; a constant
+# sitting here would invite a third.
 
 jobs:
   forecast:
@@ -83,16 +76,49 @@ jobs:
           du -xhd1 "${GITHUB_WORKSPACE%/*/*}" 2>/dev/null | sort -rh | head -8 || true
           df -h . || true
 
+      # Self-calibrating disk gate.
+      #
+      # This threshold has been wrong twice, both times because it was a fixed
+      # number derived from the install size with no reference to what the
+      # runner actually has: 2000 blocked a run at 942 MB free, 800 blocked one
+      # at 662. So it is no longer fixed.
+      #
+      # After every successful build the venv's real size is written to
+      # .venv/.size-mb. This gate reads it and asks only for what the run will
+      # actually consume:
+      #   venv present and matching -> working files only
+      #   venv must be built        -> measured size + extraction headroom
+      # With no measurement yet it falls back to an estimate, then corrects
+      # itself from the next run onward.
       - name: Preflight - disk space
         run: |
           free_mb=$(df -Pm . | awk 'NR==2 {print $4}')
-          echo "free space: ${free_mb} MB"
-          df -h . || true
-          if [ "$free_mb" -lt "$MIN_FREE_MB" ]; then
-            echo "::error::only ${free_mb} MB free, need ${MIN_FREE_MB} MB. \
-          Reclaim space on the runner: 'pip cache purge', remove stale \
-          .venv directories, or prune docker/actions caches."
+          want=$(sha256sum requirements-model.txt | cut -d" " -f1)
+          have=$(cat .venv/.req-sha 2>/dev/null || echo none)
+          measured=$(cat .venv/.size-mb 2>/dev/null || echo "")
+
+          if [ -x .venv/bin/python ] && [ "$want" = "$have" ]; then
+            need=120
+            why="venv reused; only working files are written"
+          else
+            base=${measured:-400}
+            if [ -n "$measured" ]; then src=measured; else src=estimated; fi
+            need=$((base + 150))
+            why="venv must be built (${base} MB ${src} + 150 MB extraction headroom)"
+          fi
+
+          echo "free ${free_mb} MB | need ${need} MB | ${why}"
+
+          if [ "$free_mb" -lt "$need" ]; then
+            echo "::error::only ${free_mb} MB free, this run needs ${need} MB (${why}). See the disk report in the reclaim step above."
             exit 1
+          fi
+
+          # Warn before it becomes an outage: the runner lost 280 MB in a day
+          # with nothing in this pipeline responsible, so a run that only just
+          # fits today fails tomorrow in silence otherwise.
+          if [ "$free_mb" -lt $((need + 250)) ]; then
+            echo "::warning::disk is tight - ${free_mb} MB free against ${need} MB needed. Something outside this pipeline is consuming the runner."
           fi
 
       - name: Set up Python virtual environment
@@ -109,6 +135,8 @@ jobs:
             .venv/bin/pip install --quiet --no-cache-dir --upgrade pip
             .venv/bin/pip install --quiet --no-cache-dir -r requirements-model.txt
             echo "$want" > .venv/.req-sha
+            # feeds the next run's gate - see Preflight
+            du -sm .venv | cut -f1 > .venv/.size-mb
           else
             echo "reusing venv (requirements-model.txt unchanged)"
           fi
@@ -185,13 +213,49 @@ jobs:
           rm -rf "${PIP_CACHE_DIR:-$HOME/.cache/pip}"
           echo "free: ${before} MB -> $(df -Pm . | awk 'NR==2 {print $4}') MB"
 
+      # Self-calibrating disk gate.
+      #
+      # This threshold has been wrong twice, both times because it was a fixed
+      # number derived from the install size with no reference to what the
+      # runner actually has: 2000 blocked a run at 942 MB free, 800 blocked one
+      # at 662. So it is no longer fixed.
+      #
+      # After every successful build the venv's real size is written to
+      # .venv/.size-mb. This gate reads it and asks only for what the run will
+      # actually consume:
+      #   venv present and matching -> working files only
+      #   venv must be built        -> measured size + extraction headroom
+      # With no measurement yet it falls back to an estimate, then corrects
+      # itself from the next run onward.
       - name: Preflight - disk space
         run: |
           free_mb=$(df -Pm . | awk 'NR==2 {print $4}')
-          echo "free space: ${free_mb} MB"
-          if [ "$free_mb" -lt "$MIN_FREE_MB" ]; then
-            echo "::error::only ${free_mb} MB free, need ${MIN_FREE_MB} MB."
+          want=$(sha256sum requirements-model.txt | cut -d" " -f1)
+          have=$(cat .venv/.req-sha 2>/dev/null || echo none)
+          measured=$(cat .venv/.size-mb 2>/dev/null || echo "")
+
+          if [ -x .venv/bin/python ] && [ "$want" = "$have" ]; then
+            need=120
+            why="venv reused; only working files are written"
+          else
+            base=${measured:-400}
+            if [ -n "$measured" ]; then src=measured; else src=estimated; fi
+            need=$((base + 150))
+            why="venv must be built (${base} MB ${src} + 150 MB extraction headroom)"
+          fi
+
+          echo "free ${free_mb} MB | need ${need} MB | ${why}"
+
+          if [ "$free_mb" -lt "$need" ]; then
+            echo "::error::only ${free_mb} MB free, this run needs ${need} MB (${why}). See the disk report in the reclaim step above."
             exit 1
+          fi
+
+          # Warn before it becomes an outage: the runner lost 280 MB in a day
+          # with nothing in this pipeline responsible, so a run that only just
+          # fits today fails tomorrow in silence otherwise.
+          if [ "$free_mb" -lt $((need + 250)) ]; then
+            echo "::warning::disk is tight - ${free_mb} MB free against ${need} MB needed. Something outside this pipeline is consuming the runner."
           fi
 
       - name: Set up Python virtual environment
@@ -205,6 +269,8 @@ jobs:
             .venv/bin/pip install --quiet --no-cache-dir --upgrade pip
             .venv/bin/pip install --quiet --no-cache-dir -r requirements-model.txt
             echo "$want" > .venv/.req-sha
+            # feeds the next run's gate - see Preflight
+            du -sm .venv | cut -f1 > .venv/.size-mb
           else
             echo "reusing venv"
           fi

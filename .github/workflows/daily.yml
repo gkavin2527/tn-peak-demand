@@ -9,22 +9,10 @@ concurrency:
   group: daily-data
   cancel-in-progress: false
 
-env:
-  # Refuse to start below this much free disk rather than dying half way
-  # through pip with a corrupt venv.
-  #
-  # Matches evening.yml. All jobs install the SAME tier file so the venv is
-  # actually reused - see the note in requirements-model.txt.
-  #
-  # Calibrated against what the job needs AND what this runner has. The model
-  # tier installs to 355 MB; pip peaks near 420 MB. 550 leaves margin.
-  #
-  # Twice now a threshold set from the install size alone has blocked runs the
-  # box could have served: 2000 (run 43719572988, 942 MB free) and 800 (run
-  # 43829787390, 662 MB free). The runner's free space is trending DOWN from
-  # something outside this pipeline - the diagnostic below exists to identify
-  # it the next time this fails.
-  MIN_FREE_MB: "550"
+# No MIN_FREE_MB here on purpose. The disk requirement is computed at
+# run time from the venv's own measured size - see the Preflight step.
+# A fixed threshold went stale twice and caused two outages; a constant
+# sitting here would invite a third.
 
 jobs:
   update:
@@ -74,16 +62,49 @@ jobs:
           du -xhd1 "${GITHUB_WORKSPACE%/*/*}" 2>/dev/null | sort -rh | head -8 || true
           df -h . || true
 
+      # Self-calibrating disk gate.
+      #
+      # This threshold has been wrong twice, both times because it was a fixed
+      # number derived from the install size with no reference to what the
+      # runner actually has: 2000 blocked a run at 942 MB free, 800 blocked one
+      # at 662. So it is no longer fixed.
+      #
+      # After every successful build the venv's real size is written to
+      # .venv/.size-mb. This gate reads it and asks only for what the run will
+      # actually consume:
+      #   venv present and matching -> working files only
+      #   venv must be built        -> measured size + extraction headroom
+      # With no measurement yet it falls back to an estimate, then corrects
+      # itself from the next run onward.
       - name: Preflight - disk space
         run: |
           free_mb=$(df -Pm . | awk 'NR==2 {print $4}')
-          echo "free space: ${free_mb} MB"
-          df -h . || true
-          if [ "$free_mb" -lt "$MIN_FREE_MB" ]; then
-            echo "::error::only ${free_mb} MB free, need ${MIN_FREE_MB} MB. \
-          Reclaim space on the runner: 'pip cache purge', remove stale \
-          .venv directories, or prune docker/actions caches."
+          want=$(sha256sum requirements-model.txt | cut -d" " -f1)
+          have=$(cat .venv/.req-sha 2>/dev/null || echo none)
+          measured=$(cat .venv/.size-mb 2>/dev/null || echo "")
+
+          if [ -x .venv/bin/python ] && [ "$want" = "$have" ]; then
+            need=120
+            why="venv reused; only working files are written"
+          else
+            base=${measured:-400}
+            if [ -n "$measured" ]; then src=measured; else src=estimated; fi
+            need=$((base + 150))
+            why="venv must be built (${base} MB ${src} + 150 MB extraction headroom)"
+          fi
+
+          echo "free ${free_mb} MB | need ${need} MB | ${why}"
+
+          if [ "$free_mb" -lt "$need" ]; then
+            echo "::error::only ${free_mb} MB free, this run needs ${need} MB (${why}). See the disk report in the reclaim step above."
             exit 1
+          fi
+
+          # Warn before it becomes an outage: the runner lost 280 MB in a day
+          # with nothing in this pipeline responsible, so a run that only just
+          # fits today fails tomorrow in silence otherwise.
+          if [ "$free_mb" -lt $((need + 250)) ]; then
+            echo "::warning::disk is tight - ${free_mb} MB free against ${need} MB needed. Something outside this pipeline is consuming the runner."
           fi
 
       - name: Set up Python virtual environment
@@ -100,6 +121,8 @@ jobs:
             .venv/bin/pip install --quiet --no-cache-dir --upgrade pip
             .venv/bin/pip install --quiet --no-cache-dir -r requirements-model.txt
             echo "$want" > .venv/.req-sha
+            # feeds the next run's gate - see Preflight
+            du -sm .venv | cut -f1 > .venv/.size-mb
           else
             echo "reusing venv (requirements-model.txt unchanged)"
           fi

@@ -16,7 +16,7 @@ const root = join(__dirname, '..')
 const data: Data = JSON.parse(
   readFileSync(join(root, 'public/data/dashboard.json'), 'utf8'))
 
-const sources = ['App.tsx', 'components/Charts.tsx', 'components/RangeRuler.tsx',
+const sources = ['App.tsx', 'components/Charts.tsx', 'components/DemandScale.tsx',
                  'components/CountUp.tsx']
   .map(f => readFileSync(join(root, 'src', f), 'utf8')).join('\n')
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import CountUp from './components/CountUp'
-import RangeRuler from './components/RangeRuler'
+import DemandScale from './components/DemandScale'
 import { Agreement, BarRows, CoverageBars, HistoryChart, SegmentDots } from './components/Charts'
 import { dayName, daysBetween, horizon, longDate, mw, shortDate, signed, stamp } from './lib/format'
 import type { Data } from './lib/types'
@@ -102,21 +102,13 @@ export default function App() {
                 </div>
                 <div className="hero-r">
                   {f.lo90 != null && f.hi90 != null && f.lo95 != null && f.hi95 != null ? (
-                    <RangeRuler point={f.mw} lo90={f.lo90} hi90={f.hi90}
-                      lo95={f.lo95} hi95={f.hi95}
-                      actual={a ? { mw: a.mw, date: a.date } : undefined} />
+                    <DemandScale point={f.mw} lo90={f.lo90} hi90={f.hi90}
+                      lo95={f.lo95} hi95={f.hi95} targetDate={f.target_date}
+                      actual={a ? { mw: a.mw, date: a.date } : undefined}
+                      record={d.record} />
                   ) : (
                     <p className="ax">No range attached to this run.</p>
                   )}
-                  <dl className="refs">
-                    {a && (<><dt>Latest actual</dt>
-                      <dd className="num">{mw(a.mw)} MW · {shortDate(a.date)}</dd></>)}
-                    {d.record && (<><dt>Record</dt>
-                      <dd className="num">{mw(d.record.mw)} MW · {shortDate(d.record.date)}
-                        <span className="ax"> · forecast is {
-                          ((f.mw / d.record.mw) * 100).toFixed(0)}% of it</span>
-                      </dd></>)}
-                  </dl>
                 </div>
               </div>
 

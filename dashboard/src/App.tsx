@@ -112,7 +112,7 @@ export default function App() {
                 Issued {stamp(f.issued_at)} IST · data to {a ? shortDate(a.date) : '—'} ·
                 weather: {f.weather_source?.includes('forecast') || f.weather_source?.includes('lead')
                   ? 'day-ahead forecast' : f.weather_source ?? '—'} ·
-                model: {d.model?.name ?? (f.is_champion ? 'champion' : 'interim')}
+                model: {d.model?.algorithm ?? (f.is_champion ? 'champion' : 'interim')}
                 {f.is_champion ? '' : ' (interim stand-in)'}
               </p>
               {isStale && (
@@ -389,21 +389,34 @@ export default function App() {
           <Acc title="Which model produces these numbers">
             {d.model && (
               <>
-                <p>The forecast comes from a model this project calls{' '}
-                  <b>{d.model.name}</b> — {d.model.plain}. It reads{' '}
+                <p>The forecast comes from a <b>{d.model.algorithm}</b> — a{' '}
+                  {d.model.family} run in two stages over{' '}
                   {d.model.feature_count} inputs: recent demand and energy
-                  levels, the day of the week and season, and temperature.</p>
-                <p>"Champion" is the <i>role</i> it holds, not its name. It won
-                  a benchmark against nine alternatives — including four
-                  gradient-boosting variants that all lost to plain linear
-                  regression, because tree models cannot extrapolate a demand
-                  level higher than any they were trained on.</p>
+                  levels, day of the week and season, and temperature.</p>
+                <ol className="stages">
+                  <li><b>{d.model.stage1}</b> — carries the trend. Electricity
+                    demand in Tamil Nadu keeps setting records, and a linear
+                    model can predict a level higher than any it was trained
+                    on. Tree models cannot.</li>
+                  <li><b>{d.model.stage2}</b>
+                    {d.model.n_estimators && <> ({d.model.n_estimators} trees)</>}
+                    {' '}— corrects what the straight line misses, mainly the
+                    non-linear response to temperature.</li>
+                </ol>
                 {d.model.quantile != null && (
-                  <p>Its second stage targets the{' '}
-                    {(d.model.quantile * 100).toFixed(0)}th percentile of its own
-                    residual rather than the average, because the error measure
-                    reported here is minimised by the median, not the mean.</p>
+                  <p>The second stage targets the{' '}
+                    <b>{(d.model.quantile * 100).toFixed(0)}th percentile</b> of
+                    its own residual rather than the average. The error measure
+                    reported on this page is minimised by the median, not the
+                    mean, so a squared-error stage was optimising the wrong
+                    thing — changing it was worth about 22 MW.</p>
                 )}
+                <p className="ax"><b>On naming:</b> the repository calls this
+                  configuration <code>{d.model.name}</code>, and "champion" is
+                  the <i>role</i> it holds after winning a benchmark against
+                  nine alternatives — including four gradient-boosting variants
+                  that all lost to plain Ridge regression. Neither is the name
+                  of a method.</p>
                 <p className="ax">Frozen {d.model.frozen_at.slice(0, 10)} ·
                   feature set {d.model.feature_set}</p>
               </>
@@ -425,7 +438,7 @@ export default function App() {
 
         <footer className="foot">
           <p className="strip">
-            {d.model?.name && <>model {d.model.name} · {d.model.feature_count} features · </>}
+            {d.model?.algorithm && <>model {d.model.algorithm} · {d.model.feature_count} features · </>}
             generated {stamp(d.generated_at)}
           </p>
           <p className="ax">Every figure on this page is read from the

@@ -1,0 +1,216 @@
+/* Layout & components. Tokens live in tokens.css.
+ * 8px grid; hairline panels, no shadows; radius <= 6px. */
+
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 var(--s-3); }
+
+/* ---- sticky bar ---- */
+.bar { position: sticky; top: 0; z-index: 10; background: var(--bg);
+       border-bottom: 1px solid var(--line); }
+.bar-in { height: 48px; display: flex; align-items: center; gap: var(--s-3); }
+.mark { font-family: var(--serif); font-size: var(--t-20); color: var(--ink);
+        letter-spacing: -.01em; }
+.mark i { font-style: italic; color: var(--forecast); }
+.bar nav { display: flex; gap: var(--s-2); margin-left: var(--s-2); }
+.bar nav a { font-size: var(--t-14); color: var(--ink-2); text-decoration: none;
+             padding: 4px 0; }
+.bar nav a:hover { color: var(--ink); box-shadow: inset 0 -1px 0 var(--ink); }
+.fresh { margin-left: auto; display: inline-flex; align-items: center;
+         gap: 7px; font-size: var(--t-12); font-family: var(--mono);
+         color: var(--ink-2); white-space: nowrap; }
+.fresh .dot { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 6px;
+              background: var(--ok); }
+.fresh.warn { color: var(--warn); } .fresh.warn .dot { background: var(--warn); }
+
+/* ---- sections ---- */
+.sec { padding: var(--s-8) 0 0; }
+.sec-hero { padding-top: var(--s-6); }
+.h { font-size: var(--t-20); margin-bottom: var(--s-3); }
+.ph { font-size: var(--t-14); font-weight: 500; color: var(--ink);
+      margin-bottom: var(--s-2); }
+.panel { background: var(--surface); border: 1px solid var(--line);
+         border-radius: var(--radius); padding: var(--s-3); margin-bottom: var(--s-2); }
+
+/* ---- hero ---- */
+.hero { display: grid; grid-template-columns: 7fr 5fr; gap: var(--s-4);
+        align-items: start; }
+.kicker { font-size: var(--t-12); letter-spacing: .08em; color: var(--ink-3);
+          margin: 0 0 var(--s-1); font-family: var(--mono); }
+.big { font-family: var(--serif); font-size: var(--t-96); line-height: .95;
+       color: var(--ink); margin: 0; font-weight: 400; letter-spacing: -.02em; }
+.big i { font-style: normal; font-family: var(--sans); font-size: var(--t-28);
+         color: var(--ink-3); margin-left: 10px; font-weight: 400; }
+.say { font-size: var(--t-16); color: var(--ink-2); margin: var(--s-2) 0 0;
+       max-width: 42ch; }
+.say.sm { font-size: var(--t-14); max-width: 62ch; margin-top: var(--s-2); }
+.refs { display: grid; grid-template-columns: auto 1fr; gap: 4px var(--s-2);
+        margin: var(--s-2) 0 0; font-size: var(--t-12); }
+.refs dt { color: var(--ink-3); } .refs dd { margin: 0; color: var(--ink-2); }
+
+.strip { font-family: var(--mono); font-size: var(--t-12); color: var(--ink-3);
+         margin: var(--s-3) 0 0; }
+.warnline { font-size: var(--t-14); color: var(--warn); background: var(--warn-bg);
+            border: 1px solid color-mix(in srgb, var(--warn) 25%, transparent);
+            border-radius: var(--radius); padding: 10px var(--s-2);
+            margin: var(--s-1) 0 0; }
+
+/* ---- grids ---- */
+.grid-8-4 { display: grid; grid-template-columns: 8fr 4fr; gap: var(--s-2); }
+
+/* ---- range ruler ---- */
+.ruler { margin: 0; }
+.ruler-svg { width: 100%; height: 56px; display: block; }
+.ruler-keys { display: flex; flex-wrap: wrap; gap: 4px var(--s-2);
+              font-size: var(--t-12); color: var(--ink-2); margin-top: 4px; }
+.sw { width: 9px; height: 9px; border-radius: 2px; display: inline-block;
+      margin-right: 5px; vertical-align: -1px; }
+
+/* ---- charts ---- */
+.chart { margin: 0; position: relative; }
+.chart-svg { width: 100%; height: auto; display: block; }
+.ax { font-size: var(--t-12); fill: var(--ink-3); color: var(--ink-3); }
+.fine { margin-top: var(--s-1); display: block; }
+.chart-foot { display: flex; flex-wrap: wrap; gap: var(--s-2);
+              font-size: var(--t-12); margin-top: 6px; }
+.dl { font-weight: 500; }
+.tip { position: absolute; top: 0; right: 0; background: var(--ink);
+       color: var(--bg); font-size: var(--t-12); padding: 4px 8px;
+       border-radius: 4px; pointer-events: none; }
+
+.bars { display: grid; gap: var(--s-2); }
+.bar-head { display: flex; justify-content: space-between; align-items: baseline;
+            font-size: var(--t-14); margin-bottom: 5px; }
+.bar-label { color: var(--ink); }
+.bar-val { color: var(--ink); font-weight: 500; }
+.bar-val i { font-style: normal; color: var(--ink-3); font-size: var(--t-12); }
+.bar-track { height: 8px; background: var(--bg); border-radius: 2px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 2px; }
+.bar-sub { font-size: var(--t-12); color: var(--ink-3); margin-top: 4px; }
+
+.dots { display: grid; gap: 2px; }
+.dot-row { display: grid; grid-template-columns: 11rem 1fr 4.5rem 5.5rem;
+           align-items: center; gap: var(--s-2); padding: 5px 0;
+           font-size: var(--t-14); }
+.dot-label { color: var(--ink); }
+.dot-track { position: relative; height: 16px; }
+.dot-rule { position: absolute; inset: 50% 0 auto; height: 1px;
+            background: var(--line); }
+/* Scoped: an unscoped `.dot` leaked `position:absolute` onto the header's
+   freshness indicator, pulling it out of flow and over its own label. */
+.dot-mark { position: absolute; top: 50%; width: 10px; height: 10px;
+            border-radius: 50%; background: var(--actual);
+            transform: translate(-50%, -50%); }
+.dot-mark.hollow { background: var(--surface); border: 2px solid var(--ink-3); }
+.dot-val { color: var(--ink); text-align: right; }
+.dot-n { font-size: var(--t-12); color: var(--ink-3); }
+
+.cov { display: grid; gap: var(--s-2); }
+.cov-row { display: grid; grid-template-columns: 6rem 1fr 11rem;
+           align-items: center; gap: var(--s-2); font-size: var(--t-14); }
+.cov-label { color: var(--ink); }
+.cov-track { position: relative; height: 12px; background: var(--bg);
+             border-radius: 2px; }
+.cov-fill { height: 100%; background: var(--actual); border-radius: 2px; }
+.cov-target { position: absolute; top: -3px; bottom: -3px; width: 2px;
+              background: var(--ink); }
+.cov-val { color: var(--ink); text-align: right; }
+.cov-val i { font-style: normal; color: var(--ink-3); font-size: var(--t-12); }
+
+/* ---- table ---- */
+.tb { width: 100%; border-collapse: collapse; font-size: var(--t-14); }
+.tb caption { text-align: left; margin-bottom: var(--s-1); }
+.tb th { text-align: left; font-weight: 500; color: var(--ink-3);
+         font-size: var(--t-12); letter-spacing: .04em; text-transform: uppercase;
+         padding: 0 var(--s-2) 6px 0; border-bottom: 1px solid var(--line);
+         white-space: nowrap; }
+.tb td { padding: 9px var(--s-2) 9px 0; border-bottom: 1px solid var(--line);
+         color: var(--ink); }
+.tb th:last-child, .tb td:last-child { padding-right: 0; }
+.tb tr:last-child td { border-bottom: 0; }
+.tb .r, .tb th.r { text-align: right; }
+.tag { font-size: var(--t-12); color: var(--warn); margin-left: 8px; }
+.hit { color: var(--ok); } .miss { color: var(--bad); }
+.hit, .miss { white-space: nowrap; }
+.tablefall { margin-top: var(--s-2); }
+.tablefall summary { font-size: var(--t-12); color: var(--ink-2); cursor: pointer; }
+
+/* ---- live ---- */
+.live-l { font-size: var(--t-16); color: var(--ink-2); margin: 0; }
+.live-l b { color: var(--ink); }
+.badge { display: inline-block; font-family: var(--mono); font-size: var(--t-12);
+         color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent);
+         border-radius: 3px; padding: 2px 7px; margin: var(--s-2) 0 var(--s-1); }
+.prog { height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden;
+        margin-bottom: 6px; }
+.prog-fill { height: 100%; background: var(--forecast); }
+
+/* ---- what-if ---- */
+.whatif { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3);
+          align-items: start; }
+.whatif input[type=range] { width: 100%; margin: var(--s-1) 0 4px;
+                            accent-color: var(--forecast); min-height: 44px; }
+.whatif output { font-family: var(--mono); font-size: var(--t-14); color: var(--ink); }
+
+/* ---- accordions ---- */
+.acc { border: 1px solid var(--line); border-radius: var(--radius);
+       background: var(--surface); margin-bottom: var(--s-1); }
+.acc summary { padding: 14px var(--s-3); cursor: pointer; font-size: var(--t-14);
+               color: var(--ink); min-height: 44px; display: flex; align-items: center; }
+.acc-body { padding: 0 var(--s-3) var(--s-3); font-size: var(--t-14);
+            max-width: 72ch; }
+.acc-body ul { margin: 0; padding-left: 18px; }
+.acc-body li { margin-bottom: 6px; }
+.dl-row { margin-top: var(--s-3); font-size: var(--t-14); }
+
+/* ---- footer, empty, error, skeleton ---- */
+.foot { margin: var(--s-8) 0 var(--s-6); padding-top: var(--s-3);
+        border-top: 1px solid var(--line); }
+.empty h2 { font-size: var(--t-20); margin-bottom: var(--s-1); }
+.error-panel { margin-top: var(--s-8); text-align: left; }
+.btn { font: inherit; font-size: var(--t-14); background: var(--ink);
+       color: var(--bg); border: 0; border-radius: var(--radius);
+       padding: 10px var(--s-2); margin-top: var(--s-2); cursor: pointer;
+       min-height: 44px; }
+.skel { background: var(--surface); border: 1px solid var(--line);
+        border-radius: var(--radius); margin-bottom: var(--s-2); }
+.skel-hero { height: 220px; margin-top: var(--s-6); }
+.skel-row { height: 96px; } .skel-chart { height: 280px; }
+
+/* ---- responsive ---- */
+@media (max-width: 1023px) {
+  .hero, .grid-8-4, .whatif { grid-template-columns: 1fr; }
+  .big { font-size: 4.5rem; }
+  .sec { padding-top: var(--s-6); }
+}
+@media (max-width: 639px) {
+  .wrap { padding: 0 var(--s-2); }
+  .big { font-size: 4rem; }
+  .bar nav { display: none; }
+  .dot-row { grid-template-columns: 8rem 1fr 4rem; }
+  .dot-n { display: none; }
+  .cov-row { grid-template-columns: 5rem 1fr; }
+  .cov-val { grid-column: 2; text-align: left; }
+  .tb th:nth-child(5), .tb td:nth-child(5),
+  .tb th:nth-child(3), .tb td:nth-child(3) { display: none; }
+}
+
+/* Hero reveal: the value is correct in the DOM from first paint; only its
+   opacity and offset animate. See components/CountUp.tsx for why it does not
+   count through intermediate values. */
+.reveal { display: inline-block; animation: rise 520ms cubic-bezier(.22,.8,.3,1) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); }
+                  to   { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .reveal { animation: none; } }
+
+/* ---- agreement: predicted vs actual ---- */
+.grid-agree { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+              gap: var(--s-4); align-items: start; }
+.agree-svg { width: 100%; height: auto; display: block; max-width: 440px; }
+.agree-keys { margin-top: 6px; min-height: 2.6em; }
+.tip-inline { font-size: var(--t-12); color: var(--ink); margin: 4px 0 0; }
+.stats { display: grid; gap: 0; margin: 0; }
+.stats > div { display: flex; justify-content: space-between; align-items: baseline;
+               gap: var(--s-2); padding: 9px 0; border-bottom: 1px solid var(--line); }
+.stats > div:last-child { border-bottom: 0; }
+.stats dt { font-size: var(--t-14); color: var(--ink-2); margin: 0; }
+.stats dd { font-size: var(--t-16); color: var(--ink); margin: 0; font-weight: 500; }
+@media (max-width: 1023px) { .grid-agree { grid-template-columns: 1fr; } }

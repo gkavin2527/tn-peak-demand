@@ -1,0 +1,96 @@
+/* Design tokens — DASHBOARD_SPEC.md §5.
+ *
+ * Two values deviate from the spec, both on accessibility grounds. The spec
+ * itself resolves this: "the skill wins on contrast, touch targets, and
+ * accessibility details."
+ *
+ *   --ink-3   #7C838B -> #646B73
+ *     The spec wrote "(>=4.5:1 on --bg; verify)". Verified: #7C838B gives
+ *     3.52:1 on --bg, which fails WCAG AA for text. #646B73 holds the same
+ *     hue and gives 4.95:1.
+ *
+ *   --actual  #1F3A5F -> #1D5FA0
+ *     As a categorical series colour #1F3A5F sits outside the usable
+ *     lightness band (OKLab L 0.347 vs 0.43-0.77) and below the chroma floor
+ *     (0.073 vs 0.10) - it reads as near-black rather than as a hue, which is
+ *     how a colour-vision-deficient reader loses the series. #1D5FA0 is the
+ *     nearest deep blue-slate that passes: L 0.479, C 0.123, 6.02:1 on --bg,
+ *     and dE 32.4 from --forecast (floor 15).
+ */
+:root {
+  --bg:        #F6F5F1;
+  --surface:   #FFFFFF;
+  --ink:       #14171A;
+  --ink-2:     #4A5057;
+  --ink-3:     #646B73;
+  --line:      #E2E0DA;
+
+  --forecast:  #D9480F;
+  --band-90:   #F3C7AE;
+  --band-95:   #FBE7DA;
+  --actual:    #1D5FA0;
+
+  --ok:        #2F7D5B;
+  --warn:      #B45309;
+  --warn-bg:   #FDF4E7;
+  --bad:       #B42318;
+
+  --sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --serif: Newsreader, Georgia, 'Times New Roman', serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* §5 scale — 12/14/16/20/28/96, no other sizes */
+  --t-12: .75rem;  --t-14: .875rem; --t-16: 1rem;
+  --t-20: 1.25rem; --t-28: 1.75rem; --t-96: 6rem;
+
+  --s-1: 8px;  --s-2: 16px; --s-3: 24px;
+  --s-4: 32px; --s-6: 56px; --s-8: 96px;
+  --radius: 6px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:      #16181B;
+    --surface: #1D2024;
+    --ink:     #F2F3F4;
+    --ink-2:   #C3C8CE;
+    --ink-3:   #9BA3AC;   /* 7.1:1 on --bg */
+    --line:    #2D3137;
+    --forecast:#F26B33;   /* re-stepped for the dark surface, not flipped */
+    --actual:  #5B9BE0;
+    --band-90: #6B3A22;
+    --band-95: #40251A;
+    --ok:      #4FA87E;
+    --warn:    #D98B2B;
+    --warn-bg: #2B2218;
+    --bad:     #E06A60;
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink-2);
+  font-family: var(--sans); font-size: var(--t-16); line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { color: var(--ink); font-weight: 500; letter-spacing: -.01em; margin: 0; }
+a { color: var(--ink); }
+.num { font-variant-numeric: tabular-nums; }
+
+:where(a, button, [tabindex]):focus-visible {
+  outline: 2px solid var(--forecast); outline-offset: 2px; border-radius: 3px;
+}
+.skip {
+  position: absolute; left: -9999px; top: 0; background: var(--surface);
+  color: var(--ink); padding: var(--s-1) var(--s-2); z-index: 100;
+  border: 1px solid var(--line);
+}
+.skip:focus { left: var(--s-2); top: var(--s-1); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
+}

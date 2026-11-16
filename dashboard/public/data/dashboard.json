@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-16T23:51:34",
+  "generated_at": "2026-11-16T23:28:31",
   "history": [
     {
       "date": "2025-10-12",
@@ -1617,12 +1617,12 @@
   },
   "forecast": {
     "target_date": "2026-11-17",
-    "issued_at": "2026-11-16T17:07:41",
-    "mw": 18928.9,
-    "lo90": 17969.7,
-    "hi90": 19888.1,
-    "lo95": 17531.6,
-    "hi95": 20326.2,
+    "issued_at": "2026-11-16T23:28:03",
+    "mw": 18978.2,
+    "lo90": 18016.4,
+    "hi90": 19939.9,
+    "lo95": 17577.2,
+    "hi95": 20379.1,
     "model_version": "champion-quantile_hybrid-level-A2_weather_deltas_anomalies",
     "is_champion": true,
     "weather_source": "live_log_evening_lead_1",
@@ -1634,11 +1634,11 @@
   "ledger": [
     {
       "date": "2026-11-17",
-      "pred": 18928.9,
+      "pred": 18978.2,
       "actual": null,
       "error": null,
-      "lo90": 17969.7,
-      "hi90": 19888.1,
+      "lo90": 18016.4,
+      "hi90": 19939.9,
       "inside90": null,
       "is_champion": true
     },
@@ -1664,10 +1664,10 @@
     }
   ],
   "live": {
-    "updated_at": "2026-11-16T17:07:38",
-    "n_issued": 2,
+    "updated_at": "2026-11-16T23:28:00",
+    "n_issued": 3,
     "n_scored": 1,
-    "n_pending": 1,
+    "n_pending": 2,
     "span": [
       "2026-11-12",
       "2026-11-12"

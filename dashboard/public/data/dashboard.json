@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-16T17:08:09",
+  "generated_at": "2026-11-16T23:29:38",
   "history": [
     {
       "date": "2025-10-12",
@@ -5835,8 +5835,7 @@
   ],
   "drivers_caveat": "the two components answer different questions; TreeSHAP alone would understate the demand-lag block and overstate weather",
   "sensitivity_mw_per_c": 179.5,
-  "caveats": [
-    "Model is a Track B stand-in, not Track A's champion (roadmap C.3). Re-run at G2 with --champion.",
+  "experiment_notes": [
     "Regime B weather comes from Open-Meteo's archived past runs, validated against the live log in 5.2.",
     "Forecast bias is non-stationary (+0.49C in 2021 to -0.55C in 2026), so a fixed bias correction would be wrong; none is applied."
   ],
@@ -5962,7 +5961,11 @@
   },
   "model": {
     "name": "quantile_hybrid",
+    "feature_set": "A2_weather_deltas_anomalies",
     "feature_count": 26,
-    "frozen_at": "2026-11-15T18:32:08"
+    "frozen_at": "2026-11-15T18:32:08",
+    "is_champion_role": true,
+    "plain": "Ridge regression for the trend, with a gradient-boosted quantile model correcting its residuals",
+    "quantile": 0.59055755470205
   }
 }

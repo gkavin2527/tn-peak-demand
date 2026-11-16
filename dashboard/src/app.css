@@ -14,12 +14,6 @@
 .bar nav a { font-size: var(--t-14); color: var(--ink-2); text-decoration: none;
              padding: 4px 0; }
 .bar nav a:hover { color: var(--ink); box-shadow: inset 0 -1px 0 var(--ink); }
-.fresh { margin-left: auto; display: inline-flex; align-items: center;
-         gap: 7px; font-size: var(--t-12); font-family: var(--mono);
-         color: var(--ink-2); white-space: nowrap; }
-.fresh .dot { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 6px;
-              background: var(--ok); }
-.fresh.warn { color: var(--warn); } .fresh.warn .dot { background: var(--warn); }
 
 /* ---- sections ---- */
 .sec { padding: var(--s-8) 0 0; }
@@ -42,9 +36,6 @@
 .say { font-size: var(--t-16); color: var(--ink-2); margin: var(--s-2) 0 0;
        max-width: 42ch; }
 .say.sm { font-size: var(--t-14); max-width: 62ch; margin-top: var(--s-2); }
-.refs { display: grid; grid-template-columns: auto 1fr; gap: 4px var(--s-2);
-        margin: var(--s-2) 0 0; font-size: var(--t-12); }
-.refs dt { color: var(--ink-3); } .refs dd { margin: 0; color: var(--ink-2); }
 
 .strip { font-family: var(--mono); font-size: var(--t-12); color: var(--ink-3);
          margin: var(--s-3) 0 0; }
@@ -56,13 +47,38 @@
 /* ---- grids ---- */
 .grid-8-4 { display: grid; grid-template-columns: 8fr 4fr; gap: var(--s-2); }
 
-/* ---- range ruler ---- */
-.ruler { margin: 0; }
-.ruler-svg { width: 100%; height: 56px; display: block; }
-.ruler-keys { display: flex; flex-wrap: wrap; gap: 4px var(--s-2);
-              font-size: var(--t-12); color: var(--ink-2); margin-top: 4px; }
-.sw { width: 9px; height: 9px; border-radius: 2px; display: inline-block;
-      margin-right: 5px; vertical-align: -1px; }
+/* ---- demand scale ----
+   Vertical, so demand maps to height. No legend: every mark is labelled in
+   place, and the weekday sits on the actual so a low Sunday does not read as
+   an unexplained jump. */
+.scale { margin: 0; }
+.scale-plot { position: relative; height: 210px; margin-left: 2px; }
+.scale-axis { position: absolute; left: 0; top: 0; bottom: 0; width: 1px;
+              background: var(--line); }
+
+.srow { position: absolute; left: 0; right: 0; display: flex;
+        align-items: center; gap: 8px; transform: translateY(50%); }
+.srule { flex: none; width: 34px; height: 2px; border-radius: 1px; }
+.slab { display: flex; align-items: baseline; gap: 7px; white-space: nowrap;
+        line-height: 1.2; }
+.slab b { font-size: var(--t-16); font-weight: 600; }
+.slab i { font-style: normal; font-size: var(--t-12); color: var(--ink-3); }
+
+.srow-fc .srule { background: var(--forecast); height: 3px; }
+.srow-fc .slab b { color: var(--forecast); font-size: var(--t-20); }
+.srow-ac .srule { background: var(--actual); }
+.srow-ac .slab b { color: var(--actual); }
+.srow-rec .srule { background: var(--ink-3); opacity: .55; }
+.srow-rec .slab b { color: var(--ink-2); font-size: var(--t-14); }
+
+.sband { position: absolute; left: 0; width: 34px; border-radius: 2px; }
+.sband-95 { background: var(--band-95); }
+.sband-90 { background: var(--band-90); }
+
+.scale-foot { font-size: var(--t-12); color: var(--ink-3); margin-top: var(--s-2);
+              padding-top: 8px; border-top: 1px solid var(--line); }
+
+@media (max-width: 1023px) { .scale-plot { height: 180px; } }
 
 /* ---- charts ---- */
 .chart { margin: 0; position: relative; }

@@ -50,6 +50,10 @@ export interface Data {
   segments?: Segment[]
   residual_acf1?: number
   publish?: { H: number; n_run_days: number; latest_run_clock: string }
-  model?: { name: string; feature_count: number; frozen_at: string }
-  caveats?: string[]
+  model?: {
+    name: string; feature_set: string; feature_count: number
+    frozen_at: string; is_champion_role: boolean; plain: string
+    quantile?: number
+  }
+  experiment_notes?: string[]
 }

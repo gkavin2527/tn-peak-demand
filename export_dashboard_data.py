@@ -243,8 +243,25 @@ def main():
         s = gap.get("phase_5_4_sensitivity", {}).get("mw_per_degc_t_max")
         if s:
             out["sensitivity_mw_per_c"] = round(s, 1)
-        if gap.get("caveats"):
-            out["caveats"] = gap["caveats"]
+        # operational_gap.json's caveats describe the PHASE 5 experiment, not
+        # today's forecast, and one of them has gone stale: it asserts the
+        # serving path uses a Track B stand-in "Re-run at G2 with --champion".
+        # That was true when written and is not now - evening.yml passes
+        # --champion and the logged row carries is_champion=true - so printing
+        # it alongside the model line contradicts it outright.
+        #
+        # Filtered on the live state rather than by hand, so if serving ever
+        # falls back to the stand-in the caveat reappears on its own.
+        caveats = list(gap.get("caveats", []))
+        if out.get("forecast", {}).get("is_champion"):
+            caveats = [c for c in caveats
+                       if "stand-in" not in c.lower()
+                       and "--champion" not in c]
+        # What is left describes the weather-regime experiment, so it is
+        # labelled as such rather than presented as a limitation of the
+        # forecast a visitor is reading.
+        if caveats:
+            out["experiment_notes"] = caveats
 
     # ---- weak spots ------------------------------------------------------
     if (ea := jload("error_analysis.json")):
@@ -274,9 +291,19 @@ def main():
         out["publish"] = {"H": pt.get("H"), "n_run_days": pt.get("n_run_days"),
                           "latest_run_clock": pt.get("run_clock", {}).get("latest")}
 
-    out["model"] = {"name": champ.get("model_type"),
-                    "feature_count": champ.get("feature_count"),
-                    "frozen_at": champ.get("generated_at")}
+    # "champion" is a ROLE, not a name. The dashboard was printing the role,
+    # which reads as though a model is called "champion". Carry the real one.
+    hp = champ.get("hyperparameters", {})
+    out["model"] = {
+        "name": champ.get("model_type"),
+        "feature_set": champ.get("feature_set"),
+        "feature_count": champ.get("feature_count"),
+        "frozen_at": champ.get("generated_at"),
+        "is_champion_role": True,
+        "plain": ("Ridge regression for the trend, with a gradient-boosted "
+                  "quantile model correcting its residuals"),
+        "quantile": hp.get("quantile"),
+    }
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, indent=2) + "\n")

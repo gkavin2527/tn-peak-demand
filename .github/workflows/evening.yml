@@ -126,11 +126,18 @@ jobs:
       - name: Issue tomorrow's forecast
         run: .venv/bin/python predict_next_day.py --champion models/champion_config.json
 
+      # Refresh the file the public dashboard reads. Runs before the
+      # commit step so the regenerated JSON is included in it.
+      - name: Export dashboard data
+        continue-on-error: true
+        run: .venv/bin/python export_dashboard_data.py
+
       - name: Commit forecast and scores
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/weather_forecast_log.csv data/predictions_log.csv results/
+          git add data/weather_forecast_log.csv data/predictions_log.csv \
+                  results/ dashboard/public/data/dashboard.json
           if git diff --staged --quiet; then
             echo "nothing to commit"
           else

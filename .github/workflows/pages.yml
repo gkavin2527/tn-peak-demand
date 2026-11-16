@@ -1,0 +1,68 @@
+name: deploy dashboard
+
+# Builds the static dashboard and publishes it to GitHub Pages.
+#
+# Triggers on a push that touches the dashboard or the data it reads, so the
+# published page follows the daily pipeline without a second schedule. The
+# daily/evening jobs commit dashboard/public/data/dashboard.json, which lands
+# here as a push and redeploys.
+#
+# Runs on ubuntu-latest, not the self-hosted runner: this needs Node, and the
+# self-hosted box is disk-constrained (it filled up on 2026-11-12). Keeping
+# the build off it avoids reintroducing that failure.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dashboard/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+
+      - run: npm ci
+
+      # The contract test fails if the UI hardcodes a demand-scale number or
+      # if the exported JSON is internally inconsistent. Deploying past it
+      # would publish exactly the class of error this project has shipped
+      # twice before, so it gates the build.
+      - name: Data contract tests
+        run: npm test
+
+      - run: npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

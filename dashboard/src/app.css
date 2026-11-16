@@ -200,3 +200,17 @@
 @keyframes rise { from { opacity: 0; transform: translateY(10px); }
                   to   { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .reveal { animation: none; } }
+
+/* ---- agreement: predicted vs actual ---- */
+.grid-agree { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+              gap: var(--s-4); align-items: start; }
+.agree-svg { width: 100%; height: auto; display: block; max-width: 440px; }
+.agree-keys { margin-top: 6px; min-height: 2.6em; }
+.tip-inline { font-size: var(--t-12); color: var(--ink); margin: 4px 0 0; }
+.stats { display: grid; gap: 0; margin: 0; }
+.stats > div { display: flex; justify-content: space-between; align-items: baseline;
+               gap: var(--s-2); padding: 9px 0; border-bottom: 1px solid var(--line); }
+.stats > div:last-child { border-bottom: 0; }
+.stats dt { font-size: var(--t-14); color: var(--ink-2); margin: 0; }
+.stats dd { font-size: var(--t-16); color: var(--ink); margin: 0; font-weight: 500; }
+@media (max-width: 1023px) { .grid-agree { grid-template-columns: 1fr; } }

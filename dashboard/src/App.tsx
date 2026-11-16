@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import CountUp from './components/CountUp'
 import RangeRuler from './components/RangeRuler'
-import { BarRows, CoverageBars, HistoryChart, SegmentDots } from './components/Charts'
-import { dayName, daysBetween, longDate, mw, shortDate, signed, stamp } from './lib/format'
+import { Agreement, BarRows, CoverageBars, HistoryChart, SegmentDots } from './components/Charts'
+import { dayName, daysBetween, horizon, longDate, mw, shortDate, signed, stamp } from './lib/format'
 import type { Data } from './lib/types'
 
 const BASE = import.meta.env.BASE_URL
@@ -89,7 +89,11 @@ export default function App() {
               <div className="hero">
                 <div className="hero-l">
                   <p className="kicker">
-                    Forecast for {longDate(f.target_date).toUpperCase()}
+                    {{ tomorrow: "TOMORROW'S EXPECTED PEAK",
+                       today: "TODAY'S EXPECTED PEAK",
+                       past: 'FORECAST WAS FOR',
+                       ahead: 'EXPECTED PEAK' }[horizon(f.target_date)]}
+                    {' · '}{longDate(f.target_date).toUpperCase()}
                   </p>
                   <p className="big num">
                     <CountUp to={f.mw} /><i>MW</i>
@@ -126,6 +130,19 @@ export default function App() {
                 <p className="warnline">
                   Latest actual is {stale} days old. The forecast still stands,
                   but it was built on older demand data than usual.
+                </p>
+              )}
+              {horizon(f.target_date) === 'today' && (
+                <p className="warnline">
+                  This is today's forecast, issued last night. Tomorrow's is
+                  published by the evening run at about 20:00 IST — it has not
+                  landed yet.
+                </p>
+              )}
+              {horizon(f.target_date) === 'past' && (
+                <p className="warnline">
+                  This forecast was for {longDate(f.target_date)} and has been
+                  overtaken. The evening run has not published a newer one.
                 </p>
               )}
               {f.warnings.map((w, i) => <p className="warnline" key={i}>{w}</p>)}
@@ -167,6 +184,48 @@ export default function App() {
         {/* -------------------------------------------- C. TRACK RECORD */}
         <section id="record" className="sec">
           <h2 className="h">Track record</h2>
+
+          {d.agreement && (
+            <div className="panel">
+              <h3 className="ph">How close are the forecasts</h3>
+              <p className="say sm" style={{ marginTop: 0 }}>
+                Every one of these {mw(d.agreement.n)} days was forecast from
+                data available before it, then compared with what Grid-India
+                later published.
+              </p>
+              <div className="grid-agree">
+                <Agreement data={d.agreement} />
+                <div>
+                  <dl className="stats">
+                    <div><dt>Days compared</dt>
+                      <dd className="num">{mw(d.agreement.n)}</dd></div>
+                    <div><dt>Typical error</dt>
+                      <dd className="num">{mw(d.agreement.mae)} MW</dd></div>
+                    <div><dt>As a share of demand</dt>
+                      <dd className="num">{d.agreement.mape}%</dd></div>
+                    <div><dt>Correlation with actual</dt>
+                      <dd className="num">{d.agreement.r.toFixed(3)}</dd></div>
+                    <div><dt>Variation explained (R²)</dt>
+                      <dd className="num">{(d.agreement.r2 * 100).toFixed(1)}%</dd></div>
+                  </dl>
+                  <h4 className="ph" style={{ marginTop: 'var(--s-3)' }}>
+                    How often the forecast lands within…
+                  </h4>
+                  <BarRows unit="%" color="var(--actual)"
+                    rows={d.agreement.bands.map(b => ({
+                      label: `${mw(b.within)} MW`, value: b.pct,
+                    }))} />
+                </div>
+              </div>
+              <p className="ax fine">
+                {d.agreement.basis} {shortDate(d.agreement.span[0])}{' '}
+                {d.agreement.span[0].slice(0, 4)} to{' '}
+                {shortDate(d.agreement.span[1])} {d.agreement.span[1].slice(0, 4)}.
+                A reconstruction, not a live record — the live ledger below is
+                the stricter test.
+              </p>
+            </div>
+          )}
 
           <div className="panel">
             <h3 className="ph">Live forecasts</h3>

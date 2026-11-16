@@ -191,6 +191,40 @@ def main():
     if bt:
         out["backtest"] = bt
 
+    # ---- agreement: predicted vs actual, every scored day ----------------
+    # The live ledger is the honest test but it is tiny (n=1 at the time of
+    # writing). The walk-forward reconstruction is where the evidence of
+    # agreement actually lives: 1,016 days, each one predicted from data
+    # available before it. Exported per-day so the page can show the
+    # relationship rather than assert a summary statistic.
+    wf_csv = RESULTS / "intervals_walkforward_predictions.csv"
+    if wf_csv.exists():
+        import numpy as np
+        w = pd.read_csv(wf_csv, parse_dates=["date"]).dropna(
+            subset=["y_true", "y_pred"])
+        if len(w) > 30:
+            err = (w["y_pred"] - w["y_true"]).to_numpy()
+            yt, yp = w["y_true"].to_numpy(), w["y_pred"].to_numpy()
+            ss_res = float((err ** 2).sum())
+            ss_tot = float(((yt - yt.mean()) ** 2).sum())
+            out["agreement"] = {
+                "n": int(len(w)),
+                "span": [w["date"].min().strftime("%Y-%m-%d"),
+                         w["date"].max().strftime("%Y-%m-%d")],
+                "mae": round(float(np.abs(err).mean()), 1),
+                "mape": round(float((np.abs(err) / yt).mean() * 100), 2),
+                "r": round(float(np.corrcoef(yp, yt)[0, 1]), 4),
+                "r2": round(1 - ss_res / ss_tot, 4),
+                "bands": [{"within": t,
+                           "pct": round(float((np.abs(err) <= t).mean() * 100), 1)}
+                          for t in (250, 500, 750, 1000)],
+                # rounded to whole MW: the scatter reads positions, not decimals
+                "points": [{"a": int(round(a)), "p": int(round(b))}
+                           for a, b in zip(yt, yp)],
+                "basis": ("Walk-forward reconstruction, weekly refit. Each day "
+                          "predicted from data available before it."),
+            }
+
     # ---- drivers ---------------------------------------------------------
     if (fi := jload("feature_importance.json")):
         LAB = {"weather": "Weather", "demand_lags": "Recent demand",

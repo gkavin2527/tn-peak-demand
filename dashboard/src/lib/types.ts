@@ -25,6 +25,13 @@ export interface Bar { mae: number; n: number; basis: string }
 export interface Segment {
   key: string; label: string; n: number; mae: number; bias: number; small: boolean
 }
+export interface Agreement {
+  n: number; span: [string, string]; mae: number; mape: number
+  r: number; r2: number
+  bands: { within: number; pct: number }[]
+  points: { a: number; p: number }[]
+  basis: string
+}
 export interface Data {
   generated_at: string
   latest_actual?: Point
@@ -39,6 +46,7 @@ export interface Data {
   drivers?: { key: string; label: string; dmae: number }[]
   drivers_caveat?: string
   sensitivity_mw_per_c?: number
+  agreement?: Agreement
   segments?: Segment[]
   residual_acf1?: number
   publish?: { H: number; n_run_days: number; latest_run_clock: string }

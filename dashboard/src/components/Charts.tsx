@@ -14,7 +14,7 @@
  */
 import { useId, useState } from 'react'
 import { mw, shortDate, signed } from '../lib/format'
-import type { Point, Segment } from '../lib/types'
+import type { Agreement as AgreementT, Point, Segment } from '../lib/types'
 
 /* ---------------------------------------------- B1 history + forecast */
 export function HistoryChart({
@@ -222,6 +222,60 @@ export function CoverageBars({
       <figcaption className="ax">
         Vertical rule marks the target. Measured on the backtest walk-forward.
       </figcaption>
+    </figure>
+  )
+}
+
+/* ------------------------------------------- agreement: predicted vs actual */
+export function Agreement({ data }: { data: AgreementT }) {
+  const [hover, setHover] = useState<number | null>(null)
+  const W = 440, H = 420, M = 58
+  const all = data.points.flatMap(d => [d.a, d.p])
+  const lo = Math.min(...all) * 0.98, hi = Math.max(...all) * 1.02
+  const sc = (v: number) => M + ((v - lo) / (hi - lo)) * (W - M - 14)
+  const sy = (v: number) => (H - M) - ((v - lo) / (hi - lo)) * (H - M - 14)
+  const ticks = [0, 0.5, 1].map(t => lo + t * (hi - lo))
+  const hp = hover != null ? data.points[hover] : null
+
+  return (
+    <figure className="chart"
+      aria-label={`Predicted against actual peak demand for ${data.n} days. ` +
+        `Correlation ${data.r}. Typical error ${mw(data.mae)} megawatts, ` +
+        `${data.mape} percent. Points on the diagonal are exact forecasts.`}>
+      <div className="agree">
+        <svg viewBox={`0 0 ${W} ${H}`} className="agree-svg" role="presentation"
+             onMouseLeave={() => setHover(null)}>
+          {ticks.map((t, i) => (
+            <g key={i}>
+              <line x1={M} x2={W - 14} y1={sy(t)} y2={sy(t)} stroke="var(--line)" />
+              <text x={M - 7} y={sy(t) + 4} className="ax" textAnchor="end">{mw(t)}</text>
+              <text x={sc(t)} y={H - M + 18} className="ax" textAnchor="middle">{mw(t)}</text>
+            </g>
+          ))}
+          {/* perfect-forecast diagonal: the closer the cloud hugs it, the better */}
+          <line x1={sc(lo)} y1={sy(lo)} x2={sc(hi)} y2={sy(hi)}
+                stroke="var(--ink)" strokeWidth="1.25" strokeOpacity=".55" />
+          {data.points.map((d, i) => (
+            <circle key={i} cx={sc(d.a)} cy={sy(d.p)} r={hover === i ? 4 : 2.1}
+                    fill="var(--actual)" fillOpacity={hover === i ? 1 : .34}
+                    onMouseEnter={() => setHover(i)} />
+          ))}
+          <text x={M} y={14} className="ax">Forecast (MW)</text>
+          <text x={W - 14} y={H - 6} className="ax" textAnchor="end">Actual (MW)</text>
+        </svg>
+        <div className="agree-keys">
+          <p className="ax">
+            Each dot is one day. The diagonal is a perfect forecast — dots
+            close to it are close calls.
+          </p>
+          {hp && (
+            <p className="tip-inline num">
+              actual {mw(hp.a)} · forecast {mw(hp.p)} ·
+              off by {mw(Math.abs(hp.p - hp.a))} MW
+            </p>
+          )}
+        </div>
+      </div>
     </figure>
   )
 }

@@ -1,16 +1,16 @@
 {
-  "updated_at": "2026-11-16T23:28:00",
+  "updated_at": "2026-11-17T10:47:59",
   "n_issued": 3,
-  "n_scored": 1,
-  "n_pending": 2,
+  "n_scored": 2,
+  "n_pending": 1,
   "span": [
     "2026-11-12",
-    "2026-11-12"
+    "2026-11-16"
   ],
-  "mae_mw": 499.8,
-  "mape_pct": 2.722,
-  "bias_mw": -499.8,
-  "worst_abs_error_mw": 499.8,
+  "mae_mw": 688.5,
+  "mape_pct": 3.717,
+  "bias_mw": -688.5,
+  "worst_abs_error_mw": 877.2,
   "interval_coverage": {
     "90%": 1.0,
     "95%": 1.0

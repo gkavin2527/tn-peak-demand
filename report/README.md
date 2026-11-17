@@ -1,0 +1,36 @@
+# Project report
+
+`TN_Peak_Demand_Project_Report.docx` is the SRM minor-project report for
+submission. `TN_Peak_Demand_Project_Report.original.docx` is the version it
+was derived from, kept so the edits below can be re-derived or reversed.
+
+## What was changed
+
+**Bonafide certificate.** The supervisor and head-of-department details were
+authored as two columns but written as plain paragraphs, so they rendered
+run together - `Dr. RAGUPATHI TDr. V. KAVITHA`. Rebuilt as a borderless
+two-column table with signature space above.
+
+**Page numbering.** The file was a single section numbered 1-33 straight
+through. It is now two sections: the cover is counted but not printed, the
+front matter runs ii-ix in lower-case roman, and Chapter 1 restarts the
+count at arabic 1. Chapter 1 already carried a `pageBreakBefore`, so that
+break was converted into the section break rather than a new one being
+added - otherwise a blank page appears between the two.
+
+**Contents.** The table of contents carried no page numbers at all; it
+still held the note "Page numbers to be generated from the final Word file".
+All 56 entries now have numbers with dot leaders, and the same was applied
+to the 12 list-of-tables and 4 list-of-figures entries.
+
+## How the page numbers were derived
+
+They were read from the original PDF's rendered layout, then shifted for the
+new scheme (front matter to roman, `arabic = physical page - 9`). They are
+static text, not a Word TOC field.
+
+This matters: **they are correct for the document as it stands and will not
+update themselves.** If content is added or removed, re-derive them rather
+than trusting what is on the page. The alternative - a live `TOC` field -
+was not used because it renders as "Right-click to update" until someone
+presses F9, which is worse on a file that gets submitted as-is.

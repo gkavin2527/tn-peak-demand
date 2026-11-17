@@ -12,11 +12,23 @@ name: deploy dashboard
 # the build off it avoids reintroducing that failure.
 
 on:
+  # A push only fires this when a HUMAN pushes. The daily and evening jobs
+  # commit the refreshed dashboard.json using the default GITHUB_TOKEN, and
+  # GitHub deliberately does not start new workflow runs from token-authored
+  # pushes - otherwise a workflow could trigger itself forever. So the data
+  # was being committed and the site was never redeploying.
+  #
+  # workflow_run closes that loop: whenever either data job finishes, this
+  # rebuilds and republishes. Without it the public dashboard only ever
+  # updated when someone dispatched it by hand.
   push:
     branches: [main]
     paths:
       - 'dashboard/**'
       - '.github/workflows/pages.yml'
+  workflow_run:
+    workflows: ["daily data update", "evening forecast"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -30,12 +42,24 @@ concurrency:
 
 jobs:
   build:
+    # On a workflow_run trigger, only publish if the data job actually
+    # succeeded. A failed morning run may have left dashboard.json
+    # half-written or untouched, and republishing then would either change
+    # nothing or ship a partial refresh.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: dashboard
     steps:
+      # Explicit ref: a workflow_run event checks out the default branch by
+      # default, but the data commit we are publishing is on main and being
+      # implicit about that is how this breaks silently later.
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

@@ -57,3 +57,22 @@ for the text as it stands, not recomputed on the fly.
 
 The roman front matter has no equivalent fallback - it depends on section
 support. If your viewer shows `1-33` straight through, open the file in Word.
+
+## Roman front-matter numerals
+
+Each front-matter page is its own section carrying its numeral as literal
+footer text, not a page-number field.
+
+The field version was correct and rendered properly in Word. Google Docs has
+no roman page-number format, so it rendered every section decimal - the front
+matter came out 2,3,4 instead of ii,iii,iv. Only the arabic restart at
+Chapter 1 survived. Literal text renders the same everywhere.
+
+**These numerals are frozen.** Add or remove a front-matter page and they
+will be wrong, with nothing to catch it. The section-break paragraphs are
+collapsed to 1pt for the same reason the dots are sized the way they are: at
+normal height each consumes a line, and on the full contents page that pushes
+the last entry over and invalidates the page numbers listed on it.
+
+To go back to proper field-based numbering - correct in Word, wrong in Google
+Docs - the pre-change file is at commit b8c8b34.

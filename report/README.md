@@ -34,3 +34,26 @@ update themselves.** If content is added or removed, re-derive them rather
 than trusting what is on the page. The alternative - a live `TOC` field -
 was not used because it renders as "Right-click to update" until someone
 presses F9, which is worse on a file that gets submitted as-is.
+
+## Dot leaders
+
+The contents dots are literal `.` characters, not tab leaders.
+
+Tab leaders were tried first and are the correct construction - a right tab
+carrying `w:leader="dot"`, which is what Word's own TOC styles use. They
+rendered as blank space anyway. The same render showed `5` where the front
+matter should read `v`, so the converter in use flattens section page
+numbering and tab leaders alike.
+
+Literal dots cannot be dropped by a converter. They are sized from the real
+Times New Roman and Times New Roman Bold metrics - chapter lines are bold and
+measurably wider - targeting 447.6pt against 453.6pt of usable width. The 6pt
+of slack is deliberate: an overflowing line wraps the page number onto its own
+line, which is worse than dots stopping slightly short. The right tab stop is
+kept so the numbers stay in a clean column.
+
+**If you edit a contents line, the dots will no longer fit.** They are sized
+for the text as it stands, not recomputed on the fly.
+
+The roman front matter has no equivalent fallback - it depends on section
+support. If your viewer shows `1-33` straight through, open the file in Word.

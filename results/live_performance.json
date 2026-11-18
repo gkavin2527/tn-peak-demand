@@ -1,15 +1,15 @@
 {
-  "updated_at": "2026-11-17T22:33:17",
+  "updated_at": "2026-11-18T10:15:13",
   "n_issued": 4,
-  "n_scored": 2,
-  "n_pending": 2,
+  "n_scored": 3,
+  "n_pending": 1,
   "span": [
     "2026-11-12",
-    "2026-11-16"
+    "2026-11-17"
   ],
-  "mae_mw": 688.5,
-  "mape_pct": 3.717,
-  "bias_mw": -688.5,
+  "mae_mw": 551.6,
+  "mape_pct": 2.959,
+  "bias_mw": -551.6,
   "worst_abs_error_mw": 877.2,
   "interval_coverage": {
     "90%": 1.0,

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-20T08:51:41",
+  "generated_at": "2026-11-20T10:06:30",
   "history": [
     {
       "date": "2025-10-16",
@@ -1616,22 +1616,32 @@
     "end": "2026-11-19"
   },
   "forecast": {
-    "target_date": "2026-11-20",
-    "issued_at": "2026-11-19T22:22:01",
-    "mw": 19523.5,
-    "lo90": 18534.1,
-    "hi90": 20512.8,
-    "lo95": 18082.3,
-    "hi95": 20964.7,
+    "target_date": "2026-11-21",
+    "issued_at": "2026-11-20T10:06:02",
+    "mw": 18508.6,
+    "lo90": 17570.7,
+    "hi90": 19446.6,
+    "lo95": 17142.4,
+    "hi95": 19874.9,
     "model_version": "champion-quantile_hybrid-level-A2_weather_deltas_anomalies",
     "is_champion": true,
     "weather_source": "live_log_evening_lead_1",
     "H": 2,
     "warnings": [
-      "Weather for 19 Nov came from a forecast \u2014 that day has not reached the observational archive yet."
+      "Weather for 20 Nov came from a forecast \u2014 that day has not reached the observational archive yet."
     ]
   },
   "ledger": [
+    {
+      "date": "2026-11-21",
+      "pred": 18508.6,
+      "actual": null,
+      "error": null,
+      "lo90": 17570.7,
+      "hi90": 19446.6,
+      "inside90": null,
+      "is_champion": true
+    },
     {
       "date": "2026-11-20",
       "pred": 19523.5,
@@ -1645,11 +1655,11 @@
     {
       "date": "2026-11-19",
       "pred": 19468.5,
-      "actual": null,
-      "error": null,
+      "actual": 19452.0,
+      "error": 16.5,
       "lo90": 18481.9,
       "hi90": 20455.0,
-      "inside90": null,
+      "inside90": true,
       "is_champion": true
     },
     {
@@ -1694,17 +1704,17 @@
     }
   ],
   "live": {
-    "updated_at": "2026-11-19T22:21:58",
+    "updated_at": "2026-11-20T10:05:59",
     "n_issued": 6,
-    "n_scored": 4,
-    "n_pending": 2,
+    "n_scored": 5,
+    "n_pending": 1,
     "span": [
       "2026-11-12",
-      "2026-11-18"
+      "2026-11-19"
     ],
-    "mae_mw": 531.2,
-    "mape_pct": 2.823,
-    "bias_mw": -531.2,
+    "mae_mw": 428.3,
+    "mape_pct": 2.276,
+    "bias_mw": -421.7,
     "worst_abs_error_mw": 877.2,
     "interval_coverage": {
       "90%": 1.0,

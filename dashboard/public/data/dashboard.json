@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-25T10:07:21",
+  "generated_at": "2026-11-25T11:23:54",
   "history": [
     {
       "date": "2025-10-21",
@@ -1616,22 +1616,32 @@
     "end": "2026-11-24"
   },
   "forecast": {
-    "target_date": "2026-11-25",
-    "issued_at": "2026-11-24T23:36:15",
-    "mw": 18210.2,
-    "lo90": 17287.4,
-    "hi90": 19133.0,
-    "lo95": 16865.9,
-    "hi95": 19554.4,
+    "target_date": "2026-11-26",
+    "issued_at": "2026-11-25T11:23:25",
+    "mw": 17945.1,
+    "lo90": 17035.7,
+    "hi90": 18854.4,
+    "lo95": 16620.4,
+    "hi95": 19269.7,
     "model_version": "champion-quantile_hybrid-level-A2_weather_deltas_anomalies",
     "is_champion": true,
     "weather_source": "live_log_evening_lead_1",
     "H": 2,
     "warnings": [
-      "Weather for 24 Nov came from a forecast \u2014 that day has not reached the observational archive yet."
+      "Weather for 25 Nov came from a forecast \u2014 that day has not reached the observational archive yet."
     ]
   },
   "ledger": [
+    {
+      "date": "2026-11-26",
+      "pred": 17945.1,
+      "actual": null,
+      "error": null,
+      "lo90": 17035.7,
+      "hi90": 18854.4,
+      "inside90": null,
+      "is_champion": true
+    },
     {
       "date": "2026-11-25",
       "pred": 18210.2,
@@ -1645,11 +1655,11 @@
     {
       "date": "2026-11-24",
       "pred": 17351.5,
-      "actual": null,
-      "error": null,
+      "actual": 18782.0,
+      "error": -1430.5,
       "lo90": 16472.2,
       "hi90": 18230.8,
-      "inside90": null,
+      "inside90": false,
       "is_champion": true
     },
     {
@@ -1744,21 +1754,21 @@
     }
   ],
   "live": {
-    "updated_at": "2026-11-24T23:36:12",
+    "updated_at": "2026-11-25T11:23:23",
     "n_issued": 11,
-    "n_scored": 9,
-    "n_pending": 2,
+    "n_scored": 10,
+    "n_pending": 1,
     "span": [
       "2026-11-12",
-      "2026-11-23"
+      "2026-11-24"
     ],
-    "mae_mw": 376.2,
-    "mape_pct": 1.99,
-    "bias_mw": -372.6,
-    "worst_abs_error_mw": 877.2,
+    "mae_mw": 481.6,
+    "mape_pct": 2.553,
+    "bias_mw": -478.4,
+    "worst_abs_error_mw": 1430.5,
     "interval_coverage": {
-      "90%": 1.0,
-      "95%": 1.0
+      "90%": 0.9,
+      "95%": 0.9
     },
     "n_summer_days": 0,
     "is_provisional": true,

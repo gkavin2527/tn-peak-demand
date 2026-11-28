@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-28T09:09:07",
+  "generated_at": "2026-11-28T10:32:10",
   "history": [
     {
       "date": "2025-10-24",
@@ -1616,22 +1616,32 @@
     "end": "2026-11-27"
   },
   "forecast": {
-    "target_date": "2026-11-28",
-    "issued_at": "2026-11-27T22:51:25",
-    "mw": 17327.6,
-    "lo90": 16449.5,
-    "hi90": 18205.6,
-    "lo95": 16048.5,
-    "hi95": 18606.7,
+    "target_date": "2026-11-29",
+    "issued_at": "2026-11-28T10:31:41",
+    "mw": 15342.8,
+    "lo90": 14565.3,
+    "hi90": 16120.2,
+    "lo95": 14210.2,
+    "hi95": 16475.3,
     "model_version": "champion-quantile_hybrid-level-A2_weather_deltas_anomalies",
     "is_champion": true,
     "weather_source": "live_log_evening_lead_1",
     "H": 2,
     "warnings": [
-      "Weather for 27 Nov came from a forecast \u2014 that day has not reached the observational archive yet."
+      "Weather for 28 Nov came from a forecast \u2014 that day has not reached the observational archive yet."
     ]
   },
   "ledger": [
+    {
+      "date": "2026-11-29",
+      "pred": 15342.8,
+      "actual": null,
+      "error": null,
+      "lo90": 14565.3,
+      "hi90": 16120.2,
+      "inside90": null,
+      "is_champion": true
+    },
     {
       "date": "2026-11-28",
       "pred": 17327.6,
@@ -1645,11 +1655,11 @@
     {
       "date": "2026-11-27",
       "pred": 17929.3,
-      "actual": null,
-      "error": null,
+      "actual": 18568.0,
+      "error": -638.7,
       "lo90": 17020.7,
       "hi90": 18837.9,
-      "inside90": null,
+      "inside90": true,
       "is_champion": true
     },
     {
@@ -1761,34 +1771,24 @@
       "hi90": 18643.0,
       "inside90": true,
       "is_champion": true
-    },
-    {
-      "date": "2026-11-12",
-      "pred": 17860.2,
-      "actual": 18360.0,
-      "error": -499.8,
-      "lo90": 16676.9,
-      "hi90": 19043.4,
-      "inside90": true,
-      "is_champion": false
     }
   ],
   "live": {
-    "updated_at": "2026-11-27T22:51:23",
+    "updated_at": "2026-11-28T10:31:39",
     "n_issued": 14,
-    "n_scored": 12,
-    "n_pending": 2,
+    "n_scored": 13,
+    "n_pending": 1,
     "span": [
       "2026-11-12",
-      "2026-11-26"
+      "2026-11-27"
     ],
-    "mae_mw": 436.2,
-    "mape_pct": 2.319,
-    "bias_mw": -401.5,
+    "mae_mw": 451.7,
+    "mape_pct": 2.405,
+    "bias_mw": -419.8,
     "worst_abs_error_mw": 1430.5,
     "interval_coverage": {
-      "90%": 0.9167,
-      "95%": 0.9167
+      "90%": 0.9231,
+      "95%": 0.9231
     },
     "n_summer_days": 0,
     "is_provisional": true,
